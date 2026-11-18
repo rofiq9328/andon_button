@@ -5,22 +5,22 @@
 <?php
 // Definisi kolom sesuai dropdown di file Excel
 $fieldDefs = [
-    'tersedia'        => ['label' => 'Tersedia',       'opts' => ['ADA', 'TIDAK ADA']],
-    'kondisi_remote'  => ['label' => 'Kondisi Remote', 'opts' => ['ON', 'OFF']],
-    'visual_nomor'    => ['label' => 'Visual Nomor',   'opts' => ['ADA', 'TIDAK ADA']],
-    'material_lampu'  => ['label' => 'Material Lampu', 'opts' => ['ON', 'OFF']],
-    'material_layar'  => ['label' => 'Material Layar', 'opts' => ['MUNCUL', 'TIDAK']],
-    'mekanik_lampu'   => ['label' => 'Mekanik Lampu',  'opts' => ['ON', 'OFF']],
-    'mekanik_layar'   => ['label' => 'Mekanik Layar',  'opts' => ['MUNCUL', 'TIDAK']],
-    'qc_lampu'        => ['label' => 'QC Lampu',       'opts' => ['ON', 'OFF']],
-    'qc_layar'        => ['label' => 'QC Layar',       'opts' => ['MUNCUL', 'TIDAK']],
-    'spv_lampu'       => ['label' => 'SPV Lampu',      'opts' => ['ON', 'OFF']],
-    'spv_layar'       => ['label' => 'SPV Layar',      'opts' => ['MUNCUL', 'TIDAK']],
-    'perbaikan_rusak' => ['label' => 'Rusak',          'opts' => ['YES', 'NO']],
-    'ganti_baterai'   => ['label' => 'Ganti Baterai',  'opts' => ['YES', 'NO']],
+    'tersedia'        => ['label' => 'Tersedia',        'opts' => ['ADA', 'TIDAK ADA']],
+    'kondisi_remote'  => ['label' => 'Kondisi Remote',  'opts' => ['ON', 'OFF']],
+    'visual_nomor'    => ['label' => 'Visual Nomor',    'opts' => ['ADA', 'TIDAK ADA']],
+    'material_lampu'  => ['label' => 'Material Lampu',  'opts' => ['ON', 'OFF']],
+    'material_layar'  => ['label' => 'Material Layar',  'opts' => ['MUNCUL', 'TIDAK']],
+    'mekanik_lampu'   => ['label' => 'Mekanik Lampu',   'opts' => ['ON', 'OFF']],
+    'mekanik_layar'   => ['label' => 'Mekanik Layar',   'opts' => ['MUNCUL', 'TIDAK']],
+    'qc_lampu'        => ['label' => 'QC Lampu',        'opts' => ['ON', 'OFF']],
+    'qc_layar'        => ['label' => 'QC Layar',        'opts' => ['MUNCUL', 'TIDAK']],
+    'spv_lampu'       => ['label' => 'SPV Lampu',       'opts' => ['ON', 'OFF']],
+    'spv_layar'       => ['label' => 'SPV Layar',       'opts' => ['MUNCUL', 'TIDAK']],
+    'perbaikan_rusak' => ['label' => 'Rusak',           'opts' => ['YES', 'NO']],
+    'ganti_baterai'   => ['label' => 'Ganti Baterai',   'opts' => ['YES', 'NO']],
 ];
 
-// Hitung progres: unit yang kondisi_remote-nya sudah diisi
+// Progres keseluruhan: unit yang kondisi_remote-nya sudah diisi
 $total  = 0;
 $terisi = 0;
 foreach ($grouped as $units) {
@@ -62,16 +62,25 @@ foreach ($grouped as $units) {
         </div>
     <?php endif; ?>
 
-    <form method="post" action="<?= base_url('audit-andon/simpan') ?>">
-        <?= csrf_field() ?>
-        <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
+    <?php if (empty($grouped)): ?>
+        <div class="alert alert-info">Belum ada area yang ditugaskan.</div>
+    <?php else: ?>
+        <?php foreach ($grouped as $line => $units): ?>
+            <?php
+            $lineTotal  = count($units);
+            $lineTerisi = count(array_filter($units, static fn ($u) => $u['kondisi_remote'] !== null));
+            ?>
+            <div class="card mb-3" id="line-<?= (int) $line ?>">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Line <?= (int) $line ?></span>
+                    <span class="small text-muted">Terisi <?= $lineTerisi ?> dari <?= $lineTotal ?></span>
+                </div>
 
-        <?php if (empty($grouped)): ?>
-            <div class="alert alert-info">Belum ada area yang ditugaskan.</div>
-        <?php else: ?>
-            <?php foreach ($grouped as $line => $units): ?>
-                <div class="card mb-3">
-                    <div class="card-header fw-bold">Line <?= (int) $line ?></div>
+                <form method="post" action="<?= base_url('audit-andon/simpan') ?>">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
+                    <input type="hidden" name="line" value="<?= (int) $line ?>">
+
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0 align-middle">
@@ -117,26 +126,32 @@ foreach ($grouped as $units) {
                             </table>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
 
-        <?php if ($editable): ?>
-            <div class="d-flex gap-2 sticky-bottom bg-white py-2">
-                <button type="submit" name="action" value="draft" class="btn btn-outline-primary">
-                    Simpan Draft
-                </button>
-                <button type="submit" name="action" value="serahkan" class="btn btn-success"
-                        onclick="return confirm('Serahkan data bulan ini?')">
-                    Serahkan
-                </button>
+                    <?php if ($editable): ?>
+                        <div class="card-footer text-end">
+                            <button type="submit" name="action" value="draft" class="btn btn-sm btn-primary">
+                                Simpan Line <?= (int) $line ?>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                </form>
             </div>
-        <?php else: ?>
-            <div class="alert alert-secondary">
-                Sesi ini terkunci. Hanya admin yang bisa membukanya kembali.
-            </div>
-        <?php endif; ?>
-    </form>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php if ($editable): ?>
+        <form method="post" action="<?= base_url('audit-andon/simpan') ?>"
+              class="sticky-bottom bg-white py-2 d-flex justify-content-end gap-2"
+              onsubmit="return confirm('Pastikan semua line sudah disimpan. Serahkan data bulan ini?')">
+            <?= csrf_field() ?>
+            <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
+            <button type="submit" name="action" value="serahkan" class="btn btn-success">Serahkan</button>
+        </form>
+    <?php else: ?>
+        <div class="alert alert-secondary">
+            Sesi ini terkunci. Hanya admin yang bisa membukanya kembali.
+        </div>
+    <?php endif; ?>
 
     <?php if ($isAdmin && !$editable): ?>
         <form method="post" action="<?= base_url('audit-andon/buka/' . (int) $session['id']) ?>" class="mt-3">
