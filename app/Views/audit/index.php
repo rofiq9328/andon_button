@@ -7,6 +7,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <h1 class="h4 mb-0">Audit Andon <?= esc($periode) ?></h1>
 
+        <a href="<?= base_url('audit-andon/penugasan') ?>" class="btn btn-sm btn-outline-secondary">Atur Penugasan PIC</a>
         <form method="get" action="<?= base_url('audit-andon') ?>" class="d-flex gap-2">
             <input type="month" name="periode" value="<?= esc($periode) ?>" class="form-control form-control-sm">
             <button type="submit" class="btn btn-sm btn-outline-primary">Tampilkan</button>
