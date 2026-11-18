@@ -105,7 +105,8 @@ class AndonController extends BaseController
         }
 
         $buttonId = $buttonData['id'];
-        $result = $this->sendClearSocket($buttonId, $buttonData['factory']);
+        $target = $this->resolveClearTarget((int) $lineNumber, (string) $buttonData['factory']);
+        $result = $this->sendClearSocket($buttonId, $target);
 
         if ($result['success']) {
             $troubleModel = new TroubleHistoryModel();
@@ -131,26 +132,53 @@ class AndonController extends BaseController
         return $this->response->setJSON($result);
     }
 
-    private function sendClearSocket($buttonId, $factory)
+    /**
+     * Menentukan server tujuan clear. Line yang ada di clear_areas dikirim
+     * ke Raspberry area tersebut, selain itu ke server factory seperti biasa.
+     */
+    private function resolveClearTarget(int $lineNumber, string $factory): ?array
     {
         $config = config('AndonConfig');
-        $server = $config->factory_config[$factory] ?? null;
 
-        if (!$server) {
-            return ['success' => false, 'error' => 'Konfigurasi factory salah'];
+        foreach ($config->clear_areas as $area) {
+            if (in_array($lineNumber, $area['lines'], true)) {
+                return [
+                    'host' => $area['host'],
+                    'port' => $area['port'],
+                    'name' => $area['name'],
+                ];
+            }
         }
 
-        $socket = @fsockopen($server['host'], $server['port'], $errno, $errstr, 2);
-        if ($socket) {
-            fwrite($socket, $buttonId . "\n");
-            fclose($socket);
+        return $config->factory_config[$factory] ?? null;
+    }
 
-            return ['success' => true, 'message' => 'ANDON CLEAR SENT', 'data' => ['button_id' => $buttonId]];
+    private function sendClearSocket($buttonId, ?array $server)
+    {
+        if (!$server) {
+            return ['success' => false, 'error' => 'Konfigurasi server clear tidak ditemukan'];
+        }
+
+        $target = "{$server['host']}:{$server['port']}";
+
+        $socket = @fsockopen($server['host'], $server['port'], $errno, $errstr, 2);
+        if (!$socket) {
+            $label = isset($server['name']) ? " ({$server['name']})" : '';
+
+            return ['success' => false, 'error' => "Gagal konek ke {$target}{$label}"];
+        }
+
+        $sent = fwrite($socket, $buttonId . "\n");
+        fclose($socket);
+
+        if ($sent === false) {
+            return ['success' => false, 'error' => "Gagal mengirim clear ke {$target}"];
         }
 
         return [
-            'success' => false,
-            'error' => "Gagal konek Socket Node-RED ({$server['host']}:{$server['port']})",
+            'success' => true,
+            'message' => 'ANDON CLEAR SENT',
+            'data'    => ['button_id' => $buttonId, 'target' => $target],
         ];
     }
 
