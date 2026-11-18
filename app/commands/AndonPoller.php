@@ -15,27 +15,14 @@ class AndonPoller extends BaseCommand
     {
         $lines = [];
 
-        for ($i = 1; $i <= 33; $i++) {
-            $lastOctet = 200 + $i;
+        foreach (config('AndonConfig')->lines as $l) {
             $lines[] = [
-                'line_number' => 'Line ' . $i,
-                'ip'          => '192.168.10.' . $lastOctet,
-                'port'        => 1880,
-                'building'    => 'B',
-                'factory'     => '1',
+                'line_number' => 'Line ' . $l['line_number'],
+                'ip'          => $l['ip'],
+                'port'        => $l['port'],
+                'building'    => str_replace('Building ', '', $l['building']),
+                'factory'     => $l['factory'],
             ];
-        }
-
-        $ipGedungA = 204;
-        for ($i = 34; $i <= 77; $i++) {
-            $lines[] = [
-                'line_number' => 'Line ' . $i,
-                'ip'          => '192.168.20.' . $ipGedungA,
-                'port'        => 1880,
-                'building'    => 'A',
-                'factory'     => '1',
-            ];
-            $ipGedungA++;
         }
 
         return $lines;
