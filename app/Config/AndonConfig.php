@@ -26,6 +26,18 @@ class AndonConfig extends BaseConfig
      */
     public array $lines = [];
 
+    /**
+     * IP yang tidak mengikuti urutan rumus (key = nomor line).
+     * Tambahkan di sini kalau ada line lain dengan IP di luar urutan.
+     */
+    private array $ipOverrides = [
+        70 => '192.168.20.151',
+        71 => '192.168.20.152',
+        72 => '192.168.20.153',
+        73 => '192.168.20.154',
+        74 => '192.168.20.155',
+    ];
+
     public function __construct()
     {
         parent::__construct();
@@ -52,7 +64,7 @@ class AndonConfig extends BaseConfig
                 'line_number' => $i,
                 'building'    => 'Building A',
                 'factory'     => '2',
-                'ip'          => "192.168.20.{$ip_suffix_a}",
+                'ip'          => $this->ipOverrides[$i] ?? "192.168.20.{$ip_suffix_a}",
                 'port'        => 1880
             ];
             
