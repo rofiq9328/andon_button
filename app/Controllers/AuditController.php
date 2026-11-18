@@ -143,6 +143,9 @@ class AuditController extends BaseController
             ? '/audit-andon/sesi/' . $sessionId
             : '/audit-andon/isi';
 
+        $line   = (int) $this->request->getPost('line');
+        $anchor = $line > 0 ? '#line-' . $line : '';
+
         if (!$auditModel->isEditable($session)) {
             return redirect()->to($backUrl)
                 ->with('error', 'Sesi sudah terkunci. Minta admin membuka kembali.');
@@ -178,7 +181,7 @@ class AuditController extends BaseController
         }
 
         if ($gagal > 0) {
-            return redirect()->to($backUrl)
+            return redirect()->to($backUrl . $anchor)
                 ->with('error', "{$gagal} baris gagal disimpan. Periksa nilai isiannya.");
         }
 
@@ -189,7 +192,7 @@ class AuditController extends BaseController
                 ->with('success', 'Data diserahkan. Anda masih bisa mengubah sampai akhir bulan.');
         }
 
-        return redirect()->to($backUrl)->with('success', 'Draft tersimpan.');
+        return redirect()->to($backUrl . $anchor)->with('success', 'Draft tersimpan.');
     }
 
     /**
