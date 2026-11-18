@@ -267,6 +267,7 @@
                         <select name="role" id="new-user-role" class="form-select">
                           <option value="user" selected>User</option>
                           <option value="admin">Admin</option>
+                          <option value="pic_audit">PIC Audit</option>
                         </select>
                       </div>
                       <div class="form-check">
@@ -339,6 +340,7 @@
                         <select name="role" id="edit-user-role" class="form-select">
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
+                          <option value="pic_audit">PIC Audit</option>
                         </select>
                       </div>
                       <div class="form-check">
