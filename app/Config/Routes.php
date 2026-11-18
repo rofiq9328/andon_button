@@ -67,4 +67,11 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('simpan', 'AuditController::save');
         $routes->post('buka/(:num)', 'AuditController::reopen/$1');
     });
+
+    // Penugasan PIC audit: hanya admin
+    $routes->group('audit-andon/penugasan', ['filter' => 'role:admin'], function ($routes) {
+        $routes->get('/', 'PicAssignmentController::index');
+        $routes->post('simpan', 'PicAssignmentController::store');
+        $routes->post('hapus/(:num)', 'PicAssignmentController::delete/$1');
+    });
 });
