@@ -69,7 +69,15 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                   <p>Dashboard</p>
                 </a>
               </li>
-              <?php if (session()->get('role') === 'admin'): ?>
+              <?php if (in_array(session()->get('role'), ['admin', 'pic_audit'], true)): ?>
+                    <li class="nav-item">
+                        <a href="<?= base_url('audit-andon') ?>" class="nav-link" title="Audit Andon">
+                            <i class="nav-icon bi bi-clipboard-check"></i>
+                            <p>Audit Andon</p>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if (session()->get('role') === 'admin'): ?>
               <li class="nav-item<?= $isSettingsActive ? ' menu-open' : '' ?>">
                 <a
                   href="#"
