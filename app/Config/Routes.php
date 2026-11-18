@@ -58,4 +58,13 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('users/update/(:num)', [UserController::class, 'update/$1']);
         $routes->post('users/delete/(:num)', [UserController::class, 'delete/$1']);
     });
+
+    // Menu Audit Andon: admin dan PIC audit
+    $routes->group('audit-andon', ['filter' => 'role:admin,pic_audit'], function ($routes) {
+        $routes->get('/', 'AuditController::index');
+        $routes->get('isi', 'AuditController::form');
+        $routes->get('sesi/(:num)', 'AuditController::form/$1');
+        $routes->post('simpan', 'AuditController::save');
+        $routes->post('buka/(:num)', 'AuditController::reopen/$1');
+    });
 });
