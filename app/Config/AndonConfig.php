@@ -21,6 +21,19 @@ class AndonConfig extends BaseConfig
     ];
 
     /**
+     * Area yang clear-nya dikirim ke Raspberry tertentu, bukan ke server factory.
+     * Line yang tidak ada di sini tetap memakai $factory_config.
+     */
+    public array $clear_areas = [
+        [
+            'name'  => 'Area Pi 253 (Line 70-74)',
+            'lines' => [70, 71, 72, 73, 74],
+            'host'  => '192.168.10.253',
+            'port'  => 1880,
+        ],
+    ];
+
+    /**
      * Array ini dibiarkan kosong, karena akan diisi otomatis 
      * oleh fungsi __construct() di bawah.
      */
