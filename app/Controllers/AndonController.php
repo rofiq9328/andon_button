@@ -145,7 +145,6 @@ class AndonController extends BaseController
                 return [
                     'host' => $area['host'],
                     'port' => $area['port'],
-                    'name' => $area['name'],
                 ];
             }
         }
@@ -163,9 +162,7 @@ class AndonController extends BaseController
 
         $socket = @fsockopen($server['host'], $server['port'], $errno, $errstr, 2);
         if (!$socket) {
-            $label = isset($server['name']) ? " ({$server['name']})" : '';
-
-            return ['success' => false, 'error' => "Gagal konek ke {$target}{$label}"];
+            return ['success' => false, 'error' => "Gagal konek ke {$target}"];
         }
 
         $sent = fwrite($socket, $buttonId . "\n");
