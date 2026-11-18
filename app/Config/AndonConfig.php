@@ -29,7 +29,7 @@ class AndonConfig extends BaseConfig
             'name'  => 'Area Pi 253 (Line 70-74)',
             'lines' => [70, 71, 72, 73, 74],
             'host'  => '192.168.10.253',
-            'port'  => 1880,
+            'port'  => 2112,
         ],
     ];
 
