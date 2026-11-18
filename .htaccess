@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /andon_button_dev/
+
+    # Mencegah pengulangan jika request sudah mengarah ke public
+    RewriteCond %{REQUEST_URI} !^/andon_button_dev/public/
+    
+    # Alihkan semua traffic ke folder public
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
