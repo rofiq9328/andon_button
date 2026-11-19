@@ -160,6 +160,106 @@
     .audit-toolbar .status-pill {
         padding: 0.2rem 0.6rem;
     }
+
+    /* ===== Versi lebih kecil ===== */
+    .audit-wrap {
+        max-height: 60vh;
+    }
+
+    .audit-toolbar {
+        padding: 0.45rem 0.6rem;
+    }
+
+    .audit-toolbar .progress-thin {
+        height: 6px;
+    }
+
+    .audit-toolbar .legend-chip,
+    .audit-toolbar .status-pill {
+        font-size: 0.7rem;
+    }
+
+    .audit-toolbar .btn-sm,
+    .audit-toolbar .form-select-sm {
+        font-size: 0.7rem;
+        padding-top: 0.12rem;
+        padding-bottom: 0.12rem;
+    }
+
+    .audit-table th,
+    .audit-table td {
+        padding: 0.15rem 0.3rem;
+    }
+
+    .audit-table thead tr:nth-child(1) th {
+        height: 26px;
+    }
+
+    .audit-table thead tr:nth-child(2) th {
+        top: 26px;
+        height: 24px;
+    }
+
+    .audit-table thead th.grp-head {
+        font-size: 0.6rem;
+    }
+
+    .audit-table thead th.col-label {
+        font-size: 0.6rem;
+    }
+
+    .audit-table .sticky-col {
+        min-width: 74px;
+    }
+
+    .audit-table .btn-group .btn {
+        min-width: 44px;
+        font-size: 0.6rem;
+        padding: 0.05rem 0.2rem;
+        line-height: 1.4;
+    }
+
+    .audit-table .btn-group .btn i {
+        font-size: 0.48rem;
+        margin-right: 0.1rem;
+    }
+
+    .seg-bar {
+        margin-top: 0.15rem;
+    }
+
+    .seg-bar span {
+        width: 3px;
+        height: 6px;
+    }
+
+    .unit-no {
+        font-size: 0.75rem;
+    }
+
+    .unit-count {
+        font-size: 0.56rem;
+    }
+
+    .audit-table .led-dot {
+        width: 8px;
+        height: 8px;
+    }
+
+    .note-input {
+        min-width: 110px;
+    }
+
+    .note-input .form-control,
+    .note-input .input-group-text {
+        font-size: 0.66rem;
+        padding: 0.05rem 0.3rem;
+    }
+
+    .audit-card > .card-footer {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.65rem;
+    }
 </style>
 <?= $this->endSection() ?>
 
