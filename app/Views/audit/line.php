@@ -12,17 +12,52 @@
         white-space: nowrap;
     }
 
+    /* Pembatas tebal di awal setiap kelompok kolom */
+    .audit-table th.grp-start,
+    .audit-table td.grp-start {
+        border-left: 2px solid var(--bs-secondary-color) !important;
+    }
+
+    /* Selang-seling warna per kelompok supaya batasnya terlihat */
+    .audit-table thead th {
+        background-color: var(--bs-tertiary-bg);
+    }
+
+    .audit-table thead th.grp-alt,
+    .audit-table td.grp-alt {
+        background-color: var(--bs-secondary-bg);
+    }
+
+    /* Kondisi tiap kotak: sudah diisi (hijau/merah) atau belum (bergaris) */
+    .audit-table td.cell-ok {
+        background-color: rgba(25, 135, 84, 0.14);
+    }
+
+    .audit-table td.cell-bad {
+        background-color: rgba(220, 53, 69, 0.16);
+    }
+
+    .audit-table td.cell-empty,
+    .legend-empty {
+        background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(128, 128, 128, 0.22) 6px 12px);
+    }
+
     .audit-table .sticky-col {
         position: sticky;
         left: 0;
         z-index: 1;
     }
 
+    /* Garis warna di kiri nama unit mengikuti status baris */
+    .audit-table tr[data-state="ok"] .sticky-col      { box-shadow: inset 4px 0 0 #198754; }
+    .audit-table tr[data-state="bad"] .sticky-col     { box-shadow: inset 4px 0 0 #dc3545; }
+    .audit-table tr[data-state="partial"] .sticky-col { box-shadow: inset 4px 0 0 #ffc107; }
+    .audit-table tr[data-state="empty"] .sticky-col   { box-shadow: inset 4px 0 0 #6c757d; }
+
     .audit-table .btn-group .btn {
         min-width: 52px;
     }
 
-    /* Indikator status per unit, sama seperti LED di dashboard */
     .led-dot {
         display: inline-block;
         width: 12px;
@@ -70,12 +105,16 @@ $groups = [
     ],
 ];
 
-// Susun semua field dalam urutan kolom
+// Susun field dalam urutan kolom, lengkap dengan nomor kelompok dan penanda awal kelompok
 $flat = [];
+$gi = 0;
 foreach ($groups as $fields) {
+    $first = true;
     foreach ($fields as $key => $def) {
-        $flat[$key] = $def;
+        $flat[$key] = $def + ['grp' => $gi, 'start' => $first];
+        $first = false;
     }
+    $gi++;
 }
 $fieldCount = count($flat);
 
@@ -150,32 +189,51 @@ $lineTerisi = count(array_filter($units, static fn ($u) => $u['kondisi_remote'] 
                 </div>
 
                 <div class="card-body p-0">
+                    <div class="px-3 py-2 small border-bottom d-flex flex-wrap gap-3 align-items-center">
+                        <span><span class="led-dot text-secondary me-1"></span>Belum diisi</span>
+                        <span><span class="led-dot text-warning me-1"></span>Sebagian</span>
+                        <span><span class="led-dot text-success me-1"></span>Lengkap</span>
+                        <span><span class="led-dot text-danger me-1"></span>Perlu perhatian</span>
+                        <span class="ms-md-auto d-flex align-items-center gap-2">
+                            <span class="legend-empty d-inline-block border" style="width: 22px; height: 14px;"></span>
+                            Kotak bergaris = belum dipilih
+                        </span>
+                    </div>
+
                     <div class="table-responsive audit-wrap">
                         <table class="table table-sm table-bordered align-middle mb-0 audit-table">
                             <thead>
                                 <tr class="text-center">
-                                    <th rowspan="2" class="sticky-col bg-body-tertiary">Unit</th>
-                                    <?php foreach ($groups as $gName => $fields): ?>
+                                    <th rowspan="2" class="sticky-col">Unit</th>
+                                    <?php $gIdx = 0; foreach ($groups as $gName => $fields): ?>
                                         <th colspan="<?= count($fields) ?>"
-                                            class="bg-body-tertiary small text-uppercase"><?= esc($gName) ?></th>
+                                            class="small text-uppercase<?= $gIdx % 2 ? ' grp-alt' : '' ?> <?= $gIdx > 0 ? 'grp-start' : '' ?>"><?= esc($gName) ?></th>
+                                        <?php $gIdx++; ?>
                                     <?php endforeach; ?>
-                                    <th rowspan="2" class="bg-body-tertiary small">Catatan</th>
+                                    <th rowspan="2" class="small grp-start">Catatan</th>
                                 </tr>
                                 <tr class="text-center">
                                     <?php foreach ($flat as $def): ?>
-                                        <th class="small fw-normal bg-body-tertiary"><?= esc($def['label']) ?></th>
+                                        <th class="small fw-normal<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"><?= esc($def['label']) ?></th>
                                     <?php endforeach; ?>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($units as $u): ?>
-                                    <tr data-unit="<?= (int) $u['id'] ?>">
+                                    <tr data-unit="<?= (int) $u['id'] ?>" data-state="empty">
                                         <td class="sticky-col bg-body fw-bold">
-                                            <span class="led-dot text-secondary me-2" id="led-<?= (int) $u['id'] ?>"></span>#<?= (int) $u['line_no'] ?>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="led-dot text-secondary" id="led-<?= (int) $u['id'] ?>"></span>
+                                                <span>
+                                                    #<?= (int) $u['line_no'] ?>
+                                                    <div class="small fw-normal text-secondary" id="cnt-<?= (int) $u['id'] ?>">0 / <?= $fieldCount ?></div>
+                                                </span>
+                                            </div>
                                         </td>
 
                                         <?php foreach ($flat as $key => $def): ?>
-                                            <td class="text-center">
+                                            <td class="text-center<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"
+                                                data-field="<?= $key ?>">
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <?php foreach ($def['opts'] as $i => [$value, $good]): ?>
                                                         <?php $rid = 'u' . (int) $u['id'] . '_' . $key . '_' . $i; ?>
@@ -194,7 +252,7 @@ $lineTerisi = count(array_filter($units, static fn ($u) => $u['kondisi_remote'] 
                                             </td>
                                         <?php endforeach; ?>
 
-                                        <td>
+                                        <td class="grp-start">
                                             <input type="text" class="form-control form-control-sm" style="min-width: 160px;"
                                                    name="units[<?= (int) $u['id'] ?>][catatan]"
                                                    value="<?= esc($u['catatan'] ?? '') ?>"
@@ -235,20 +293,59 @@ $lineTerisi = count(array_filter($units, static fn ($u) => $u['kondisi_remote'] 
         const FIELD_COUNT = <?= (int) $fieldCount ?>;
         const rows = document.querySelectorAll('tr[data-unit]');
 
-        // Warna LED per unit: merah jika ada pilihan bermasalah,
-        // hijau jika semua field sudah diisi dan normal, abu-abu jika belum lengkap
-        function refreshRow(tr) {
-            const dot = document.getElementById('led-' + tr.dataset.unit);
-            const checked = tr.querySelectorAll('input.audit-radio:checked');
-            const adaMasalah = Array.from(checked).some(r => r.dataset.bad === '1');
+        // Warna LED sesuai status baris
+        const LED = {
+            bad:     'text-danger',
+            ok:      'text-success',
+            partial: 'text-warning',
+            empty:   'text-secondary',
+        };
 
-            dot.classList.remove('text-success', 'text-danger', 'text-secondary', 'is-active');
+        function refreshRow(tr) {
+            const id = tr.dataset.unit;
+            const dot = document.getElementById('led-' + id);
+            const cnt = document.getElementById('cnt-' + id);
+            let filled = 0;
+            let adaMasalah = false;
+
+            // Setiap kotak: sudah diisi (hijau/merah) atau belum (bergaris)
+            tr.querySelectorAll('td[data-field]').forEach(td => {
+                td.classList.remove('cell-ok', 'cell-bad', 'cell-empty');
+                const checked = td.querySelector('input.audit-radio:checked');
+
+                if (!checked) {
+                    td.classList.add('cell-empty');
+                    return;
+                }
+
+                filled++;
+                if (checked.dataset.bad === '1') {
+                    td.classList.add('cell-bad');
+                    adaMasalah = true;
+                } else {
+                    td.classList.add('cell-ok');
+                }
+            });
+
+            let state;
             if (adaMasalah) {
-                dot.classList.add('text-danger', 'is-active');
-            } else if (checked.length === FIELD_COUNT) {
-                dot.classList.add('text-success', 'is-active');
+                state = 'bad';
+            } else if (filled === FIELD_COUNT) {
+                state = 'ok';
+            } else if (filled > 0) {
+                state = 'partial';
             } else {
-                dot.classList.add('text-secondary');
+                state = 'empty';
+            }
+
+            tr.dataset.state = state;
+            cnt.textContent = filled + ' / ' + FIELD_COUNT;
+
+            Object.values(LED).forEach(c => dot.classList.remove(c));
+            dot.classList.remove('is-active');
+            dot.classList.add(LED[state]);
+            if (state !== 'empty') {
+                dot.classList.add('is-active');
             }
         }
 
@@ -256,11 +353,10 @@ $lineTerisi = count(array_filter($units, static fn ($u) => $u['kondisi_remote'] 
             let ok = 0;
             let bad = 0;
             rows.forEach(tr => {
-                const dot = document.getElementById('led-' + tr.dataset.unit);
-                if (dot.classList.contains('text-danger')) {
-                    bad++;
-                } else if (dot.classList.contains('text-success')) {
+                if (tr.dataset.state === 'ok') {
                     ok++;
+                } else if (tr.dataset.state === 'bad') {
+                    bad++;
                 }
             });
             document.getElementById('sum-ok').textContent = ok;
