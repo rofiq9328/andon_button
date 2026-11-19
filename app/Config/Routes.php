@@ -63,7 +63,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->group('audit-andon', ['filter' => 'role:admin,pic_audit'], function ($routes) {
         $routes->get('/', 'AuditController::index');
         $routes->get('isi', 'AuditController::form');
+        $routes->get('isi/line/(:num)', 'AuditController::linePic/$1');
         $routes->get('sesi/(:num)', 'AuditController::form/$1');
+        $routes->get('sesi/(:num)/line/(:num)', 'AuditController::lineAdmin/$1/$2');
         $routes->post('simpan', 'AuditController::save');
         $routes->post('buka/(:num)', 'AuditController::reopen/$1');
     });
