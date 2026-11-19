@@ -14,7 +14,7 @@
             <i class="fa-solid fa-boxes-stacked me-2"></i>PENDATAAN BARANG
         </a>
         <div class="d-flex align-items-center gap-3 text-white">
-            <span class="small"><?= esc(session()->get('full_name')) ?> · <?= esc(session()->get('role')) ?></span>
+            <span class="small"><?= esc(session()->get('full_name')) ?> · <?= esc(implode(', ', \App\Libraries\Roles::all())) ?></span>
             <a href="<?= base_url('logout') ?>" class="btn btn-sm btn-outline-light fw-bold">
                 <i class="fa-solid fa-right-from-bracket me-1"></i> KELUAR
             </a>
