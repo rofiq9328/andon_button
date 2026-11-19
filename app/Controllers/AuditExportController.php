@@ -25,7 +25,7 @@ class AuditExportController extends BaseController
         'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER',
     ];
 
-    /** Huruf kolom => field di database. Sama dengan urutan di file Excel. */
+    /** Huruf kolom => field di database, urut sesuai file Excel. */
     private const COLUMNS = [
         'C' => 'tersedia',
         'D' => 'kondisi_remote',
@@ -45,6 +45,15 @@ class AuditExportController extends BaseController
 
     public function excel()
     {
+        if (!class_exists(Spreadsheet::class)) {
+            return redirect()->to('audit-andon')
+                ->with('error', 'PhpSpreadsheet belum terpasang di server. Jalankan composer install.');
+        }
+
+        // Export bisa memakan waktu dan memori lebih dari default XAMPP
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         $periode = (string) $this->request->getGet('periode');
         if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $periode)) {
             $periode = date('Y-m');
@@ -53,39 +62,48 @@ class AuditExportController extends BaseController
         [$year, $month] = explode('-', $periode);
         $monthName = self::MONTHS[(int) $month - 1];
 
-        // Semua unit (line 1-77), termasuk yang belum diisi
-        $units = db_connect()->table('audit_andon_units')
-            ->orderBy('line', 'ASC')
-            ->orderBy('line_no', 'ASC')
-            ->get()
-            ->getResultArray();
+        try {
+            $units = db_connect()->table('audit_andon_units')
+                ->orderBy('line', 'ASC')
+                ->orderBy('line_no', 'ASC')
+                ->get()
+                ->getResultArray();
 
-        $details = [];
-        foreach (db_connect()->table('audit_andon_detail')
-                     ->where('periode', $periode)
-                     ->get()
-                     ->getResultArray() as $d) {
-            $details[$d['line'] . '-' . $d['line_no']] = $d;
+            $details = [];
+            foreach (db_connect()->table('audit_andon_detail')
+                         ->where('periode', $periode)
+                         ->get()
+                         ->getResultArray() as $d) {
+                $details[$d['line'] . '-' . $d['line_no']] = $d;
+            }
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle($monthName);
+
+            $this->writeHeader($sheet, $year);
+            $last = $this->writeUnits($sheet, $units, $details);
+
+            $summary = $spreadsheet->createSheet();
+            $summary->setTitle('SUMMARY');
+            $lines = array_values(array_unique(array_map(static fn ($u) => (int) $u['line'], $units)));
+            $this->writeSummary($summary, $year, $monthName, $lines, $last);
+
+            $spreadsheet->setActiveSheetIndex(0);
+
+            $writer = new Xlsx($spreadsheet);
+            ob_start();
+            $writer->save('php://output');
+            $content = ob_get_clean();
+        } catch (\Throwable $e) {
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            log_message('error', 'Export audit gagal: ' . $e->getMessage());
+
+            return redirect()->to('audit-andon?periode=' . $periode)
+                ->with('error', 'Export gagal: ' . $e->getMessage());
         }
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle($monthName);
-
-        $this->writeHeader($sheet, $year);
-        $last = $this->writeUnits($sheet, $units, $details);
-
-        $summary = $spreadsheet->createSheet();
-        $summary->setTitle('SUMMARY');
-        $lines = array_values(array_unique(array_map(static fn ($u) => (int) $u['line'], $units)));
-        $this->writeSummary($summary, $year, $monthName, $lines, $last);
-
-        $spreadsheet->setActiveSheetIndex(0);
-
-        $writer = new Xlsx($spreadsheet);
-        ob_start();
-        $writer->save('php://output');
-        $content = ob_get_clean();
 
         $filename = 'Audit Andon ' . $monthName . ' ' . $year . '.xlsx';
 
@@ -136,12 +154,7 @@ class AuditExportController extends BaseController
         $sheet->setCellValue('O7', 'GANTI BATERAI');
         $sheet->setCellValue('P6', 'CATATAN');
 
-        $merges = [
-            'A6:A8', 'B6:B8', 'C6:C8', 'D6:D8', 'E6:E8',
-            'F6:M6', 'F7:G7', 'H7:I7', 'J7:K7', 'L7:M7',
-            'N6:O6', 'N7:N8', 'O7:O8', 'P6:P8',
-        ];
-        foreach ($merges as $range) {
+        foreach (['A6:A8', 'B6:B8', 'C6:C8', 'D6:D8', 'E6:E8', 'F6:M6', 'F7:G7', 'H7:I7', 'J7:K7', 'L7:M7', 'N6:O6', 'N7:N8', 'O7:O8', 'P6:P8'] as $range) {
             $sheet->mergeCells($range);
         }
 
@@ -171,38 +184,36 @@ class AuditExportController extends BaseController
     }
 
     /**
-     * Isi baris unit (mulai baris 10). Mengembalikan nomor baris terakhir.
+     * Isi baris unit (mulai baris 10) sekaligus, bukan per sel.
+     * Mengembalikan nomor baris terakhir.
      */
     private function writeUnits(Worksheet $sheet, array $units, array $details): int
     {
-        $row = self::FIRST_ROW;
+        $fields = array_values(self::COLUMNS);
+        $rows   = [];
 
         foreach ($units as $u) {
-            $d = $details[$u['line'] . '-' . $u['line_no']] ?? null;
+            $d   = $details[$u['line'] . '-' . $u['line_no']] ?? [];
+            $row = [(int) $u['line'], (int) $u['line_no']];
 
-            $sheet->setCellValue("A{$row}", (int) $u['line']);
-            $sheet->setCellValue("B{$row}", (int) $u['line_no']);
-
-            foreach (self::COLUMNS as $col => $field) {
-                $value = $d[$field] ?? null;
-                if ($value !== null && $value !== '') {
-                    $sheet->setCellValue("{$col}{$row}", $value);
-                }
+            foreach ($fields as $field) {
+                $row[] = $d[$field] ?? null;
             }
 
-            $row++;
+            $rows[] = $row;
         }
 
-        $last = $row - 1;
+        // Nilai null dilewati, jadi sel kosong tetap kosong
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, null, 'A' . self::FIRST_ROW, false);
+        }
+
+        $last = self::FIRST_ROW + count($rows) - 1;
 
         if ($last >= self::FIRST_ROW) {
-            $sheet->getStyle('A' . self::FIRST_ROW . ':O' . $last)->applyFromArray([
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-                'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D0D0D0']]],
-            ]);
-            $sheet->getStyle('P' . self::FIRST_ROW . ':P' . $last)->applyFromArray([
-                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D0D0D0']]],
-            ]);
+            $sheet->getStyle('A' . self::FIRST_ROW . ':O' . $last)
+                ->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
 
         $sheet->freezePane('C' . self::FIRST_ROW);
@@ -231,7 +242,6 @@ class AuditExportController extends BaseController
         $rJ = $rng('J');
         $rL = $rng('L');
 
-        // Judul
         $s->setCellValue('F1', 'DATA REKAN ANDON ' . $year);
         $s->setCellValue('F2', self::COMPANY);
         $s->setCellValue('F3', self::AREA);
@@ -248,18 +258,17 @@ class AuditExportController extends BaseController
         $s->setCellValue('C9', 'KONDISI');
         $s->setCellValue('D9', 'JUMLAH');
 
-        // Rekap total
-        $s->setCellValue('A10', 'KETERSEDIAAN');  $s->mergeCells('A10:B11');
-        $s->setCellValue('C10', 'ADA');           $s->setCellValue('D10', "=SUM(D{$p}:D{$q})");
-        $s->setCellValue('C11', 'TIDAK ADA');     $s->setCellValue('D11', "=SUM(E{$p}:E{$q})");
+        $s->setCellValue('A10', 'KETERSEDIAAN');   $s->mergeCells('A10:B11');
+        $s->setCellValue('C10', 'ADA');            $s->setCellValue('D10', "=SUM(D{$p}:D{$q})");
+        $s->setCellValue('C11', 'TIDAK ADA');      $s->setCellValue('D11', "=SUM(E{$p}:E{$q})");
 
         $s->setCellValue('A12', 'KONDISI REMOTE'); $s->mergeCells('A12:B13');
         $s->setCellValue('C12', 'ON');             $s->setCellValue('D12', "=SUM(F{$p}:F{$q})");
         $s->setCellValue('C13', 'OFF');            $s->setCellValue('D13', "=SUM(G{$p}:G{$q})");
 
-        $s->setCellValue('A14', 'VISUAL NOMOR');  $s->mergeCells('A14:B15');
-        $s->setCellValue('C14', 'ADA');           $s->setCellValue('D14', "=SUM(H{$p}:H{$q})");
-        $s->setCellValue('C15', 'TIDAK ADA');     $s->setCellValue('D15', "=SUM(I{$p}:I{$q})");
+        $s->setCellValue('A14', 'VISUAL NOMOR');   $s->mergeCells('A14:B15');
+        $s->setCellValue('C14', 'ADA');            $s->setCellValue('D14', "=SUM(H{$p}:H{$q})");
+        $s->setCellValue('C15', 'TIDAK ADA');      $s->setCellValue('D15', "=SUM(I{$p}:I{$q})");
 
         $s->setCellValue('A16', 'LAMPU');
         $s->mergeCells('A16:A23');
@@ -283,14 +292,13 @@ class AuditExportController extends BaseController
         $s->setCellValue('A25', 'TOTAL LINE');    $s->mergeCells('A25:B25');
         $s->setCellValue('C25', '-');             $s->setCellValue('D25', "=COUNTA(A{$p}:A{$q})");
 
-        // Rekap per line
         $s->setCellValue('A28', 'PERLINE');
-        $s->setCellValue('A29', 'LINE');       $s->mergeCells('A29:B30');
-        $s->setCellValue('C29', 'TOTAL STATION'); $s->mergeCells('C29:C30');
-        $s->setCellValue('D29', 'TERSEDIA');   $s->mergeCells('D29:E29');
+        $s->setCellValue('A29', 'LINE');           $s->mergeCells('A29:B30');
+        $s->setCellValue('C29', 'TOTAL STATION');  $s->mergeCells('C29:C30');
+        $s->setCellValue('D29', 'TERSEDIA');       $s->mergeCells('D29:E29');
         $s->setCellValue('F29', 'KONDISI REMOTE'); $s->mergeCells('F29:G29');
-        $s->setCellValue('H29', 'VISUAL NOMOR'); $s->mergeCells('H29:I29');
-        $s->setCellValue('J29', 'LAMPU');      $s->mergeCells('J29:M29');
+        $s->setCellValue('H29', 'VISUAL NOMOR');   $s->mergeCells('H29:I29');
+        $s->setCellValue('J29', 'LAMPU');          $s->mergeCells('J29:M29');
 
         $sub = [
             'D30' => 'ADA', 'E30' => 'TIDAK ADA',
@@ -318,7 +326,6 @@ class AuditExportController extends BaseController
             $s->setCellValue("M{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rL},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rL},\"ON\")>0,\"ON\",\"-\"))");
         }
 
-        // Gaya
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '198754']],
