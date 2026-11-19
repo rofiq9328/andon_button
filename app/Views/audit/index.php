@@ -10,6 +10,10 @@
                 <h1 class="mb-0 fs-3">AUDIT ANDON <?= esc($periode) ?></h1>
             </div>
             <div class="col-sm-6 text-sm-end mt-2 mt-sm-0 d-flex gap-2 justify-content-sm-end flex-wrap">
+                <a href="<?= base_url('audit-andon/export') ?>?periode=<?= esc($periode) ?>"
+                   class="btn btn-success btn-sm fw-bold shadow-sm">
+                    <i class="fa-solid fa-file-excel me-1"></i> EXPORT EXCEL
+                </a>
                 <a href="<?= base_url('audit-andon/penugasan') ?>" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm">
                     <i class="fa-solid fa-users me-1"></i> PENUGASAN PIC
                 </a>
