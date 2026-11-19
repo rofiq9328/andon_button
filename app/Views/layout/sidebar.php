@@ -27,6 +27,7 @@ function isMenuActive($path, $current_path)
 $isDashboardActive     = isMenuActive('', $current_path);
 $isMasterButtonActive  = isMenuActive('andon/update-button', $current_path);
 $isUserManagementActive = isMenuActive('users', $current_path);
+$isAuditActive          = isMenuActive('audit-andon', $current_path);
 $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
@@ -70,13 +71,19 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                 </a>
               </li>
               <?php if (in_array(session()->get('role'), ['admin', 'pic_audit'], true)): ?>
-                    <li class="nav-item">
-                        <a href="<?= base_url('audit-andon') ?>" class="nav-link" title="Audit Andon">
-                            <i class="nav-icon bi bi-clipboard-check"></i>
-                            <p>Audit Andon</p>
-                        </a>
-                    </li>
-                    <?php endif; ?>
+                <li class="nav-item">
+                  <a
+                    href="<?= base_url('audit-andon') ?>"
+                    class="nav-link<?= $isAuditActive ? ' active' : '' ?>"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    title="Audit Andon"
+                  >
+                    <i class="nav-icon bi bi-clipboard-check"></i>
+                    <p>Audit Andon</p>
+                  </a>
+                </li>
+              <?php endif; ?>
                     <?php if (session()->get('role') === 'admin'): ?>
               <li class="nav-item<?= $isSettingsActive ? ' menu-open' : '' ?>">
                 <a
