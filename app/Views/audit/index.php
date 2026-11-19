@@ -15,7 +15,7 @@
                 </a>
                 <form method="get" action="<?= base_url('audit-andon') ?>" class="d-flex gap-2">
                     <input type="month" name="periode" value="<?= esc($periode) ?>" class="form-control form-control-sm">
-                    <button type="submit" class="btn btn-primary btn-sm fw-bold shadow-sm">TAMPILKAN</button>
+                    <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm">TAMPILKAN</button>
                 </form>
             </div>
         </div>
@@ -90,7 +90,7 @@
                                             <td class="text-end">
                                                 <div class="d-flex gap-2 justify-content-end">
                                                     <a href="<?= base_url('audit-andon/sesi/' . (int) $s['id']) ?>"
-                                                       class="btn btn-primary btn-sm fw-bold shadow-sm">LIHAT</a>
+                                                       class="btn btn-success btn-sm fw-bold shadow-sm">LIHAT</a>
 
                                                     <?php if (!$s['editable']): ?>
                                                         <form method="post" action="<?= base_url('audit-andon/buka/' . (int) $s['id']) ?>">
