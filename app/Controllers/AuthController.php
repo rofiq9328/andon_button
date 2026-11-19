@@ -34,6 +34,12 @@ class AuthController extends BaseController
             return redirect()->back()->withInput();
         }
 
+        // Semua role user (bisa lebih dari satu)
+        $roles = (new \App\Models\UserRoleModel())->rolesForUser((int) $user['id']);
+        if (!in_array($user['role'], $roles, true)) {
+            array_unshift($roles, $user['role']);
+        }
+
         // Simpan data penting saja ke session, JANGAN simpan password
         session()->regenerate(); // cegah session fixation
         session()->set([
@@ -41,6 +47,7 @@ class AuthController extends BaseController
             'username'   => $user['username'],
             'full_name'  => $user['full_name'],
             'role'       => $user['role'],
+            'roles'      => $roles,
             'isLoggedIn' => true,
         ]);
 
