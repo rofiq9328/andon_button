@@ -8,22 +8,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="bg-body-tertiary">
-<?php $pb = session()->get('pb_user'); ?>
-<?php if ($pb): ?>
 <nav class="navbar navbar-expand bg-success navbar-dark shadow-sm">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold" href="<?= base_url('pendataan') ?>">
             <i class="fa-solid fa-boxes-stacked me-2"></i>PENDATAAN BARANG
         </a>
         <div class="d-flex align-items-center gap-3 text-white">
-            <span class="small"><?= esc($pb['nama_user']) ?> · <?= esc($pb['kode_role']) ?></span>
-            <a href="<?= base_url('pendataan/logout') ?>" class="btn btn-sm btn-outline-light fw-bold">
+            <span class="small"><?= esc(session()->get('full_name')) ?> · <?= esc(session()->get('role')) ?></span>
+            <a href="<?= base_url('logout') ?>" class="btn btn-sm btn-outline-light fw-bold">
                 <i class="fa-solid fa-right-from-bracket me-1"></i> KELUAR
             </a>
         </div>
     </div>
 </nav>
-<?php endif; ?>
 <main class="container-fluid py-4">
     <?= $this->renderSection('content') ?>
 </main>
