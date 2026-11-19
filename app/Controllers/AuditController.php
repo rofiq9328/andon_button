@@ -56,7 +56,7 @@ class AuditController extends BaseController
 
     private function isAdmin(): bool
     {
-        return session()->get('role') === 'admin';
+        return \App\Libraries\Roles::has('admin');
     }
 
     private function userId(): int
