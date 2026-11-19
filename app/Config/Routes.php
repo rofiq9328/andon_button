@@ -86,11 +86,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('/', 'AuditExportController::excel');
     });
 
-    // Pendataan barang: login terpisah dari andon
-    $routes->group('pendataan', function ($routes) {
-        $routes->get('/', 'Pendataan\HomeController::index');
-        $routes->get('login', 'Pendataan\AuthController::login');
-        $routes->post('login', 'Pendataan\AuthController::prosesLogin');
-        $routes->get('logout', 'Pendataan\AuthController::logout');
+    // Pendataan barang: memakai login andon (satu login)
+    $routes->group('pendataan', ['filter' => 'auth'], function ($routes) {
+        $routes->get('/', 'Pendataan\HomeController::index', ['filter' => 'role:admin,petugas_area,verifikator,viewer']);
     });
 });
