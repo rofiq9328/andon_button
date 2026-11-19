@@ -75,9 +75,20 @@ class Database extends Config
         'busyTimeout' => 1000,
     ];
 
+    /**
+     * Database pendataan barang (terpisah dari andon).
+     *
+     * @var array<string, mixed>
+     */
+    public array $pendataan = [];
+
     public function __construct()
     {
         parent::__construct();
+
+        // Koneksi kedua: sama dengan default, hanya nama database yang berbeda
+        $this->pendataan = $this->default;
+        $this->pendataan['database'] = env('database.pendataan.database', 'db_pendataan_barang');
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
