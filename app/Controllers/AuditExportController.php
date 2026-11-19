@@ -185,22 +185,13 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Batas warna: line 68-77 tidak diberi warna
-        $coloredLast = $lastRow;
-        foreach ($units as $i => $u) {
-            if ((int) $u['line'] >= 68) {
-                $coloredLast = self::FIRST_ROW + $i - 1;
-                break;
-            }
-        }
-
-        // Aturan kondisional dari template dipertahankan, tapi hanya sampai line 67
-        $this->restrictConditionalFormats($sheet, $coloredLast);
+        // Aturan kondisional dari template dipertahankan untuk semua line
+        $this->restrictConditionalFormats($sheet, $lastRow);
 
         // Kolom LINE dan LINE NO tanpa warna latar
         $sheet->getStyle('A' . self::FIRST_ROW . ':B' . $lastRow)->getFill()->setFillType(Fill::FILL_NONE);
 
-        // Sel bermasalah diberi merah langsung dari nilainya. Hanya untuk line 1-67.
+        // Sel bermasalah diberi merah langsung dari nilainya, untuk semua line.
         $bad = [
             'C' => 'TIDAK ADA', 'D' => 'OFF', 'E' => 'TIDAK ADA',
             'F' => 'OFF', 'G' => 'TIDAK', 'H' => 'OFF', 'I' => 'TIDAK',
@@ -209,10 +200,6 @@ class AuditExportController extends BaseController
         ];
 
         foreach ($units as $i => $u) {
-            if ((int) $u['line'] >= 68) {
-                break;
-            }
-
             $r = self::FIRST_ROW + $i;
             $d = $details[$u['line'] . '-' . $u['line_no']] ?? [];
 
