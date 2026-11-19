@@ -71,7 +71,7 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                   <p>Dashboard</p>
                 </a>
               </li>
-              <?php if (in_array(session()->get('role'), ['admin', 'pic_audit'], true)): ?>
+              <?php if (\App\Libraries\Roles::hasAny(['admin', 'pic_audit'])): ?>
                 <li class="nav-item">
                   <a
                     href="<?= base_url('audit-andon') ?>"
@@ -85,7 +85,7 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                   </a>
                 </li>
               <?php endif; ?>
-                    <?php if (in_array(session()->get('role'), ['admin', 'petugas_area', 'verifikator', 'viewer'], true)): ?>
+                    <?php if (\App\Libraries\Roles::hasAny(['admin', 'petugas_area', 'verifikator', 'viewer'])): ?>
                 <li class="nav-item">
                     <a href="<?= base_url('pendataan') ?>" class="nav-link<?= $isPendataanActive ? ' active' : '' ?>"
                        data-bs-toggle="tooltip" data-bs-placement="right" title="Pendataan Barang">
@@ -94,7 +94,7 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                     </a>
                 </li>
                 <?php endif; ?>
-                <?php if (session()->get('role') === 'admin'): ?>
+                <?php if (\App\Libraries\Roles::has('admin')): ?>
               <li class="nav-item<?= $isSettingsActive ? ' menu-open' : '' ?>">
                 <a
                   href="#"
