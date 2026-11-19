@@ -152,6 +152,7 @@
                                     data-full-name="<?= esc($user['full_name']) ?>"
                                     data-email="<?= esc($user['email']) ?>"
                                     data-role="<?= esc($user['role']) ?>"
+                                    data-roles="<?= esc(implode(',', $userRoles[(int) $user['id']] ?? [$user['role']])) ?>"
                                     data-active="<?= esc($user['is_active']) ?>"
                                     aria-label="Edit <?= esc($user['username']) ?>"
                                   >
@@ -264,14 +265,14 @@
                       </div>
                       <div class="mb-3">
                         <label for="new-user-role" class="form-label">Role</label>
-                        <select name="role" id="new-user-role" class="form-select">
-                          <option value="user" selected>User</option>
-                          <option value="admin">Admin</option>
-                          <option value="pic_audit">PIC Audit</option>
-                          <option value="petugas_area">Petugas Area (Pendataan)</option>
-                          <option value="verifikator">Verifikator (Pendataan)</option>
-                          <option value="viewer">Viewer (Pendataan)</option>
-                        </select>
+                        <div class="d-flex flex-column gap-1 border rounded p-2" id="new-user-roles">
+                          <?php foreach ($allRoles as $code => $label): ?>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" name="roles[]" value="<?= esc($code) ?>" id="new-user-role-<?= esc($code) ?>"<?= $code === 'user' && 'new-user' === 'new-user' ? ' checked' : '' ?>>
+                              <label class="form-check-label" for="new-user-role-<?= esc($code) ?>"><?= esc($label) ?></label>
+                            </div>
+                          <?php endforeach; ?>
+                        </div>
                       </div>
                       <div class="form-check">
                         <input
@@ -340,14 +341,14 @@
                       </div>
                       <div class="mb-3">
                         <label for="edit-user-role" class="form-label">Role</label>
-                        <select name="role" id="edit-user-role" class="form-select">
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                          <option value="pic_audit">PIC Audit</option>
-                          <option value="petugas_area">Petugas Area (Pendataan)</option>
-                          <option value="verifikator">Verifikator (Pendataan)</option>
-                          <option value="viewer">Viewer (Pendataan)</option>
-                        </select>
+                        <div class="d-flex flex-column gap-1 border rounded p-2" id="edit-user-roles">
+                          <?php foreach ($allRoles as $code => $label): ?>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" name="roles[]" value="<?= esc($code) ?>" id="edit-user-role-<?= esc($code) ?>"<?= $code === 'user' && 'edit-user' === 'new-user' ? ' checked' : '' ?>>
+                              <label class="form-check-label" for="edit-user-role-<?= esc($code) ?>"><?= esc($label) ?></label>
+                            </div>
+                          <?php endforeach; ?>
+                        </div>
                       </div>
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="is_active" value="1" id="edit-user-active" />
@@ -430,7 +431,10 @@
             document.getElementById('edit-user-username').value = btn.dataset.username || '';
             document.getElementById('edit-user-email').value    = btn.dataset.email || '';
             document.getElementById('edit-user-password').value = '';
-            document.getElementById('edit-user-role').value     = btn.dataset.role || 'user';
+            var dipilih = (btn.dataset.roles || btn.dataset.role || 'user').split(',');
+            document.querySelectorAll('#edit-user-roles input[name="roles[]"]').forEach(function (cb) {
+                cb.checked = dipilih.indexOf(cb.value) !== -1;
+            });
             document.getElementById('edit-user-active').checked = btn.dataset.active === '1';
         });
 
