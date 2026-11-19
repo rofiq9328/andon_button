@@ -91,7 +91,7 @@ $tiles = [
                                     <td class="text-center text-warning-emphasis fw-semibold"><?= $l['partial'] + $l['empty'] ?></td>
                                     <td class="text-end">
                                         <a href="<?= base_url($base . '/line/' . $l['line']) ?>"
-                                           class="btn btn-outline-primary btn-sm fw-bold">BUKA</a>
+                                           class="btn btn-outline-success btn-sm fw-bold">BUKA</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
