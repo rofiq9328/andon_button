@@ -4,7 +4,7 @@
 
 <div class="mb-4">
     <h1 class="h3 fw-bold mb-1">Dashboard Pendataan Barang</h1>
-    <div class="text-secondary">Selamat datang, <?= esc(session()->get('pb_user')['nama_user']) ?>.</div>
+    <div class="text-secondary">Selamat datang, <?= esc(session()->get('full_name')) ?>.</div>
 </div>
 
 <div class="row g-3">
