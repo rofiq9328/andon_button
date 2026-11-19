@@ -9,10 +9,7 @@ use App\Models\PicAreaModel;
 
 class AuditController extends BaseController
 {
-    /**
-     * Field yang boleh diubah dari form. Field lain (id, audit_id, line, dst)
-     * tidak diambil dari request, supaya tidak bisa diubah lewat form.
-     */
+    /** Field yang boleh diubah (termasuk catatan). */
     private const EDIT_FIELDS = [
         'tersedia', 'kondisi_remote', 'visual_nomor',
         'material_lampu', 'material_layar',
@@ -21,6 +18,40 @@ class AuditController extends BaseController
         'spv_lampu', 'spv_layar',
         'perbaikan_rusak', 'ganti_baterai',
         'catatan',
+    ];
+
+    /** Nilai normal tiap kolom, dipakai untuk isi cepat. */
+    private const NORMAL = [
+        'tersedia'        => 'ADA',
+        'kondisi_remote'  => 'ON',
+        'visual_nomor'    => 'ADA',
+        'material_lampu'  => 'ON',
+        'material_layar'  => 'MUNCUL',
+        'mekanik_lampu'   => 'ON',
+        'mekanik_layar'   => 'MUNCUL',
+        'qc_lampu'        => 'ON',
+        'qc_layar'        => 'MUNCUL',
+        'spv_lampu'       => 'ON',
+        'spv_layar'       => 'MUNCUL',
+        'perbaikan_rusak' => 'NO',
+        'ganti_baterai'   => 'NO',
+    ];
+
+    /** Nilai yang berarti perlu perhatian, dipakai untuk status unit. */
+    private const BAD = [
+        'tersedia'        => 'TIDAK ADA',
+        'kondisi_remote'  => 'OFF',
+        'visual_nomor'    => 'TIDAK ADA',
+        'material_lampu'  => 'OFF',
+        'material_layar'  => 'TIDAK',
+        'mekanik_lampu'   => 'OFF',
+        'mekanik_layar'   => 'TIDAK',
+        'qc_lampu'        => 'OFF',
+        'qc_layar'        => 'TIDAK',
+        'spv_lampu'       => 'OFF',
+        'spv_layar'       => 'TIDAK',
+        'perbaikan_rusak' => 'YES',
+        'ganti_baterai'   => 'YES',
     ];
 
     private function isAdmin(): bool
@@ -38,10 +69,6 @@ class AuditController extends BaseController
         return $this->isAdmin() || (int) $session['user_id'] === $this->userId();
     }
 
-    /**
-     * Base URL halaman sesi ini (tanpa slash di depan).
-     * PIC: audit-andon/isi. Admin: audit-andon/sesi/{id}.
-     */
     private function baseFor(array $session): string
     {
         return $this->isAdmin()
@@ -59,9 +86,34 @@ class AuditController extends BaseController
     }
 
     /**
+     * Status satu unit: bad, ok, partial, atau empty.
+     */
+    private function unitState(array $u): string
+    {
+        $filled = 0;
+        $bad    = false;
+
+        foreach (self::BAD as $field => $badValue) {
+            if ($u[$field] !== null) {
+                $filled++;
+                if ($u[$field] === $badValue) {
+                    $bad = true;
+                }
+            }
+        }
+
+        if ($bad) {
+            return 'bad';
+        }
+        if ($filled === count(self::BAD)) {
+            return 'ok';
+        }
+
+        return $filled > 0 ? 'partial' : 'empty';
+    }
+
+    /**
      * Sesi yang boleh dilihat user ini.
-     * Dengan $sessionId: sesi tertentu, kalau user boleh mengaksesnya.
-     * Tanpa $sessionId: PIC mendapat sesi periode berjalan (dibuat kalau belum ada).
      */
     private function resolveSession(?int $sessionId): ?array
     {
@@ -80,8 +132,6 @@ class AuditController extends BaseController
         $periode = AuditAndonModel::currentPeriode();
         $session = $auditModel->getOrCreateSession($periode, $this->userId())['session'];
 
-        // Sinkronkan unit dari penugasan terbaru. INSERT IGNORE,
-        // jadi unit yang sudah ada tidak dobel dan isiannya tetap.
         (new AuditAndonDetailModel())->createForSession(
             (int) $session['id'],
             $periode,
@@ -92,7 +142,7 @@ class AuditController extends BaseController
     }
 
     /**
-     * Admin: daftar sesi per periode (default periode berjalan).
+     * Admin: daftar sesi per periode.
      */
     public function index()
     {
@@ -113,10 +163,15 @@ class AuditController extends BaseController
             ->getResultArray();
 
         foreach ($sessions as &$s) {
-            $s['total'] = $detailModel->where('audit_id', $s['id'])->countAllResults();
-            $s['terisi'] = $detailModel->where('audit_id', $s['id'])
-                ->where('kondisi_remote IS NOT NULL', null, false)
-                ->countAllResults();
+            $units = $detailModel->where('audit_id', $s['id'])->findAll();
+            $ok = 0;
+            foreach ($units as $u) {
+                if ($this->unitState($u) === 'ok') {
+                    $ok++;
+                }
+            }
+            $s['total']    = count($units);
+            $s['terisi']   = $ok;
             $s['editable'] = $auditModel->isEditable($s);
         }
         unset($s);
@@ -128,8 +183,7 @@ class AuditController extends BaseController
     }
 
     /**
-     * Halaman utama sesi: kartu per line dengan progres.
-     * PIC: sesi miliknya. Admin: sesi tertentu lewat /audit-andon/sesi/{id}.
+     * Halaman utama: kartu per line dengan status.
      */
     public function form(?int $sessionId = null)
     {
@@ -142,11 +196,11 @@ class AuditController extends BaseController
 
         $lines = [];
         foreach ($grouped as $line => $units) {
-            $lines[] = [
-                'line'   => (int) $line,
-                'total'  => count($units),
-                'terisi' => count(array_filter($units, static fn ($u) => $u['kondisi_remote'] !== null)),
-            ];
+            $row = ['line' => (int) $line, 'total' => count($units), 'ok' => 0, 'bad' => 0, 'partial' => 0, 'empty' => 0];
+            foreach ($units as $u) {
+                $row[$this->unitState($u)]++;
+            }
+            $lines[] = $row;
         }
 
         return view('audit/form', [
@@ -159,23 +213,15 @@ class AuditController extends BaseController
         ]);
     }
 
-    /**
-     * Form satu line untuk PIC (periode berjalan).
-     */
     public function linePic(int $line)
     {
         if ($this->isAdmin()) {
             return redirect()->to('audit-andon');
         }
 
-        $session = $this->resolveSession(null);
-
-        return $this->renderLine($session, $line);
+        return $this->renderLine($this->resolveSession(null), $line);
     }
 
-    /**
-     * Form satu line untuk admin (atau PIC pemilik sesi).
-     */
     public function lineAdmin(int $sessionId, int $line)
     {
         $session = $this->resolveSession($sessionId);
@@ -195,7 +241,6 @@ class AuditController extends BaseController
             return redirect()->to($base)->with('error', "Line {$line} tidak ada di sesi ini.");
         }
 
-        // Navigasi ke line sebelum dan sesudahnya
         $lineNumbers = array_keys($grouped);
         $idx  = array_search($line, $lineNumbers, true);
         $prev = $idx > 0 ? $lineNumbers[$idx - 1] : null;
@@ -215,8 +260,158 @@ class AuditController extends BaseController
     }
 
     /**
-     * Simpan isian satu line. action = 'draft' menyimpan line,
-     * action = 'serahkan' (tanpa line) menandai sesi diserahkan.
+     * Autosave satu field (dipanggil dari JavaScript). Balas JSON.
+     */
+    public function autosave()
+    {
+        $sessionId = (int) $this->request->getPost('session_id');
+        $unitId    = (int) $this->request->getPost('unit_id');
+        $field     = (string) $this->request->getPost('field');
+        $value     = trim((string) $this->request->getPost('value'));
+
+        $auditModel = new AuditAndonModel();
+        $session    = $auditModel->find($sessionId);
+
+        if (!$session || !$this->canAccess($session)) {
+            return $this->jsonError('Sesi tidak ditemukan.', 404);
+        }
+        if (!$auditModel->isEditable($session)) {
+            return $this->jsonError('Sesi sudah terkunci.', 403);
+        }
+        if (!in_array($field, self::EDIT_FIELDS, true)) {
+            return $this->jsonError('Kolom tidak valid.', 422);
+        }
+
+        $detailModel = new AuditAndonDetailModel();
+        $detail      = $detailModel->where(['id' => $unitId, 'audit_id' => $sessionId])->first();
+        if (!$detail) {
+            return $this->jsonError('Unit tidak ditemukan.', 404);
+        }
+
+        $ok = $detailModel->update($unitId, [
+            $field       => $value === '' ? null : $value,
+            'updated_by' => $this->userId(),
+        ]);
+
+        if (!$ok) {
+            $errors = $detailModel->errors();
+
+            return $this->jsonError($errors ? implode(' ', $errors) : 'Nilai tidak valid.', 422);
+        }
+
+        return $this->response->setJSON([
+            'ok'   => true,
+            'time' => date('H:i:s'),
+            'csrf' => csrf_hash(),
+        ]);
+    }
+
+    private function jsonError(string $message, int $status)
+    {
+        return $this->response
+            ->setStatusCode($status)
+            ->setJSON(['ok' => false, 'message' => $message, 'csrf' => csrf_hash()]);
+    }
+
+    /**
+     * Isi cepat: hanya mengisi kotak yang masih kosong, dengan nilai normal.
+     * field = nama kolom, atau 'all' untuk semua kolom.
+     */
+    public function quickFill()
+    {
+        $sessionId = (int) $this->request->getPost('session_id');
+        $line      = (int) $this->request->getPost('line');
+        $field     = (string) $this->request->getPost('field');
+
+        $auditModel = new AuditAndonModel();
+        $session    = $auditModel->find($sessionId);
+
+        if (!$session || !$this->canAccess($session)) {
+            return redirect()->to('audit-andon/isi')->with('error', 'Sesi tidak ditemukan.');
+        }
+
+        $target = $this->baseFor($session) . '/line/' . $line;
+
+        if (!$auditModel->isEditable($session)) {
+            return redirect()->to($target)->with('error', 'Sesi sudah terkunci.');
+        }
+
+        $fields = $field === 'all' ? array_keys(self::NORMAL) : (isset(self::NORMAL[$field]) ? [$field] : []);
+        if (empty($fields)) {
+            return redirect()->to($target)->with('error', 'Kolom tidak valid.');
+        }
+
+        $db    = db_connect();
+        $total = 0;
+
+        foreach ($fields as $f) {
+            $db->table('audit_andon_detail')
+                ->where('audit_id', $sessionId)
+                ->where('line', $line)
+                ->where("{$f} IS NULL", null, false)
+                ->update([
+                    $f           => self::NORMAL[$f],
+                    'updated_by' => $this->userId(),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            $total += $db->affectedRows();
+        }
+
+        return redirect()->to($target)
+            ->with('success', "{$total} kotak kosong diisi dengan nilai normal.");
+    }
+
+    /**
+     * Ringkasan sebelum diserahkan.
+     */
+    public function review(?int $sessionId = null)
+    {
+        $session = $this->resolveSession($sessionId);
+        if ($session === null) {
+            return redirect()->to('audit-andon')->with('error', 'Sesi tidak ditemukan.');
+        }
+
+        $grouped = (new AuditAndonDetailModel())->getForSessionGrouped((int) $session['id']);
+
+        $totals   = ['total' => 0, 'ok' => 0, 'bad' => 0, 'partial' => 0, 'empty' => 0];
+        $perLine  = [];
+        $problems = [];
+
+        foreach ($grouped as $line => $units) {
+            $row = ['line' => (int) $line, 'total' => count($units), 'ok' => 0, 'bad' => 0, 'partial' => 0, 'empty' => 0];
+
+            foreach ($units as $u) {
+                $state = $this->unitState($u);
+                $row[$state]++;
+                $totals[$state]++;
+                $totals['total']++;
+
+                if ($state === 'bad') {
+                    $problems[] = [
+                        'line'    => (int) $line,
+                        'line_no' => (int) $u['line_no'],
+                        'id'      => (int) $u['id'],
+                    ];
+                }
+            }
+
+            $perLine[] = $row;
+        }
+
+        return view('audit/review', [
+            'session'  => $session,
+            'owner'    => $this->ownerOf($session),
+            'editable' => (new AuditAndonModel())->isEditable($session),
+            'base'     => $this->baseFor($session),
+            'isAdmin'  => $this->isAdmin(),
+            'totals'   => $totals,
+            'perLine'  => $perLine,
+            'problems' => $problems,
+        ]);
+    }
+
+    /**
+     * Simpan isian (dipakai untuk tombol Serahkan).
      */
     public function save()
     {
@@ -241,7 +436,6 @@ class AuditController extends BaseController
                 ->with('error', 'Sesi sudah terkunci. Minta admin membuka kembali.');
         }
 
-        // Hanya baris detail milik sesi ini yang boleh diubah
         $validIds = array_map(
             'intval',
             $detailModel->where('audit_id', $sessionId)->findColumn('id') ?? []
@@ -282,12 +476,9 @@ class AuditController extends BaseController
                 ->with('success', 'Data diserahkan. Anda masih bisa mengubah sampai akhir bulan.');
         }
 
-        return redirect()->to($target)->with('success', "Line {$line} tersimpan.");
+        return redirect()->to($target)->with('success', 'Data tersimpan.');
     }
 
-    /**
-     * Admin membuka kembali sesi yang sudah terkunci.
-     */
     public function reopen(int $sessionId)
     {
         if (!$this->isAdmin()) {
@@ -301,9 +492,6 @@ class AuditController extends BaseController
             ->with('success', 'Sesi dibuka kembali.');
     }
 
-    /**
-     * Semua unit dari seluruh rentang line milik PIC.
-     */
     private function unitsForUser(int $userId): array
     {
         $unitModel = new AuditAndonUnitModel();
