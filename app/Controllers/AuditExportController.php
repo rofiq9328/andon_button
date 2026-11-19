@@ -185,8 +185,17 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Hapus aturan pewarnaan bawaan template, supaya warna hanya dari data
-        $this->clearConditionalFormats($sheet);
+        // Batas warna: line 68-77 tidak diberi warna
+        $coloredLast = $lastRow;
+        foreach ($units as $i => $u) {
+            if ((int) $u['line'] >= 68) {
+                $coloredLast = self::FIRST_ROW + $i - 1;
+                break;
+            }
+        }
+
+        // Aturan kondisional dari template dipertahankan, tapi hanya sampai line 67
+        $this->restrictConditionalFormats($sheet, $coloredLast);
 
         // Kolom LINE dan LINE NO tanpa warna latar
         $sheet->getStyle('A' . self::FIRST_ROW . ':B' . $lastRow)->getFill()->setFillType(Fill::FILL_NONE);
@@ -327,6 +336,37 @@ class AuditExportController extends BaseController
             $prop->setValue($sheet, []);
         } catch (\ReflectionException $e) {
             log_message('warning', 'Aturan pewarnaan template tidak dapat dihapus: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Aturan kondisional dari template dipertahankan, tetapi rentangnya
+     * dibatasi sampai baris $lastRow (line 68-77 tidak diberi warna).
+     */
+    private function restrictConditionalFormats(Worksheet $sheet, int $lastRow): void
+    {
+        $collection = $sheet->getConditionalStylesCollection();
+        if (empty($collection)) {
+            return;
+        }
+
+        $this->clearConditionalFormats($sheet);
+
+        foreach ($collection as $range => $rules) {
+            foreach (explode(' ', trim((string) $range)) as $part) {
+                if (!preg_match('/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/', $part, $m)) {
+                    continue;
+                }
+
+                $startRow = (int) $m[2];
+                $endRow   = min((int) $m[4], $lastRow);
+
+                if ($startRow > $endRow) {
+                    continue;
+                }
+
+                $sheet->setConditionalStyles($m[1] . $startRow . ':' . $m[3] . $endRow, $rules);
+            }
         }
     }
 }
