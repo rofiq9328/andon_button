@@ -282,7 +282,7 @@ $lineTotal  = count($units);
                                 </button>
                             </form>
 
-                            <a href="<?= base_url($base . '/review') ?>" class="btn btn-primary btn-sm fw-bold text-nowrap">
+                            <a href="<?= base_url($base . '/review') ?>" class="btn btn-success btn-sm fw-bold text-nowrap">
                                 <i class="fa-solid fa-clipboard-check me-1"></i> TINJAU
                             </a>
                         <?php endif; ?>
