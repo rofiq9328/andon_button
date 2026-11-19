@@ -173,8 +173,9 @@ class AuditExportController extends BaseController
             $sheet->fromArray($rows, null, 'A' . self::FIRST_ROW, false);
         }
 
-        // Hapus warna merah tetap dari template (sisa data lama)
         $lastRow = self::FIRST_ROW + max(count($units), 1) - 1;
+
+        // Hapus warna merah tetap dari template (sisa data lama)
         for ($r = self::FIRST_ROW; $r <= $lastRow; $r++) {
             foreach (range('A', 'O') as $col) {
                 $fill = $sheet->getCell($col . $r)->getStyle()->getFill();
@@ -184,41 +185,34 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Hapus aturan pewarnaan bawaan template
+        // Hapus aturan pewarnaan bawaan template, supaya warna hanya dari data
         $this->clearConditionalFormats($sheet);
 
-        // Pewarnaan hanya untuk line 1-67. Line 68-77 tidak diberi warna.
-        $coloredLast = $lastRow;
+        // Kolom LINE dan LINE NO tanpa warna latar
+        $sheet->getStyle('A' . self::FIRST_ROW . ':B' . $lastRow)->getFill()->setFillType(Fill::FILL_NONE);
+
+        // Sel bermasalah diberi merah langsung dari nilainya. Hanya untuk line 1-67.
+        $bad = [
+            'C' => 'TIDAK ADA', 'D' => 'OFF', 'E' => 'TIDAK ADA',
+            'F' => 'OFF', 'G' => 'TIDAK', 'H' => 'OFF', 'I' => 'TIDAK',
+            'J' => 'OFF', 'K' => 'TIDAK', 'L' => 'OFF', 'M' => 'TIDAK',
+            'N' => 'YES', 'O' => 'YES',
+        ];
+
         foreach ($units as $i => $u) {
             if ((int) $u['line'] >= 68) {
-                $coloredLast = self::FIRST_ROW + $i - 1;
                 break;
             }
-        }
 
-        if ($coloredLast >= self::FIRST_ROW) {
-            $bad = [
-                'C' => ['TIDAK ADA'], 'D' => ['OFF'], 'E' => ['TIDAK ADA'],
-                'F' => ['OFF'], 'G' => ['TIDAK'], 'H' => ['OFF'], 'I' => ['TIDAK'],
-                'J' => ['OFF'], 'K' => ['TIDAK'], 'L' => ['OFF'], 'M' => ['TIDAK'],
-                'N' => ['YES'], 'O' => ['YES'],
-            ];
+            $r = self::FIRST_ROW + $i;
+            $d = $details[$u['line'] . '-' . $u['line_no']] ?? [];
 
-            foreach ($bad as $col => $values) {
-                $conditionals = [];
-                foreach ($values as $value) {
-                    $cond = new Conditional();
-                    $cond->setConditionType(Conditional::CONDITION_CELLIS);
-                    $cond->setOperatorType(Conditional::OPERATOR_EQUAL);
-                    $cond->addCondition('"' . $value . '"');
-                    $cond->getStyle()->getFont()->getColor()->setARGB('FF9C0006');
-                    $cond->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
-                    $cond->getStyle()->getFill()->getEndColor()->setARGB('FFFFC7CE');
-                    $conditionals[] = $cond;
+            foreach ($bad as $col => $value) {
+                if (($d[self::COLUMNS[$col]] ?? null) === $value) {
+                    $cell = $sheet->getStyle($col . $r);
+                    $cell->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFC7CE');
+                    $cell->getFont()->getColor()->setARGB('FF9C0006');
                 }
-
-                $sheet->getStyle($col . self::FIRST_ROW . ':' . $col . $coloredLast)
-                    ->setConditionalStyles($conditionals);
             }
         }
 
