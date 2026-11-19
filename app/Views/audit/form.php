@@ -43,7 +43,7 @@ $tiles   = [
                 <?php endif; ?>
 
                 <?php if ($editable): ?>
-                    <a href="<?= base_url($base . '/review') ?>" class="btn btn-primary btn-sm fw-bold">
+                    <a href="<?= base_url($base . '/review') ?>" class="btn btn-success btn-sm fw-bold">
                         <i class="fa-solid fa-clipboard-check me-1"></i> TINJAU &amp; SERAHKAN
                     </a>
                 <?php elseif ($isAdmin): ?>
