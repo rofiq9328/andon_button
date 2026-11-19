@@ -13,23 +13,23 @@
     .audit-table td {
         border-bottom: 1px solid var(--bs-border-color);
         border-right: 1px solid var(--bs-border-color-translucent);
-        padding: 0.5rem 0.6rem;
+        padding: 0.3rem 0.4rem;
     }
 
     .audit-table thead tr:nth-child(1) th {
         position: sticky;
         top: 0;
         z-index: 3;
-        height: 42px;
+        height: 34px;
         background-color: var(--bs-tertiary-bg);
         border-top: 0;
     }
 
     .audit-table thead tr:nth-child(2) th {
         position: sticky;
-        top: 42px;
+        top: 34px;
         z-index: 3;
-        height: 38px;
+        height: 30px;
         background-color: var(--bs-body-bg);
         box-shadow: inset 0 -2px 0 var(--bs-border-color);
     }
@@ -85,7 +85,7 @@
         left: 0;
         z-index: 2;
         border-right: 2px solid var(--bs-border-color);
-        min-width: 112px;
+        min-width: 92px;
     }
 
     .audit-table thead th.sticky-col {
@@ -103,28 +103,28 @@
 
     /* ===== Tombol pilihan ===== */
     .audit-table .btn-group .btn {
-        min-width: 66px;
-        font-size: 0.74rem;
+        min-width: 54px;
+        font-size: 0.68rem;
         font-weight: 600;
-        padding: 0.3rem 0.5rem;
+        padding: 0.15rem 0.35rem;
         white-space: nowrap;
     }
 
     .audit-table .btn-group .btn i {
-        font-size: 0.65rem;
-        margin-right: 0.25rem;
+        font-size: 0.55rem;
+        margin-right: 0.15rem;
     }
 
     /* ===== Indikator 13 kolom per unit ===== */
     .seg-bar {
         display: flex;
-        gap: 2px;
-        margin-top: 0.4rem;
+        gap: 1px;
+        margin-top: 0.25rem;
     }
 
     .seg-bar span {
-        width: 5px;
-        height: 10px;
+        width: 4px;
+        height: 8px;
         border-radius: 2px;
         background-color: var(--bs-secondary-bg);
         transition: background-color 0.2s;
@@ -134,18 +134,31 @@
     .seg-bar span.seg-bad { background-color: var(--bs-danger); }
 
     .unit-no {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
     }
 
     .unit-count {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: var(--bs-secondary-color);
         font-variant-numeric: tabular-nums;
-        margin-top: 0.1rem;
+        margin-top: 0;
     }
 
     .note-input {
-        min-width: 200px;
+        min-width: 150px;
+    }
+
+    /* Area tabel dan toolbar lebih ringkas */
+    .audit-wrap {
+        max-height: 64vh;
+    }
+
+    .audit-toolbar {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .audit-toolbar .status-pill {
+        padding: 0.2rem 0.6rem;
     }
 </style>
 <?= $this->endSection() ?>
