@@ -80,4 +80,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('simpan', 'PicAssignmentController::store');
         $routes->post('hapus/(:num)', 'PicAssignmentController::delete/$1');
     });
+
+    // Export Excel audit: hanya admin
+    $routes->group('audit-andon/export', ['filter' => 'role:admin'], function ($routes) {
+        $routes->get('/', 'AuditExportController::excel');
+    });
 });
