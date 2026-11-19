@@ -2,6 +2,152 @@
 
 <?= $this->section('styles') ?>
 <?= $this->include('audit/_styles') ?>
+<style>
+    /* ===== Tabel input: batas jelas dan header tetap terlihat ===== */
+    .audit-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .audit-table th,
+    .audit-table td {
+        border-bottom: 1px solid var(--bs-border-color);
+        border-right: 1px solid var(--bs-border-color-translucent);
+        padding: 0.5rem 0.6rem;
+    }
+
+    .audit-table thead tr:nth-child(1) th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        height: 42px;
+        background-color: var(--bs-tertiary-bg);
+        border-top: 0;
+    }
+
+    .audit-table thead tr:nth-child(2) th {
+        position: sticky;
+        top: 42px;
+        z-index: 3;
+        height: 38px;
+        background-color: var(--bs-body-bg);
+        box-shadow: inset 0 -2px 0 var(--bs-border-color);
+    }
+
+    .audit-table thead th.grp-head {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--bs-body-color);
+    }
+
+    .audit-table thead th.grp-head i {
+        color: var(--bs-secondary-color);
+        margin-right: 0.35rem;
+    }
+
+    .audit-table thead th.grp-head.grp-alt {
+        background-color: var(--bs-secondary-bg);
+    }
+
+    .audit-table thead th.col-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--bs-secondary-color);
+    }
+
+    .audit-table th.grp-start,
+    .audit-table td.grp-start {
+        border-left: 2px solid var(--bs-secondary-color) !important;
+    }
+
+    .audit-table td.grp-alt {
+        background-color: var(--bs-tertiary-bg);
+    }
+
+    .audit-table td.cell-ok {
+        background-color: rgba(25, 135, 84, 0.13);
+    }
+
+    .audit-table td.cell-bad {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+
+    .audit-table td.cell-empty {
+        background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(128, 128, 128, 0.18) 6px 12px);
+    }
+
+    .audit-table .sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        border-right: 2px solid var(--bs-border-color);
+        min-width: 112px;
+    }
+
+    .audit-table thead th.sticky-col {
+        z-index: 5;
+    }
+
+    .audit-table tbody tr:hover .sticky-col {
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+
+    .audit-table tr[data-state="ok"] .sticky-col      { box-shadow: inset 4px 0 0 var(--bs-success); }
+    .audit-table tr[data-state="bad"] .sticky-col     { box-shadow: inset 4px 0 0 var(--bs-danger); }
+    .audit-table tr[data-state="partial"] .sticky-col { box-shadow: inset 4px 0 0 var(--bs-warning); }
+    .audit-table tr[data-state="empty"] .sticky-col   { box-shadow: inset 4px 0 0 var(--bs-secondary); }
+
+    /* ===== Tombol pilihan ===== */
+    .audit-table .btn-group .btn {
+        min-width: 66px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        padding: 0.3rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    .audit-table .btn-group .btn i {
+        font-size: 0.65rem;
+        margin-right: 0.25rem;
+    }
+
+    /* ===== Indikator 13 kolom per unit ===== */
+    .seg-bar {
+        display: flex;
+        gap: 2px;
+        margin-top: 0.4rem;
+    }
+
+    .seg-bar span {
+        width: 5px;
+        height: 10px;
+        border-radius: 2px;
+        background-color: var(--bs-secondary-bg);
+        transition: background-color 0.2s;
+    }
+
+    .seg-bar span.seg-ok  { background-color: var(--bs-success); }
+    .seg-bar span.seg-bad { background-color: var(--bs-danger); }
+
+    .unit-no {
+        font-size: 0.95rem;
+    }
+
+    .unit-count {
+        font-size: 0.7rem;
+        color: var(--bs-secondary-color);
+        font-variant-numeric: tabular-nums;
+        margin-top: 0.1rem;
+    }
+
+    .note-input {
+        min-width: 200px;
+    }
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -34,6 +180,15 @@ $groups = [
         'perbaikan_rusak' => ['label' => 'Rusak',   'opts' => [['NO', true], ['YES', false]]],
         'ganti_baterai'   => ['label' => 'Baterai', 'opts' => [['NO', true], ['YES', false]]],
     ],
+];
+
+$groupIcons = [
+    'Remote'    => 'fa-satellite-dish',
+    'Material'  => 'fa-boxes-stacked',
+    'Mekanik'   => 'fa-gears',
+    'QC/QA'     => 'fa-magnifying-glass-chart',
+    'SPV'       => 'fa-user-tie',
+    'Perbaikan' => 'fa-screwdriver-wrench',
 ];
 
 $flat = [];
@@ -82,7 +237,7 @@ $lineTotal  = count($units);
             <div class="alert alert-danger shadow-sm"><?= esc(session()->getFlashdata('error')) ?></div>
         <?php endif; ?>
 
-        <!-- Toolbar: progres, status simpan, isi cepat, tinjau -->
+        <!-- Toolbar -->
         <div class="audit-toolbar mb-3">
             <div class="row g-3 align-items-center">
                 <div class="col-lg-4">
@@ -146,18 +301,20 @@ $lineTotal  = count($units);
                 <div class="table-responsive audit-wrap">
                     <table class="table table-sm align-middle mb-0 audit-table">
                         <thead>
-                            <tr class="text-center">
-                                <th rowspan="2" class="sticky-col">Unit</th>
+                            <tr>
+                                <th rowspan="2" class="sticky-col col-label text-start">Unit</th>
                                 <?php $gIdx = 0; foreach ($groups as $gName => $fields): ?>
                                     <th colspan="<?= count($fields) ?>"
-                                        class="<?= $gIdx % 2 ? 'grp-alt' : '' ?> <?= $gIdx > 0 ? 'grp-start' : '' ?>"><?= esc($gName) ?></th>
+                                        class="text-center grp-head<?= $gIdx % 2 ? ' grp-alt' : '' ?><?= $gIdx > 0 ? ' grp-start' : '' ?>">
+                                        <i class="fa-solid <?= $groupIcons[$gName] ?? 'fa-circle' ?>"></i><?= esc($gName) ?>
+                                    </th>
                                     <?php $gIdx++; ?>
                                 <?php endforeach; ?>
-                                <th rowspan="2" class="grp-start">Catatan</th>
+                                <th rowspan="2" class="col-label text-start grp-start">Catatan</th>
                             </tr>
-                            <tr class="text-center">
+                            <tr>
                                 <?php foreach ($flat as $def): ?>
-                                    <th class="fw-normal<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"><?= esc($def['label']) ?></th>
+                                    <th class="text-center col-label<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"><?= esc($def['label']) ?></th>
                                 <?php endforeach; ?>
                             </tr>
                         </thead>
@@ -165,13 +322,16 @@ $lineTotal  = count($units);
                             <?php foreach ($units as $u): ?>
                                 <tr id="unit-<?= (int) $u['id'] ?>" data-unit="<?= (int) $u['id'] ?>" data-state="empty">
                                     <td class="sticky-col bg-body">
-                                        <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center justify-content-between gap-2">
+                                            <span class="unit-no fw-bold">#<?= (int) $u['line_no'] ?></span>
                                             <span class="led-dot text-secondary" id="led-<?= (int) $u['id'] ?>"></span>
-                                            <div>
-                                                <div class="unit-no">#<?= (int) $u['line_no'] ?></div>
-                                                <div class="unit-count" id="cnt-<?= (int) $u['id'] ?>">0 / <?= $fieldCount ?></div>
-                                            </div>
                                         </div>
+                                        <div class="seg-bar" id="seg-<?= (int) $u['id'] ?>">
+                                            <?php foreach ($flat as $key => $def): ?>
+                                                <span data-seg="<?= $key ?>"></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="unit-count" id="cnt-<?= (int) $u['id'] ?>">0 / <?= $fieldCount ?></div>
                                     </td>
 
                                     <?php foreach ($flat as $key => $def): ?>
@@ -191,18 +351,23 @@ $lineTotal  = count($units);
                                                            <?= ($u[$key] === $value) ? 'checked' : '' ?>
                                                            <?= $editable ? '' : 'disabled' ?>>
                                                     <label class="btn btn-outline-<?= $good ? 'success' : 'danger' ?>"
-                                                           for="<?= $rid ?>"><?= esc($value) ?></label>
+                                                           for="<?= $rid ?>">
+                                                        <i class="fa-solid <?= $good ? 'fa-check' : 'fa-xmark' ?>"></i><?= esc($value) ?>
+                                                    </label>
                                                 <?php endforeach; ?>
                                             </div>
                                         </td>
                                     <?php endforeach; ?>
 
                                     <td class="grp-start">
-                                        <input type="text" class="form-control form-control-sm note-input"
-                                               data-unit="<?= (int) $u['id'] ?>" data-field="catatan"
-                                               value="<?= esc($u['catatan'] ?? '') ?>"
-                                               placeholder="Catatan"
-                                               <?= $editable ? '' : 'disabled' ?>>
+                                        <div class="input-group input-group-sm note-input">
+                                            <span class="input-group-text text-secondary"><i class="fa-solid fa-comment-dots"></i></span>
+                                            <input type="text" class="form-control"
+                                                   data-unit="<?= (int) $u['id'] ?>" data-field="catatan"
+                                                   value="<?= esc($u['catatan'] ?? '') ?>"
+                                                   placeholder="Tulis catatan"
+                                                   <?= $editable ? '' : 'disabled' ?>>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -213,7 +378,7 @@ $lineTotal  = count($units);
             <?php if ($editable): ?>
                 <div class="card-footer small text-secondary d-flex justify-content-between flex-wrap gap-2">
                     <span><i class="fa-solid fa-cloud-arrow-up me-1"></i> Perubahan tersimpan otomatis.</span>
-                    <span>Kotak bergaris = belum dipilih.</span>
+                    <span>Tiap garis kecil di bawah nomor unit mewakili satu kolom: hijau normal, merah perlu perhatian, abu-abu belum diisi.</span>
                 </div>
             <?php endif; ?>
         </div>
@@ -228,12 +393,12 @@ $lineTotal  = count($units);
 <script>
 (function () {
     const CFG = {
-        url:       <?= json_encode(base_url('audit-andon/autosave')) ?>,
-        sessionId: <?= (int) $session['id'] ?>,
+        url:        <?= json_encode(base_url('audit-andon/autosave')) ?>,
+        sessionId:  <?= (int) $session['id'] ?>,
         fieldCount: <?= (int) $fieldCount ?>,
-        editable:  <?= $editable ? 'true' : 'false' ?>,
-        csrfName:  <?= json_encode(csrf_token()) ?>,
-        csrfHash:  <?= json_encode(csrf_hash()) ?>,
+        editable:   <?= $editable ? 'true' : 'false' ?>,
+        csrfName:   <?= json_encode(csrf_token()) ?>,
+        csrfHash:   <?= json_encode(csrf_hash()) ?>,
     };
 
     const rows = Array.from(document.querySelectorAll('tr[data-unit]'));
@@ -241,7 +406,7 @@ $lineTotal  = count($units);
     const progText = document.getElementById('prog-text');
     const progBar  = document.getElementById('prog-bar');
 
-    const LED = { bad: 'text-danger', ok: 'text-success', partial: 'text-warning', empty: 'text-secondary' };
+    const LED  = { bad: 'text-danger', ok: 'text-success', partial: 'text-warning', empty: 'text-secondary' };
     const PILL = { idle: 'is-idle', saving: 'is-saving', saved: 'is-saved', error: 'is-error' };
     const ICON = {
         idle:   'fa-solid fa-circle-check',
@@ -262,22 +427,30 @@ $lineTotal  = count($units);
         const id = tr.dataset.unit;
         const dot = document.getElementById('led-' + id);
         const cnt = document.getElementById('cnt-' + id);
+        const seg = document.getElementById('seg-' + id);
         let filled = 0;
         let bad = false;
 
         tr.querySelectorAll('td[data-field]').forEach(td => {
+            const key = td.dataset.field;
+            const bar = seg.querySelector('[data-seg="' + key + '"]');
             td.classList.remove('cell-ok', 'cell-bad', 'cell-empty');
+            bar.classList.remove('seg-ok', 'seg-bad');
+
             const checked = td.querySelector('input.audit-radio:checked');
             if (!checked) {
                 td.classList.add('cell-empty');
                 return;
             }
+
             filled++;
             if (checked.dataset.bad === '1') {
                 td.classList.add('cell-bad');
+                bar.classList.add('seg-bad');
                 bad = true;
             } else {
                 td.classList.add('cell-ok');
+                bar.classList.add('seg-ok');
             }
         });
 
@@ -293,7 +466,7 @@ $lineTotal  = count($units);
         }
 
         tr.dataset.state = state;
-        cnt.textContent = filled + ' / ' + CFG.fieldCount;
+        cnt.textContent = filled + ' / ' + CFG.fieldCount + ' terisi';
 
         Object.values(LED).forEach(c => dot.classList.remove(c));
         dot.classList.remove('is-active');
@@ -356,7 +529,7 @@ $lineTotal  = count($units);
             });
         });
 
-        tr.querySelectorAll('input.note-input').forEach(inp => {
+        tr.querySelectorAll('input[data-field="catatan"]').forEach(inp => {
             inp.addEventListener('change', () => {
                 if (CFG.editable) {
                     autosave({ unit_id: inp.dataset.unit, field: 'catatan', value: inp.value });
