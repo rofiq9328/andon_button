@@ -29,7 +29,7 @@ class UserController extends BaseController
                 ->groupEnd();
         }
 
-        if ($role !== 'all' && in_array($role, ['admin', 'supervisor', 'user', 'pic_audit'], true)) {
+        if ($role !== 'all' && in_array($role, ['admin', 'supervisor', 'user', 'pic_audit', 'petugas_area', 'verifikator', 'viewer'], true)) {
             $builder->where('role', $role);
         }
 
@@ -53,7 +53,7 @@ class UserController extends BaseController
             'full_name' => 'required|max_length[100]',
             'email'     => 'permit_empty|valid_email|is_unique[users.email]',
             'password'  => 'required|min_length[6]',
-            'role'      => 'required|in_list[admin,supervisor,user,pic_audit]',
+            'role'      => 'required|in_list[admin,supervisor,user,pic_audit,petugas_area,verifikator,viewer]',
         ];
 
         if (!$this->validate($rules)) {
@@ -93,7 +93,7 @@ class UserController extends BaseController
             'username'  => "required|min_length[3]|max_length[50]|is_unique[users.username,id,{$id}]",
             'full_name' => 'required|max_length[100]',
             'email'     => "permit_empty|valid_email|is_unique[users.email,id,{$id}]",
-            'role'      => 'required|in_list[admin,supervisor,user,pic_audit]',
+            'role'      => 'required|in_list[admin,supervisor,user,pic_audit,petugas_area,verifikator,viewer]',
         ];
 
         // Password opsional saat edit: kalau diisi baru divalidasi & diganti
