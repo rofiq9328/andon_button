@@ -28,6 +28,7 @@ $isDashboardActive     = isMenuActive('', $current_path);
 $isMasterButtonActive  = isMenuActive('andon/update-button', $current_path);
 $isUserManagementActive = isMenuActive('users', $current_path);
 $isAuditActive          = isMenuActive('audit-andon', $current_path);
+$isPendataanActive = isMenuActive('pendataan', $current_path);
 $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
@@ -84,7 +85,16 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                   </a>
                 </li>
               <?php endif; ?>
-                    <?php if (session()->get('role') === 'admin'): ?>
+                    <?php if (in_array(session()->get('role'), ['admin', 'petugas_area', 'verifikator', 'viewer'], true)): ?>
+                <li class="nav-item">
+                    <a href="<?= base_url('pendataan') ?>" class="nav-link<?= $isPendataanActive ? ' active' : '' ?>"
+                       data-bs-toggle="tooltip" data-bs-placement="right" title="Pendataan Barang">
+                        <i class="nav-icon bi bi-boxes"></i>
+                        <p>Pendataan Barang</p>
+                    </a>
+                </li>
+                <?php endif; ?>
+                <?php if (session()->get('role') === 'admin'): ?>
               <li class="nav-item<?= $isSettingsActive ? ' menu-open' : '' ?>">
                 <a
                   href="#"
