@@ -185,7 +185,10 @@ class AuditExportController extends BaseController
         }
 
         // Aturan merah otomatis: hanya nilai bermasalah yang diberi warna
-        $sheet->setConditionalStylesCollection([]);
+        // Kosongkan aturan merah lama dari template
+        foreach (array_keys($sheet->getConditionalStylesCollection()) as $oldRange) {
+            $sheet->setConditionalStyles($oldRange, []);
+        }
 
         $bad = [
             'C' => ['TIDAK ADA'], 'D' => ['OFF'], 'E' => ['TIDAK ADA'],
