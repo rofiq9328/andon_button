@@ -7,6 +7,8 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Conditional;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
  * Export data audit andon memakai file Excel asli di root project sebagai template.
@@ -169,6 +171,41 @@ class AuditExportController extends BaseController
 
         if (!empty($rows)) {
             $sheet->fromArray($rows, null, 'A' . self::FIRST_ROW, false);
+        }
+
+        // Hapus warna merah tetap dari template (sisa data lama)
+        $lastRow = self::FIRST_ROW + max(count($units), 1) - 1;
+        for ($r = self::FIRST_ROW; $r <= $lastRow; $r++) {
+            foreach (range('A', 'O') as $col) {
+                $fill = $sheet->getCell($col . $r)->getStyle()->getFill();
+                if ($fill->getFillType() !== Fill::FILL_NONE && $fill->getStartColor()->getARGB() === 'FFFFC7CE') {
+                    $fill->setFillType(Fill::FILL_NONE);
+                }
+            }
+        }
+
+        // Aturan merah otomatis: hanya nilai bermasalah yang diberi warna
+        $sheet->setConditionalStylesCollection([]);
+
+        $bad = [
+            'C' => ['TIDAK ADA'], 'D' => ['OFF'], 'E' => ['TIDAK ADA'],
+            'F' => ['OFF'], 'G' => ['TIDAK'], 'H' => ['OFF'], 'I' => ['TIDAK'],
+            'J' => ['OFF'], 'K' => ['TIDAK'], 'L' => ['OFF'], 'M' => ['TIDAK'],
+            'N' => ['YES'], 'O' => ['YES'],
+        ];
+        foreach ($bad as $col => $values) {
+            $conditionals = [];
+            foreach ($values as $value) {
+                $cond = new Conditional();
+                $cond->setConditionType(Conditional::CONDITION_CELLIS);
+                $cond->setOperatorType(Conditional::OPERATOR_EQUAL);
+                $cond->addCondition('"' . $value . '"');
+                $cond->getStyle()->getFont()->getColor()->setARGB('FF9C0006');
+                $cond->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
+                $cond->getStyle()->getFill()->getEndColor()->setARGB('FFFFC7CE');
+                $conditionals[] = $cond;
+            }
+            $sheet->getStyle($col . self::FIRST_ROW . ':' . $col . $lastRow)->setConditionalStyles($conditionals);
         }
 
         // Dropdown ditulis ulang per sel, supaya susunan yang benar berlaku di semua baris
