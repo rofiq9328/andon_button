@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Models\UserRoleModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -9,19 +10,17 @@ class PendataanSetRole extends BaseCommand
 {
     protected $group       = 'Pendataan';
     protected $name        = 'pendataan:set-role';
-    protected $description = 'Mengatur role user (termasuk role pendataan barang).';
+    protected $description = 'Menambahkan satu role ke user yang sudah ada.';
     protected $usage       = 'pendataan:set-role <username> <role>';
-
-    private const ROLES = ['admin', 'supervisor', 'user', 'pic_audit', 'petugas_area', 'verifikator', 'viewer'];
 
     public function run(array $params)
     {
         $username = $params[0] ?? null;
         $role     = $params[1] ?? null;
 
-        if ($username === null || $role === null || !in_array($role, self::ROLES, true)) {
+        if ($username === null || $role === null || !in_array($role, UserRoleModel::ALL_ROLES, true)) {
             CLI::error('Pemakaian: ' . $this->usage);
-            CLI::write('Role: ' . implode(', ', self::ROLES));
+            CLI::write('Role: ' . implode(', ', UserRoleModel::ALL_ROLES));
             return;
         }
 
@@ -31,8 +30,12 @@ class PendataanSetRole extends BaseCommand
             return;
         }
 
-        db_connect()->table('users')->where('id', $user['id'])->update(['role' => $role]);
+        $model = new UserRoleModel();
+        $sudahAda = $model->where(['user_id' => $user['id'], 'role' => $role])->first();
+        if ($sudahAda === null) {
+            $model->insert(['user_id' => $user['id'], 'role' => $role]);
+        }
 
-        CLI::write("Role '{$username}' diubah menjadi {$role}.", 'green');
+        CLI::write("Role '{$role}' ditambahkan ke '{$username}'.", 'green');
     }
 }
