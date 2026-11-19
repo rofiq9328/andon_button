@@ -12,6 +12,9 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 /**
  * Export data audit andon ke Excel, dengan susunan yang sama seperti
  * file Excel asli: sheet bulan (NOVEMBER) dan sheet SUMMARY.
+ *
+ * SUMMARY berisi nilai hasil hitungan PHP, bukan rumus, supaya file
+ * tidak perlu menghitung ulang rumus saat dibuat.
  */
 class AuditExportController extends BaseController
 {
@@ -50,7 +53,6 @@ class AuditExportController extends BaseController
                 ->with('error', 'PhpSpreadsheet belum terpasang di server. Jalankan composer install.');
         }
 
-        // Export bisa memakan waktu dan memori lebih dari default XAMPP
         @set_time_limit(300);
         @ini_set('memory_limit', '512M');
 
@@ -82,12 +84,11 @@ class AuditExportController extends BaseController
             $sheet->setTitle($monthName);
 
             $this->writeHeader($sheet, $year);
-            $last = $this->writeUnits($sheet, $units, $details);
+            $this->writeUnits($sheet, $units, $details);
 
             $summary = $spreadsheet->createSheet();
             $summary->setTitle('SUMMARY');
-            $lines = array_values(array_unique(array_map(static fn ($u) => (int) $u['line'], $units)));
-            $this->writeSummary($summary, $year, $monthName, $lines, $last);
+            $this->writeSummary($summary, $year, $units, $details);
 
             $spreadsheet->setActiveSheetIndex(0);
 
@@ -184,10 +185,9 @@ class AuditExportController extends BaseController
     }
 
     /**
-     * Isi baris unit (mulai baris 10) sekaligus, bukan per sel.
-     * Mengembalikan nomor baris terakhir.
+     * Isi baris unit (mulai baris 10) sekaligus.
      */
-    private function writeUnits(Worksheet $sheet, array $units, array $details): int
+    private function writeUnits(Worksheet $sheet, array $units, array $details): void
     {
         $fields = array_values(self::COLUMNS);
         $rows   = [];
@@ -203,45 +203,80 @@ class AuditExportController extends BaseController
             $rows[] = $row;
         }
 
-        // Nilai null dilewati, jadi sel kosong tetap kosong
         if (!empty($rows)) {
             $sheet->fromArray($rows, null, 'A' . self::FIRST_ROW, false);
-        }
 
-        $last = self::FIRST_ROW + count($rows) - 1;
-
-        if ($last >= self::FIRST_ROW) {
+            $last = self::FIRST_ROW + count($rows) - 1;
             $sheet->getStyle('A' . self::FIRST_ROW . ':O' . $last)
                 ->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
 
         $sheet->freezePane('C' . self::FIRST_ROW);
-
-        return $last;
     }
 
     /**
-     * Sheet SUMMARY: rekap total dan per line, memakai rumus COUNTIFS
-     * ke sheet bulan, seperti di file asli.
+     * Sheet SUMMARY: rekap total dan per line, dihitung di PHP.
      */
-    private function writeSummary(Worksheet $s, string $year, string $monthName, array $lines, int $last): void
+    private function writeSummary(Worksheet $s, string $year, array $units, array $details): void
     {
-        $ref   = "'" . $monthName . "'!";
-        $first = self::FIRST_ROW;
-        $p     = self::SUM_FIRST;
-        $q     = $p + max(count($lines), 1) - 1;
+        // Kumpulkan hitungan per line
+        $stat = [];
+        foreach ($units as $u) {
+            $line = (int) $u['line'];
+            $d    = $details[$u['line'] . '-' . $u['line_no']] ?? [];
 
-        $rng = static fn (string $col): string => "{$ref}\${$col}\${$first}:\${$col}\${$last}";
-        $rA = $rng('A');
-        $rC = $rng('C');
-        $rD = $rng('D');
-        $rE = $rng('E');
-        $rF = $rng('F');
-        $rH = $rng('H');
-        $rJ = $rng('J');
-        $rL = $rng('L');
+            $st = $stat[$line] ?? [
+                'ada' => 0, 'tidak' => 0, 'on' => 0, 'off' => 0,
+                'vada' => 0, 'vtidak' => 0,
+                'material' => [], 'mekanik' => [], 'qc' => [], 'spv' => [],
+            ];
 
+            if (($d['tersedia'] ?? null) === 'ADA')        { $st['ada']++; }
+            if (($d['tersedia'] ?? null) === 'TIDAK ADA')  { $st['tidak']++; }
+            if (($d['kondisi_remote'] ?? null) === 'ON')   { $st['on']++; }
+            if (($d['kondisi_remote'] ?? null) === 'OFF')  { $st['off']++; }
+            if (($d['visual_nomor'] ?? null) === 'ADA')    { $st['vada']++; }
+            if (($d['visual_nomor'] ?? null) === 'TIDAK ADA') { $st['vtidak']++; }
+
+            $st['material'][] = $d['material_lampu'] ?? null;
+            $st['mekanik'][]  = $d['mekanik_lampu'] ?? null;
+            $st['qc'][]       = $d['qc_lampu'] ?? null;
+            $st['spv'][]      = $d['spv_lampu'] ?? null;
+
+            $stat[$line] = $st;
+        }
+
+        $lampuStatus = static function (array $values): string {
+            if (in_array('OFF', $values, true)) {
+                return 'OFF';
+            }
+            if (in_array('ON', $values, true)) {
+                return 'ON';
+            }
+            return '-';
+        };
+
+        // Total keseluruhan
+        $tot = ['ada' => 0, 'tidak' => 0, 'on' => 0, 'off' => 0, 'vada' => 0, 'vtidak' => 0, 'station' => 0];
+        $stLampu = ['material' => ['OFF' => 0, 'ON' => 0], 'mekanik' => ['OFF' => 0, 'ON' => 0],
+                    'qc' => ['OFF' => 0, 'ON' => 0], 'spv' => ['OFF' => 0, 'ON' => 0]];
+
+        foreach ($stat as $st) {
+            foreach (['ada', 'tidak', 'on', 'off', 'vada', 'vtidak'] as $k) {
+                $tot[$k] += $st[$k];
+            }
+            $tot['station'] += $st['ada'] + $st['tidak'];
+
+            foreach (['material', 'mekanik', 'qc', 'spv'] as $k) {
+                $status = $lampuStatus($st[$k]);
+                if ($status !== '-') {
+                    $stLampu[$k][$status]++;
+                }
+            }
+        }
+
+        // Judul
         $s->setCellValue('F1', 'DATA REKAN ANDON ' . $year);
         $s->setCellValue('F2', self::COMPANY);
         $s->setCellValue('F3', self::AREA);
@@ -259,39 +294,40 @@ class AuditExportController extends BaseController
         $s->setCellValue('D9', 'JUMLAH');
 
         $s->setCellValue('A10', 'KETERSEDIAAN');   $s->mergeCells('A10:B11');
-        $s->setCellValue('C10', 'ADA');            $s->setCellValue('D10', "=SUM(D{$p}:D{$q})");
-        $s->setCellValue('C11', 'TIDAK ADA');      $s->setCellValue('D11', "=SUM(E{$p}:E{$q})");
+        $s->setCellValue('C10', 'ADA');            $s->setCellValue('D10', $tot['ada']);
+        $s->setCellValue('C11', 'TIDAK ADA');      $s->setCellValue('D11', $tot['tidak']);
 
         $s->setCellValue('A12', 'KONDISI REMOTE'); $s->mergeCells('A12:B13');
-        $s->setCellValue('C12', 'ON');             $s->setCellValue('D12', "=SUM(F{$p}:F{$q})");
-        $s->setCellValue('C13', 'OFF');            $s->setCellValue('D13', "=SUM(G{$p}:G{$q})");
+        $s->setCellValue('C12', 'ON');             $s->setCellValue('D12', $tot['on']);
+        $s->setCellValue('C13', 'OFF');            $s->setCellValue('D13', $tot['off']);
 
         $s->setCellValue('A14', 'VISUAL NOMOR');   $s->mergeCells('A14:B15');
-        $s->setCellValue('C14', 'ADA');            $s->setCellValue('D14', "=SUM(H{$p}:H{$q})");
-        $s->setCellValue('C15', 'TIDAK ADA');      $s->setCellValue('D15', "=SUM(I{$p}:I{$q})");
+        $s->setCellValue('C14', 'ADA');            $s->setCellValue('D14', $tot['vada']);
+        $s->setCellValue('C15', 'TIDAK ADA');      $s->setCellValue('D15', $tot['vtidak']);
 
         $s->setCellValue('A16', 'LAMPU');
         $s->mergeCells('A16:A23');
         $lampu = [
-            [16, 'Material', 'J'],
-            [18, 'Mekanik',  'K'],
-            [20, 'QC/QA',    'L'],
-            [22, 'SPV',      'M'],
+            [16, 'Material', 'material'],
+            [18, 'Mekanik',  'mekanik'],
+            [20, 'QC/QA',    'qc'],
+            [22, 'SPV',      'spv'],
         ];
-        foreach ($lampu as [$row, $label, $col]) {
+        foreach ($lampu as [$row, $label, $key]) {
             $s->setCellValue("B{$row}", $label);
             $s->mergeCells("B{$row}:B" . ($row + 1));
             $s->setCellValue("C{$row}", 'OFF');
-            $s->setCellValue("D{$row}", "=COUNTIF({$col}{$p}:{$col}{$q},\"OFF\")");
+            $s->setCellValue("D{$row}", $stLampu[$key]['OFF']);
             $s->setCellValue('C' . ($row + 1), 'ON');
-            $s->setCellValue('D' . ($row + 1), "=COUNTIF({$col}{$p}:{$col}{$q},\"ON\")");
+            $s->setCellValue('D' . ($row + 1), $stLampu[$key]['ON']);
         }
 
         $s->setCellValue('A24', 'TOTAL STATION'); $s->mergeCells('A24:B24');
-        $s->setCellValue('C24', '-');             $s->setCellValue('D24', "=SUM(C{$p}:C{$q})");
+        $s->setCellValue('C24', '-');             $s->setCellValue('D24', $tot['station']);
         $s->setCellValue('A25', 'TOTAL LINE');    $s->mergeCells('A25:B25');
-        $s->setCellValue('C25', '-');             $s->setCellValue('D25', "=COUNTA(A{$p}:A{$q})");
+        $s->setCellValue('C25', '-');             $s->setCellValue('D25', count($stat));
 
+        // Rekap per line
         $s->setCellValue('A28', 'PERLINE');
         $s->setCellValue('A29', 'LINE');           $s->mergeCells('A29:B30');
         $s->setCellValue('C29', 'TOTAL STATION');  $s->mergeCells('C29:C30');
@@ -310,20 +346,25 @@ class AuditExportController extends BaseController
             $s->setCellValue($cell, $text);
         }
 
-        foreach ($lines as $i => $line) {
-            $r = $p + $i;
+        $i = 0;
+        $last = self::SUM_FIRST - 1;
+        foreach ($stat as $line => $st) {
+            $r = self::SUM_FIRST + $i;
+            $last = $r;
+            $i++;
+
             $s->setCellValue("A{$r}", $line);
-            $s->setCellValue("C{$r}", "=D{$r}+E{$r}");
-            $s->setCellValue("D{$r}", "=COUNTIFS({$rA},\$A{$r},{$rC},\"ADA\")");
-            $s->setCellValue("E{$r}", "=COUNTIFS({$rA},\$A{$r},{$rC},\"TIDAK ADA\")");
-            $s->setCellValue("F{$r}", "=COUNTIFS({$rA},\$A{$r},{$rD},\"ON\")");
-            $s->setCellValue("G{$r}", "=COUNTIFS({$rA},\$A{$r},{$rD},\"OFF\")");
-            $s->setCellValue("H{$r}", "=COUNTIFS({$rA},\$A{$r},{$rE},\"ADA\")");
-            $s->setCellValue("I{$r}", "=COUNTIFS({$rA},\$A{$r},{$rE},\"TIDAK ADA\")");
-            $s->setCellValue("J{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rF},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rF},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("K{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rH},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rH},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("L{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("M{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rL},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rL},\"ON\")>0,\"ON\",\"-\"))");
+            $s->setCellValue("C{$r}", $st['ada'] + $st['tidak']);
+            $s->setCellValue("D{$r}", $st['ada']);
+            $s->setCellValue("E{$r}", $st['tidak']);
+            $s->setCellValue("F{$r}", $st['on']);
+            $s->setCellValue("G{$r}", $st['off']);
+            $s->setCellValue("H{$r}", $st['vada']);
+            $s->setCellValue("I{$r}", $st['vtidak']);
+            $s->setCellValue("J{$r}", $lampuStatus($st['material']));
+            $s->setCellValue("K{$r}", $lampuStatus($st['mekanik']));
+            $s->setCellValue("L{$r}", $lampuStatus($st['qc']));
+            $s->setCellValue("M{$r}", $lampuStatus($st['spv']));
         }
 
         $headerStyle = [
@@ -335,8 +376,9 @@ class AuditExportController extends BaseController
         $s->getStyle('A28:M30')->applyFromArray($headerStyle);
 
         $grid = ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D0D0D0']]];
-        $s->getStyle('A9:D25')->applyFromArray(['borders' => $grid, 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
-        $s->getStyle("A29:M{$q}")->applyFromArray(['borders' => $grid, 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+        $center = ['horizontal' => Alignment::HORIZONTAL_CENTER];
+        $s->getStyle('A9:D25')->applyFromArray(['borders' => $grid, 'alignment' => $center]);
+        $s->getStyle('A29:M' . max($last, self::SUM_FIRST))->applyFromArray(['borders' => $grid, 'alignment' => $center]);
 
         $s->getColumnDimension('A')->setWidth(12);
         $s->getColumnDimension('B')->setWidth(10);
