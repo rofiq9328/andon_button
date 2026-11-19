@@ -268,6 +268,9 @@
                           <option value="user" selected>User</option>
                           <option value="admin">Admin</option>
                           <option value="pic_audit">PIC Audit</option>
+                          <option value="petugas_area">Petugas Area (Pendataan)</option>
+                          <option value="verifikator">Verifikator (Pendataan)</option>
+                          <option value="viewer">Viewer (Pendataan)</option>
                         </select>
                       </div>
                       <div class="form-check">
@@ -341,6 +344,9 @@
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
                           <option value="pic_audit">PIC Audit</option>
+                          <option value="petugas_area">Petugas Area (Pendataan)</option>
+                          <option value="verifikator">Verifikator (Pendataan)</option>
+                          <option value="viewer">Viewer (Pendataan)</option>
                         </select>
                       </div>
                       <div class="form-check">
