@@ -184,31 +184,42 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Aturan merah otomatis: hanya nilai bermasalah yang diberi warna
-        // Kosongkan aturan merah lama dari template
-        foreach (array_keys($sheet->getConditionalStylesCollection()) as $oldRange) {
-            $sheet->setConditionalStyles($oldRange, []);
+        // Hapus aturan pewarnaan bawaan template
+        $this->clearConditionalFormats($sheet);
+
+        // Pewarnaan hanya untuk line 1-67. Line 68-77 tidak diberi warna.
+        $coloredLast = $lastRow;
+        foreach ($units as $i => $u) {
+            if ((int) $u['line'] >= 68) {
+                $coloredLast = self::FIRST_ROW + $i - 1;
+                break;
+            }
         }
 
-        $bad = [
-            'C' => ['TIDAK ADA'], 'D' => ['OFF'], 'E' => ['TIDAK ADA'],
-            'F' => ['OFF'], 'G' => ['TIDAK'], 'H' => ['OFF'], 'I' => ['TIDAK'],
-            'J' => ['OFF'], 'K' => ['TIDAK'], 'L' => ['OFF'], 'M' => ['TIDAK'],
-            'N' => ['YES'], 'O' => ['YES'],
-        ];
-        foreach ($bad as $col => $values) {
-            $conditionals = [];
-            foreach ($values as $value) {
-                $cond = new Conditional();
-                $cond->setConditionType(Conditional::CONDITION_CELLIS);
-                $cond->setOperatorType(Conditional::OPERATOR_EQUAL);
-                $cond->addCondition('"' . $value . '"');
-                $cond->getStyle()->getFont()->getColor()->setARGB('FF9C0006');
-                $cond->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
-                $cond->getStyle()->getFill()->getEndColor()->setARGB('FFFFC7CE');
-                $conditionals[] = $cond;
+        if ($coloredLast >= self::FIRST_ROW) {
+            $bad = [
+                'C' => ['TIDAK ADA'], 'D' => ['OFF'], 'E' => ['TIDAK ADA'],
+                'F' => ['OFF'], 'G' => ['TIDAK'], 'H' => ['OFF'], 'I' => ['TIDAK'],
+                'J' => ['OFF'], 'K' => ['TIDAK'], 'L' => ['OFF'], 'M' => ['TIDAK'],
+                'N' => ['YES'], 'O' => ['YES'],
+            ];
+
+            foreach ($bad as $col => $values) {
+                $conditionals = [];
+                foreach ($values as $value) {
+                    $cond = new Conditional();
+                    $cond->setConditionType(Conditional::CONDITION_CELLIS);
+                    $cond->setOperatorType(Conditional::OPERATOR_EQUAL);
+                    $cond->addCondition('"' . $value . '"');
+                    $cond->getStyle()->getFont()->getColor()->setARGB('FF9C0006');
+                    $cond->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
+                    $cond->getStyle()->getFill()->getEndColor()->setARGB('FFFFC7CE');
+                    $conditionals[] = $cond;
+                }
+
+                $sheet->getStyle($col . self::FIRST_ROW . ':' . $col . $coloredLast)
+                    ->setConditionalStyles($conditionals);
             }
-            $sheet->getStyle($col . self::FIRST_ROW . ':' . $col . $lastRow)->setConditionalStyles($conditionals);
         }
 
         // Dropdown ditulis ulang per sel, supaya susunan yang benar berlaku di semua baris
@@ -307,6 +318,21 @@ class AuditExportController extends BaseController
             $s->setCellValue("K{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rH},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rH},\"ON\")>0,\"ON\",\"-\"))");
             $s->setCellValue("L{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"ON\")>0,\"ON\",\"-\"))");
             $s->setCellValue("M{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rL},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rL},\"ON\")>0,\"ON\",\"-\"))");
+        }
+    }
+
+    /**
+     * Hapus aturan pewarnaan bawaan template. Kalau struktur library berbeda,
+     * aturan dibiarkan agar file tidak rusak.
+     */
+    private function clearConditionalFormats(Worksheet $sheet): void
+    {
+        try {
+            $prop = new \ReflectionProperty(Worksheet::class, 'conditionalStylesCollection');
+            $prop->setAccessible(true);
+            $prop->setValue($sheet, []);
+        } catch (\ReflectionException $e) {
+            log_message('warning', 'Aturan pewarnaan template tidak dapat dihapus: ' . $e->getMessage());
         }
     }
 }
