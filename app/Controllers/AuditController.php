@@ -39,13 +39,65 @@ class AuditController extends BaseController
     }
 
     /**
+     * Base URL halaman sesi ini (tanpa slash di depan).
+     * PIC: audit-andon/isi. Admin: audit-andon/sesi/{id}.
+     */
+    private function baseFor(array $session): string
+    {
+        return $this->isAdmin()
+            ? 'audit-andon/sesi/' . (int) $session['id']
+            : 'audit-andon/isi';
+    }
+
+    private function ownerOf(array $session): ?array
+    {
+        return db_connect()->table('users')
+            ->select('full_name, username')
+            ->where('id', $session['user_id'])
+            ->get()
+            ->getRowArray();
+    }
+
+    /**
+     * Sesi yang boleh dilihat user ini.
+     * Dengan $sessionId: sesi tertentu, kalau user boleh mengaksesnya.
+     * Tanpa $sessionId: PIC mendapat sesi periode berjalan (dibuat kalau belum ada).
+     */
+    private function resolveSession(?int $sessionId): ?array
+    {
+        $auditModel = new AuditAndonModel();
+
+        if ($sessionId !== null) {
+            $session = $auditModel->find($sessionId);
+
+            return ($session && $this->canAccess($session)) ? $session : null;
+        }
+
+        if ($this->isAdmin()) {
+            return null;
+        }
+
+        $periode = AuditAndonModel::currentPeriode();
+        $session = $auditModel->getOrCreateSession($periode, $this->userId())['session'];
+
+        // Sinkronkan unit dari penugasan terbaru. INSERT IGNORE,
+        // jadi unit yang sudah ada tidak dobel dan isiannya tetap.
+        (new AuditAndonDetailModel())->createForSession(
+            (int) $session['id'],
+            $periode,
+            $this->unitsForUser($this->userId())
+        );
+
+        return $session;
+    }
+
+    /**
      * Admin: daftar sesi per periode (default periode berjalan).
-     * PIC: langsung ke form miliknya.
      */
     public function index()
     {
         if (!$this->isAdmin()) {
-            return redirect()->to('/audit-andon/isi');
+            return redirect()->to('audit-andon/isi');
         }
 
         $auditModel  = new AuditAndonModel();
@@ -76,55 +128,95 @@ class AuditController extends BaseController
     }
 
     /**
-     * PIC: sesi miliknya untuk periode berjalan (dibuat otomatis kalau belum ada).
-     * Admin: sesi tertentu lewat /audit-andon/sesi/{id}.
+     * Halaman utama sesi: kartu per line dengan progres.
+     * PIC: sesi miliknya. Admin: sesi tertentu lewat /audit-andon/sesi/{id}.
      */
     public function form(?int $sessionId = null)
     {
-        $auditModel  = new AuditAndonModel();
-        $detailModel = new AuditAndonDetailModel();
-
-        if ($this->isAdmin()) {
-            if ($sessionId === null) {
-                return redirect()->to('/audit-andon');
-            }
-
-            $session = $auditModel->find($sessionId);
-            if (!$session) {
-                return redirect()->to('/audit-andon')->with('error', 'Sesi tidak ditemukan.');
-            }
-        } else {
-            $periode = AuditAndonModel::currentPeriode();
-            $result  = $auditModel->getOrCreateSession($periode, $this->userId());
-            $session = $result['session'];
-
-            // Sinkronkan unit dari penugasan terbaru. INSERT IGNORE,
-            // jadi unit yang sudah ada tidak dobel dan isiannya tetap.
-            $detailModel->createForSession(
-                (int) $session['id'],
-                $periode,
-                $this->unitsForUser($this->userId())
-            );
+        $session = $this->resolveSession($sessionId);
+        if ($session === null) {
+            return redirect()->to('audit-andon')->with('error', 'Sesi tidak ditemukan.');
         }
 
-        $owner = db_connect()->table('users')
-            ->select('full_name, username')
-            ->where('id', $session['user_id'])
-            ->get()
-            ->getRowArray();
+        $grouped = (new AuditAndonDetailModel())->getForSessionGrouped((int) $session['id']);
+
+        $lines = [];
+        foreach ($grouped as $line => $units) {
+            $lines[] = [
+                'line'   => (int) $line,
+                'total'  => count($units),
+                'terisi' => count(array_filter($units, static fn ($u) => $u['kondisi_remote'] !== null)),
+            ];
+        }
 
         return view('audit/form', [
             'session'  => $session,
-            'owner'    => $owner,
-            'editable' => $auditModel->isEditable($session),
-            'grouped'  => $detailModel->getForSessionGrouped((int) $session['id']),
+            'owner'    => $this->ownerOf($session),
+            'editable' => (new AuditAndonModel())->isEditable($session),
+            'lines'    => $lines,
+            'base'     => $this->baseFor($session),
             'isAdmin'  => $this->isAdmin(),
         ]);
     }
 
     /**
-     * Simpan isian. action = 'draft' menyimpan saja,
-     * action = 'serahkan' menyimpan lalu menandai sesi diserahkan.
+     * Form satu line untuk PIC (periode berjalan).
+     */
+    public function linePic(int $line)
+    {
+        if ($this->isAdmin()) {
+            return redirect()->to('audit-andon');
+        }
+
+        $session = $this->resolveSession(null);
+
+        return $this->renderLine($session, $line);
+    }
+
+    /**
+     * Form satu line untuk admin (atau PIC pemilik sesi).
+     */
+    public function lineAdmin(int $sessionId, int $line)
+    {
+        $session = $this->resolveSession($sessionId);
+        if ($session === null) {
+            return redirect()->to('audit-andon')->with('error', 'Sesi tidak ditemukan.');
+        }
+
+        return $this->renderLine($session, $line);
+    }
+
+    private function renderLine(array $session, int $line)
+    {
+        $base    = $this->baseFor($session);
+        $grouped = (new AuditAndonDetailModel())->getForSessionGrouped((int) $session['id']);
+
+        if (!isset($grouped[$line])) {
+            return redirect()->to($base)->with('error', "Line {$line} tidak ada di sesi ini.");
+        }
+
+        // Navigasi ke line sebelum dan sesudahnya
+        $lineNumbers = array_keys($grouped);
+        $idx  = array_search($line, $lineNumbers, true);
+        $prev = $idx > 0 ? $lineNumbers[$idx - 1] : null;
+        $next = ($idx !== false && $idx < count($lineNumbers) - 1) ? $lineNumbers[$idx + 1] : null;
+
+        return view('audit/line', [
+            'session'  => $session,
+            'owner'    => $this->ownerOf($session),
+            'editable' => (new AuditAndonModel())->isEditable($session),
+            'line'     => $line,
+            'units'    => $grouped[$line],
+            'prev'     => $prev,
+            'next'     => $next,
+            'base'     => $base,
+            'isAdmin'  => $this->isAdmin(),
+        ]);
+    }
+
+    /**
+     * Simpan isian satu line. action = 'draft' menyimpan line,
+     * action = 'serahkan' (tanpa line) menandai sesi diserahkan.
      */
     public function save()
     {
@@ -135,19 +227,17 @@ class AuditController extends BaseController
         $session   = $auditModel->find($sessionId);
 
         if (!$session || !$this->canAccess($session)) {
-            return redirect()->to($this->isAdmin() ? '/audit-andon' : '/audit-andon/isi')
+            return redirect()->to($this->isAdmin() ? 'audit-andon' : 'audit-andon/isi')
                 ->with('error', 'Sesi tidak ditemukan.');
         }
 
-        $backUrl = $this->isAdmin()
-            ? '/audit-andon/sesi/' . $sessionId
-            : '/audit-andon/isi';
-
-        $line   = (int) $this->request->getPost('line');
-        $anchor = $line > 0 ? '#line-' . $line : '';
+        $base    = $this->baseFor($session);
+        $line    = (int) $this->request->getPost('line');
+        $lineUrl = $base . '/line/' . $line;
+        $target  = $line > 0 ? $lineUrl : $base;
 
         if (!$auditModel->isEditable($session)) {
-            return redirect()->to($backUrl)
+            return redirect()->to($target)
                 ->with('error', 'Sesi sudah terkunci. Minta admin membuka kembali.');
         }
 
@@ -181,18 +271,18 @@ class AuditController extends BaseController
         }
 
         if ($gagal > 0) {
-            return redirect()->to($backUrl . $anchor)
+            return redirect()->to($target)
                 ->with('error', "{$gagal} baris gagal disimpan. Periksa nilai isiannya.");
         }
 
         if ($this->request->getPost('action') === 'serahkan') {
             $auditModel->markSubmitted($sessionId);
 
-            return redirect()->to($backUrl)
+            return redirect()->to($base)
                 ->with('success', 'Data diserahkan. Anda masih bisa mengubah sampai akhir bulan.');
         }
 
-        return redirect()->to($backUrl . $anchor)->with('success', 'Draft tersimpan.');
+        return redirect()->to($target)->with('success', "Line {$line} tersimpan.");
     }
 
     /**
@@ -201,13 +291,13 @@ class AuditController extends BaseController
     public function reopen(int $sessionId)
     {
         if (!$this->isAdmin()) {
-            return redirect()->to('/audit-andon/isi')
+            return redirect()->to('audit-andon/isi')
                 ->with('error', 'Hanya admin yang bisa membuka kembali sesi.');
         }
 
         (new AuditAndonModel())->reopen($sessionId);
 
-        return redirect()->to('/audit-andon/sesi/' . $sessionId)
+        return redirect()->to('audit-andon/sesi/' . $sessionId)
             ->with('success', 'Sesi dibuka kembali.');
     }
 
