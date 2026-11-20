@@ -64,8 +64,9 @@
                         <i class="fas fa-file-excel me-1"></i>
                         <span class="d-none d-sm-inline">Upload Excel</span>
                     </button>
-                    <button type="button" class="btn btn-success btn-sm shadow-sm ms-1" onclick="clearAllButton()" title="Kosongkan semua data">
-                        <i class="fas fa-trash me-1"></i> Kosongkan Data
+                    <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm ms-1" onclick="clearAllButton()" title="Kosongkan semua data">
+                        <i class="fa-solid fa-power-off me-1"></i>
+                        <span class="d-none d-sm-inline">KOSONGKAN DATA</span>
                     </button>
                 </div>
             </div>
