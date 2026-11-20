@@ -110,21 +110,18 @@ class BarangController extends BaseController
 
         $newName = $file->getRandomName();
         if (!$file->move($directory, $newName)) return [$oldPhoto, ['Foto Barang gagal disimpan.']];
-        if ($oldPhoto && is_file($directory . DIRECTORY_SEPARATOR . basename($oldPhoto))) {
-            @unlink($directory . DIRECTORY_SEPARATOR . basename($oldPhoto));
-        }
-        return [$newName, []];
+                return [$newName, []];
     }
 
     public function store()
     {
         if ($response = $this->adminOnly()) return $response;
         [$data, $errors] = $this->validatedInput();
-        [$photo, $photoErrors] = $this->uploadPhoto();
-        $errors = array_merge($errors, $photoErrors);
         if ($errors) return redirect()->back()->withInput()->with('errors', $errors);
+        [$photo, $photoErrors] = $this->uploadPhoto();
+        if ($photoErrors) return redirect()->back()->withInput()->with('errors', $photoErrors);
         $data['foto_barang'] = $photo;
-        $data['created_by'] = (int) (session()->get('id') ?? 0) ?: null;
+        $data['created_by'] = (int) (session()->get('user_id') ?? 0) ?: null;
         $data['updated_by'] = $data['created_by'];
 
         if (!(new BarangModel())->insert($data)) {
@@ -142,14 +139,21 @@ class BarangController extends BaseController
         if (!$current) return redirect()->to('pendataan/master/barang')->with('error', 'Barang tidak ditemukan.');
 
         [$data, $errors] = $this->validatedInput($id);
-        [$photo, $photoErrors] = $this->uploadPhoto($current['foto_barang'] ?? null);
-        $errors = array_merge($errors, $photoErrors);
         if ($errors) return redirect()->back()->withInput()->with('errors', $errors)->with('edit_barang_id', $id);
+        [$photo, $photoErrors] = $this->uploadPhoto($current['foto_barang'] ?? null);
+        if ($photoErrors) return redirect()->back()->withInput()->with('errors', $photoErrors)->with('edit_barang_id', $id);
         $data['foto_barang'] = $photo;
-        $data['updated_by'] = (int) (session()->get('id') ?? 0) ?: null;
+        $data['updated_by'] = (int) (session()->get('user_id') ?? 0) ?: null;
 
         if (!$model->update($id, $data)) {
+            if ($photo && $photo !== ($current['foto_barang'] ?? null)) {
+                @unlink(FCPATH . 'uploads/pendataan/barang/' . basename($photo));
+            }
             return redirect()->back()->withInput()->with('errors', ['Perubahan Barang gagal disimpan.'])->with('edit_barang_id', $id);
+        }
+        if (!empty($current['foto_barang']) && $photo !== $current['foto_barang']) {
+            $oldPath = FCPATH . 'uploads/pendataan/barang/' . basename($current['foto_barang']);
+            if (is_file($oldPath)) @unlink($oldPath);
         }
         return redirect()->to('pendataan/master/barang')->with('success', 'Barang berhasil diperbarui.');
     }
@@ -161,7 +165,7 @@ class BarangController extends BaseController
         $item = $model->find($id);
         if (!$item) return redirect()->to('pendataan/master/barang')->with('error', 'Barang tidak ditemukan.');
         $newStatus = (int) $item['status'] === 1 ? 0 : 1;
-        if (!$model->update($id, ['status' => $newStatus, 'updated_by' => (int) (session()->get('id') ?? 0) ?: null])) {
+        if (!$model->update($id, ['status' => $newStatus, 'updated_by' => (int) (session()->get('user_id') ?? 0) ?: null])) {
             return redirect()->to('pendataan/master/barang')->with('error', 'Status Barang gagal diperbarui.');
         }
         return redirect()->to('pendataan/master/barang')->with('success', $newStatus === 1 ? 'Barang berhasil diaktifkan.' : 'Barang berhasil dinonaktifkan.');
