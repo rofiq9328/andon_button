@@ -203,6 +203,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                 <th>Factory</th>
                                 <th>Induk Area</th>
                                 <th style="width:145px;">Jenis</th>
+                                <th style="width:165px;">Fungsi Stok</th>
                                 <th class="text-center" style="width:105px;">Status</th>
                                 <?php if ($isAdmin): ?>
                                     <th class="text-end" style="width:125px;">Aksi</th>
@@ -212,7 +213,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                         <tbody id="areaTableBody">
                             <?php if (empty($areas)): ?>
                                 <tr>
-                                    <td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-secondary py-5">
+                                    <td colspan="<?= $isAdmin ? 10 : 9 ?>" class="text-center text-secondary py-5">
                                         <i class="fa-solid fa-map-location-dot fa-2x mb-2 d-block opacity-50"></i>
                                         Belum ada data Area. Silakan tambahkan Area pertama.
                                     </td>
@@ -232,6 +233,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                         $factoryLabel . ' ' .
                                         $parentLabel . ' ' .
                                         $area['jenis_area'] . ' ' .
+                                        $area['fungsi_stok'] . ' ' .
                                         $area['cakupan_area']
                                     );
                                     ?>
@@ -258,6 +260,23 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                                 <?= esc(str_replace('_', ' ', $area['jenis_area'])) ?>
                                             </span>
                                         </td>
+                                        <td>
+                                            <?php
+                                            $fungsiStokLabel = [
+                                                'PENGGUNA' => 'Area Pengguna',
+                                                'PENYIMPANAN' => 'Lokasi Penyimpanan',
+                                                'KEDUANYA' => 'Keduanya',
+                                            ];
+                                            $fungsiStokClass = [
+                                                'PENGGUNA' => 'text-bg-primary',
+                                                'PENYIMPANAN' => 'text-bg-info',
+                                                'KEDUANYA' => 'text-bg-success',
+                                            ];
+                                            ?>
+                                            <span class="badge <?= esc($fungsiStokClass[$area['fungsi_stok']] ?? 'text-bg-secondary') ?>">
+                                                <?= esc($fungsiStokLabel[$area['fungsi_stok']] ?? $area['fungsi_stok']) ?>
+                                            </span>
+                                        </td>
                                         <td class="text-center">
                                             <?php if ((int) $area['status'] === 1): ?>
                                                 <span class="badge text-bg-success">Aktif</span>
@@ -277,6 +296,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                                             data-kode="<?= esc($area['kode_area'], 'attr') ?>"
                                                             data-nama="<?= esc($area['nama_area'], 'attr') ?>"
                                                             data-jenis="<?= esc($area['jenis_area'], 'attr') ?>"
+                                                            data-fungsi="<?= esc($area['fungsi_stok'] ?? 'PENGGUNA', 'attr') ?>"
                                                             data-deskripsi="<?= esc($area['deskripsi'] ?? '', 'attr') ?>"
                                                             data-status="<?= (int) $area['status'] ?>">
                                                         <i class="fa-solid fa-pen"></i>
@@ -298,7 +318,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                             <?php endif; ?>
 
                             <tr id="areaNoResult" class="d-none">
-                                <td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-secondary py-4">
+                                <td colspan="<?= $isAdmin ? 10 : 9 ?>" class="text-center text-secondary py-4">
                                     Tidak ada Area yang cocok dengan pencarian.
                                 </td>
                             </tr>
@@ -383,6 +403,16 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                         </div>
 
                         <div class="col-md-6">
+                            <label for="areaStockFunction" class="form-label">Fungsi Stok <span class="text-danger">*</span></label>
+                            <select class="form-select" id="areaStockFunction" name="fungsi_stok" required>
+                                <option value="PENGGUNA">Area Pengguna</option>
+                                <option value="PENYIMPANAN">Lokasi Penyimpanan</option>
+                                <option value="KEDUANYA">Keduanya</option>
+                            </select>
+                            <div class="form-text">Tidak bergantung pada Jenis Area. Office, Warehouse, dan Area lainnya dapat menjadi lokasi penyimpanan.</div>
+                        </div>
+
+                        <div class="col-md-6">
                             <label for="areaCode" class="form-label">Kode Area <span class="text-danger">*</span></label>
                             <input type="text" class="form-control text-uppercase" id="areaCode" name="kode_area"
                                    maxlength="30" placeholder="Contoh: A-LINE-01" required>
@@ -463,6 +493,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         kode: <?= json_encode((string) old('kode_area', '')) ?>,
         nama: <?= json_encode((string) old('nama_area', '')) ?>,
         jenis: <?= json_encode((string) old('jenis_area', 'OTHER')) ?>,
+        fungsi: <?= json_encode((string) old('fungsi_stok', 'PENGGUNA')) ?>,
         deskripsi: <?= json_encode((string) old('deskripsi', '')) ?>,
         status: <?= json_encode((string) old('status', '1')) ?>
     };
@@ -507,6 +538,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         factorySelect.value = '';
         parentSelect.value = '';
         document.getElementById('areaType').value = 'OTHER';
+        document.getElementById('areaStockFunction').value = 'PENGGUNA';
         document.getElementById('areaStatus').value = '1';
         document.getElementById('areaDescription').value = '';
         title.textContent = 'Tambah Area';
@@ -525,6 +557,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         document.getElementById('areaCode').value = data.kode || '';
         document.getElementById('areaName').value = data.nama || '';
         document.getElementById('areaType').value = data.jenis || 'OTHER';
+        document.getElementById('areaStockFunction').value = data.fungsi || 'PENGGUNA';
         document.getElementById('areaDescription').value = data.deskripsi || '';
         document.getElementById('areaStatus').value = String(data.status);
         title.textContent = 'Edit Area';
@@ -545,6 +578,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                 kode: this.dataset.kode,
                 nama: this.dataset.nama,
                 jenis: this.dataset.jenis,
+                fungsi: this.dataset.fungsi,
                 deskripsi: this.dataset.deskripsi,
                 status: this.dataset.status
             });
@@ -570,6 +604,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                 kode: oldValues.kode,
                 nama: oldValues.nama,
                 jenis: oldValues.jenis,
+                fungsi: oldValues.fungsi,
                 deskripsi: oldValues.deskripsi,
                 status: oldValues.status
             });
@@ -581,6 +616,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
             document.getElementById('areaCode').value = oldValues.kode;
             document.getElementById('areaName').value = oldValues.nama;
             document.getElementById('areaType').value = oldValues.jenis;
+            document.getElementById('areaStockFunction').value = oldValues.fungsi;
             document.getElementById('areaDescription').value = oldValues.deskripsi;
             document.getElementById('areaStatus').value = oldValues.status;
             updateScopeFields();
