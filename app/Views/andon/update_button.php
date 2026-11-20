@@ -433,8 +433,8 @@
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Kosongkan',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'DELETE',
+                cancelButtonText: 'CANCEL'
             }).then((result) => {
                 if (result.isConfirmed) {
                     kirim();
