@@ -223,12 +223,13 @@ $totalTransaksi = array_sum($ringkasan);
                                 <th>Alur</th>
                                 <th>Status</th>
                                 <th>Keterangan</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($transaksi)): ?>
                             <tr>
-                                <td colspan="8" class="text-center text-secondary py-5">
+                                <td colspan="9" class="text-center text-secondary py-5">
                                     <i class="fa-solid fa-receipt fa-2x mb-2 d-block opacity-50"></i>
                                     Belum ada transaksi yang sesuai dengan filter.
                                 </td>
@@ -250,6 +251,12 @@ $totalTransaksi = array_sum($ringkasan);
                                     </td>
                                     <td><span class="badge <?= esc($statusClass[$row['status_transaksi']] ?? 'text-bg-secondary') ?>"><?= esc($statusLabel[$row['status_transaksi']] ?? $row['status_transaksi']) ?></span></td>
                                     <td class="text-secondary"><?= esc($row['keterangan'] ?: '-') ?></td>
+                                    <td class="text-center">
+                                        <a href="<?= base_url('pendataan/transaksi/detail/' . (int) $row['id_transaksi']) ?>"
+                                           class="btn btn-sm btn-outline-success" title="Lihat Detail">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
