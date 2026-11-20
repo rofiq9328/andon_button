@@ -18,6 +18,12 @@ class AreaController extends BaseController
         'OTHER',
     ];
 
+    private const FUNGSI_STOK = [
+        'PENGGUNA',
+        'PENYIMPANAN',
+        'KEDUANYA',
+    ];
+
     private function adminOnly()
     {
         if (!Roles::has('admin')) {
@@ -66,6 +72,7 @@ class AreaController extends BaseController
         $kode       = strtoupper(trim((string) $this->request->getPost('kode_area')));
         $nama       = trim((string) $this->request->getPost('nama_area'));
         $jenis      = strtoupper(trim((string) $this->request->getPost('jenis_area')));
+        $fungsiStok = strtoupper(trim((string) $this->request->getPost('fungsi_stok')));
         $deskripsi  = trim((string) $this->request->getPost('deskripsi'));
         $status     = (string) ($this->request->getPost('status') ?? '1');
 
@@ -148,6 +155,10 @@ class AreaController extends BaseController
 
         if (!in_array($jenis, self::JENIS_AREA, true)) {
             $errors[] = 'Jenis Area tidak valid.';
+        }
+
+        if (!in_array($fungsiStok, self::FUNGSI_STOK, true)) {
+            $errors[] = 'Fungsi Stok Area tidak valid.';
         }
 
         if (!in_array($status, ['0', '1'], true)) {
