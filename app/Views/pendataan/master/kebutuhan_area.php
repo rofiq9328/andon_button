@@ -53,7 +53,7 @@ $periodLabel = function ($row) use ($today) {
                 </a>
                 <?php if ($isAdmin): ?>
                     <button type="button" id="btnAddStandard" class="btn btn-success btn-sm fw-bold shadow-sm"
-                            data-bs-toggle="modal" data-bs-target="#standardModal">
+                            data-bs-toggle="modal" data-bs-target="#standardModal" <?= empty($areas) || empty($barang) ? 'disabled' : '' ?>>
                         <i class="fa-solid fa-plus me-1"></i> TAMBAH KEBUTUHAN
                     </button>
                 <?php endif; ?>
@@ -100,6 +100,14 @@ $periodLabel = function ($row) use ($today) {
                 </div>
             </div>
         </div>
+
+        <?php if (empty($areas) || empty($barang)): ?>
+            <div class="alert alert-warning shadow-sm">
+                Kebutuhan Area memerlukan minimal satu Area aktif dan satu Master Barang aktif.
+                <?php if (empty($areas)): ?><a href="<?= base_url('pendataan/master/area') ?>" class="alert-link">Buka Master Area</a>.<?php endif; ?>
+                <?php if (empty($barang)): ?><a href="<?= base_url('pendataan/master/barang') ?>" class="alert-link">Buka Master Barang</a>.<?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="standard-note mb-3">
             <i class="fa-solid fa-circle-info me-1"></i>
@@ -360,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
         form.reset();
         form.action = storeUrl;
         document.getElementById('standardId').value = '';
-        fields.mulai.value = new Date().toLocaleDateString('en-CA');
+        fields.mulai.value = <?= json_encode(date('Y-m-d')) ?>;
         document.getElementById('standardModalHeading').textContent = 'Tambah Kebutuhan Area';
     }
     document.getElementById('btnAddStandard')?.addEventListener('click', resetForm);
@@ -399,13 +407,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 const d = button.dataset;
                 form.action = updateUrl + '/' + editId;
                 document.getElementById('standardModalHeading').textContent = 'Edit Kebutuhan Area';
-                fields.area.value = oldValues.area || d.area;
-                fields.barang.value = oldValues.barang || d.barang;
-                fields.jumlah.value = oldValues.jumlah || d.jumlah;
-                fields.mulai.value = oldValues.mulai || d.mulai;
-                fields.sampai.value = oldValues.sampai || d.sampai;
-                fields.keterangan.value = oldValues.keterangan || d.keterangan;
-                fields.status.value = oldValues.status || d.status;
+                fields.area.value = oldValues.area;
+                fields.barang.value = oldValues.barang;
+                fields.jumlah.value = oldValues.jumlah;
+                fields.mulai.value = oldValues.mulai;
+                fields.sampai.value = oldValues.sampai;
+                fields.keterangan.value = oldValues.keterangan;
+                fields.status.value = oldValues.status;
             }
         } else {
             fields.area.value = oldValues.area;
