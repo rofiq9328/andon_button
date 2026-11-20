@@ -184,6 +184,7 @@ class AreaController extends BaseController
             'kode_area'      => $kode,
             'nama_area'      => $nama,
             'jenis_area'     => $jenis,
+            'fungsi_stok'    => $fungsiStok,
             'deskripsi'      => $deskripsi === '' ? null : $deskripsi,
             'status'         => (int) $status,
         ], array_values(array_unique($errors))];
