@@ -94,6 +94,8 @@ class ButtonController extends BaseController
             }
 
             $jumlahBerhasil = 0;
+            $modelErrors = [];
+
             $db->transStart();
 
             $toClear = [];
@@ -107,27 +109,35 @@ class ButtonController extends BaseController
                 }
             }
             foreach (array_keys($toClear) as $idToClear) {
-                $buttonModel->update($idToClear, ['worker' => null]);
+                if ($buttonModel->update($idToClear, ['worker' => null]) === false) {
+                    $modelErrors[] = "kosongkan worker ID {$idToClear}: " . implode(' ', $buttonModel->errors());
+                }
             }
 
             foreach ($cleanRows as $data) {
                 $id = $data['id'];
                 $existingById = $buttonModel->find($id);
+                $ok = false;
 
                 if ($existingById) {
                     $update = $data;
                     unset($update['id']);
-                    $buttonModel->update($id, $update);
+                    $ok = $buttonModel->update($id, $update);
                 } else {
                     $existingBySlot = $buttonModel->where('line', $data['line'])
                         ->where('worker', $data['worker'])
                         ->first();
 
                     if ($existingBySlot) {
-                        $buttonModel->update($existingBySlot['id'], $data);
+                        $ok = $buttonModel->update($existingBySlot['id'], $data);
                     } else {
-                        $buttonModel->insert($data);
+                        $ok = $buttonModel->insert($data);
                     }
+                }
+
+                if ($ok === false) {
+                    $modelErrors[] = "ID {$id}: " . implode(' ', $buttonModel->errors());
+                    continue;
                 }
 
                 $jumlahBerhasil++;
@@ -136,7 +146,13 @@ class ButtonController extends BaseController
             $db->transComplete();
 
             if ($db->transStatus() === false) {
-                session()->setFlashdata('error', 'Gagal menyimpan data ke database.');
+                // Simpan penyebab asli dari database ke log dan tampilkan di layar
+                $dbError = $db->error();
+                log_message('error', 'Import Excel button gagal di database: ' . json_encode($dbError));
+                session()->setFlashdata('error', 'Gagal menyimpan data ke database: ' . ($dbError['message'] ?? 'penyebab tidak diketahui'));
+            } elseif ($modelErrors) {
+                log_message('error', 'Import Excel button, data ditolak model: ' . implode(' | ', $modelErrors));
+                session()->setFlashdata('error', "{$jumlahBerhasil} data tersimpan, " . count($modelErrors) . ' data ditolak: ' . implode(' | ', array_slice($modelErrors, 0, 3)));
             } elseif ($bariskonflik) {
                 $message = "$jumlahBerhasil data berhasil diupdate dan disimpan, tapi "
                     . count($bariskonflik)
@@ -153,7 +169,6 @@ class ButtonController extends BaseController
         session()->setFlashdata('error', 'Gagal memproses file.');
         return redirect()->back();
     }
-
 
     public function delete($id)
     {
