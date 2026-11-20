@@ -118,7 +118,8 @@
                             <p class="pendataan-menu-description mb-3"><?= esc($deskripsi) ?></p>
                             <?php if ($url): ?>
                                 <a href="<?= esc($url, 'attr') ?>" class="btn btn-success btn-sm fw-bold">
-                                    BUKA MASTER DATA <i class="fa-solid fa-arrow-right ms-1"></i>
+                                    <?= $judul === 'Master Data' ? 'BUKA MASTER DATA' : 'BUKA TRANSAKSI' ?>
+                                    <i class="fa-solid fa-arrow-right ms-1"></i>
                                 </a>
                             <?php else: ?>
                                 <span class="badge rounded-pill text-bg-secondary pendataan-status">
