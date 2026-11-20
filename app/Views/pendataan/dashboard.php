@@ -89,8 +89,8 @@
                 [
                     'Transaksi',
                     'fa-right-left',
-                    'Penerimaan, penempatan, transfer, dan persetujuan.',
-                    null,
+                    'Barang masuk, barang keluar, dan pindah area.',
+                    base_url('pendataan/transaksi'),
                 ],
                 [
                     'Saldo Barang',
