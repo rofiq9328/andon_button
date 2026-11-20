@@ -166,6 +166,11 @@ $totalTransaksi = array_sum($ringkasan);
                     <h2 class="h6 fw-bold mb-0">Riwayat Transaksi</h2>
                     <div class="small text-secondary mt-1"><?= count($transaksi) ?> data ditampilkan</div>
                 </div>
+                <?php if (!empty($canCreate)): ?>
+                    <a href="<?= base_url('pendataan/transaksi/tambah') ?>" class="btn btn-success btn-sm fw-bold">
+                        <i class="fa-solid fa-plus me-1"></i> TRANSAKSI BARU
+                    </a>
+                <?php endif; ?>
             </div>
             <div class="card-body border-bottom">
                 <form method="get" action="<?= base_url('pendataan/transaksi') ?>" class="row g-2 align-items-end trx-filter">
