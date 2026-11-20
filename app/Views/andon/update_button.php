@@ -64,10 +64,6 @@
                         <i class="fas fa-file-excel me-1"></i>
                         <span class="d-none d-sm-inline">Upload Excel</span>
                     </button>
-                    <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm ms-1" onclick="clearAllButton()" title="Kosongkan semua data">
-                        <i class="fa-solid fa-power-off me-1"></i>
-                        <span class="d-none d-sm-inline">KOSONGKAN DATA</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -78,8 +74,14 @@
     <div class="container-fluid">
         <!-- Card Data Table -->
         <div class="card card-outline card-success shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-end">
-                <div class="input-group input-group-sm" style="max-width: 260px;">
+            <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm"
+                        onclick="clearAllButton()" title="Hapus semua data button">
+                    <i class="fa-solid fa-trash-can me-1"></i>
+                    DELETE ALL
+                </button>
+
+                <div class="input-group input-group-sm ms-auto" style="max-width: 260px;">
                     <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
                     <input type="text" id="searchButton" class="form-control" placeholder="Cari Data...">
                 </div>
@@ -409,7 +411,7 @@
         }
     };
 
-    // Kosongkan semua data button, konfirmasi lewat SweetAlert2 (sama seperti hapus data)
+    // Hapus semua data button, konfirmasi lewat SweetAlert2.
     window.clearAllButton = function() {
         const kirim = function() {
             const form = document.createElement('form');
@@ -428,13 +430,13 @@
 
         if (typeof Swal !== 'undefined') {
             Swal.fire({
-                title: 'Kosongkan Semua Data?',
+                title: 'DELETE ALL DATA?',
                 text: 'Semua data button akan dihapus. Setelah itu upload file Excel baru untuk mengisi ulang.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'DELETE',
+                confirmButtonText: 'DELETE ALL',
                 cancelButtonText: 'CANCEL'
             }).then((result) => {
                 if (result.isConfirmed) {
