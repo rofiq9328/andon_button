@@ -184,11 +184,7 @@ class ButtonController extends BaseController
 
     public function clearAll()
     {
-        // Wajib mengetik KOSONGKAN sebagai konfirmasi supaya tidak terhapus tidak sengaja
-        if (trim((string) $this->request->getPost('konfirmasi')) !== 'KOSONGKAN') {
-            session()->setFlashdata('error', 'Konfirmasi tidak sesuai. Ketik KOSONGKAN untuk menghapus semua data button.');
-            return redirect()->back();
-        }
+        // Konfirmasi sudah dilakukan lewat SweetAlert di halaman Master Button
 
         $db = \Config\Database::connect();
         $jumlah = $db->table('button_id')->countAllResults();
