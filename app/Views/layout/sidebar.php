@@ -36,6 +36,7 @@ $isPendataanAreaActive    = isMenuActive('pendataan/master/area', $current_path)
 $isPendataanKategoriActive = isMenuActive('pendataan/master/kategori', $current_path);
 $isPendataanSatuanActive = isMenuActive('pendataan/master/satuan', $current_path);
 $isPendataanBarangActive = isMenuActive('pendataan/master/barang', $current_path);
+$isPendataanTransaksiActive = isMenuActive('pendataan/transaksi', $current_path);
 $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
