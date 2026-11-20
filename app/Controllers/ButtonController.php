@@ -95,17 +95,22 @@ class ButtonController extends BaseController
 
             $jumlahBerhasil = 0;
             $modelErrors = [];
+            $dilepas = [];
 
             $db->transStart();
 
+            // Slot yang dibutuhkan Excel: pemilik lamanya dilepas dari worker-nya (data tetap ada)
             $toClear = [];
             foreach ($cleanRows as $row) {
                 $occupant = $buttonModel->where('line', $row['line'])
                     ->where('worker', $row['worker'])
                     ->first();
 
-                if ($occupant && $occupant['id'] !== $row['id'] && isset($targetById[$occupant['id']])) {
+                if ($occupant && $occupant['id'] !== $row['id']) {
                     $toClear[$occupant['id']] = true;
+                    if (!isset($targetById[$occupant['id']])) {
+                        $dilepas[] = $occupant['id'];
+                    }
                 }
             }
             foreach (array_keys($toClear) as $idToClear) {
@@ -146,19 +151,26 @@ class ButtonController extends BaseController
             $db->transComplete();
 
             if ($db->transStatus() === false) {
-                // Simpan penyebab asli dari database ke log dan tampilkan di layar
                 $dbError = $db->error();
                 log_message('error', 'Import Excel button gagal di database: ' . json_encode($dbError));
                 session()->setFlashdata('error', 'Gagal menyimpan data ke database: ' . ($dbError['message'] ?? 'penyebab tidak diketahui'));
             } elseif ($modelErrors) {
                 log_message('error', 'Import Excel button, data ditolak model: ' . implode(' | ', $modelErrors));
                 session()->setFlashdata('error', "{$jumlahBerhasil} data tersimpan, " . count($modelErrors) . ' data ditolak: ' . implode(' | ', array_slice($modelErrors, 0, 3)));
-            } elseif ($bariskonflik) {
-                $message = "$jumlahBerhasil data berhasil diupdate dan disimpan, tapi "
-                    . count($bariskonflik)
-                    . ' baris dilewati karena ada 2 ID dalam Line & Worker yang sama, perbaiki file Excel Anda.';
-                session()->setFlashdata('warning', $message);
-                session()->setFlashdata('warningDetail', $bariskonflik);
+            } elseif ($bariskonflik || $dilepas) {
+                $parts = ["$jumlahBerhasil data berhasil diupdate dan disimpan."];
+                if ($bariskonflik) {
+                    $parts[] = count($bariskonflik) . ' baris dilewati karena ada 2 ID dalam Line & Worker yang sama, perbaiki file Excel Anda.';
+                }
+                if ($dilepas) {
+                    $parts[] = count($dilepas) . ' ID yang tidak ada di file dilepas dari slot line/worker karena slotnya dipakai ID dari Excel.';
+                }
+                $detail = $bariskonflik;
+                foreach ($dilepas as $idLepas) {
+                    $detail[] = "ID {$idLepas} dilepas dari slotnya (worker dikosongkan)";
+                }
+                session()->setFlashdata('warning', implode(' ', $parts));
+                session()->setFlashdata('warningDetail', $detail);
             } else {
                 session()->setFlashdata('success', "$jumlahBerhasil Data Button berhasil diupdate dan disimpan.");
             }
