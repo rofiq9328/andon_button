@@ -143,7 +143,10 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.show();
     }));
     modalEl.addEventListener('hidden.bs.modal', resetForm);
-    <?php if($editBarangId): ?>modal.show();<?php endif; ?>
+    <?php if($editBarangId): ?>
+    const failedEditButton = document.querySelector('.btn-edit-barang[data-id="<?= (int) $editBarangId ?>"]');
+    if (failedEditButton) failedEditButton.click();
+    <?php endif; ?>
 });
 </script>
 <?= $this->endSection() ?>
