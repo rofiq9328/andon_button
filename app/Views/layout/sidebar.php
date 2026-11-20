@@ -190,10 +190,11 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                     </li>
 
                     <li class="nav-item">
-                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
-                         title="Modul Transaksi akan dibuat setelah Master Data selesai">
+                      <a href="<?= base_url('pendataan/transaksi') ?>"
+                         class="nav-link<?= $isPendataanTransaksiActive ? ' active' : '' ?>"
+                         title="Transaksi Barang">
                         <i class="nav-icon bi bi-arrow-left-right"></i>
-                        <p>Transaksi <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                        <p>Transaksi</p>
                       </a>
                     </li>
                     <li class="nav-item">
