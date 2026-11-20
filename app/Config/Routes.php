@@ -127,6 +127,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
         // Riwayat transaksi: dapat dilihat seluruh role Pendataan.
         $routes->get('transaksi', 'Pendataan\TransaksiController::index', $rolesPendataan);
+        $routes->get('transaksi/detail/(:num)', 'Pendataan\TransaksiController::detail/$1', $rolesPendataan);
 
         // Pembuatan transaksi Draft: Admin dan Petugas Area.
         $routes->get('transaksi/tambah', 'Pendataan\TransaksiController::create', ['filter' => 'role:admin,petugas_area']);
