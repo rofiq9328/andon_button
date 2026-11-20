@@ -50,6 +50,96 @@
         color: #212529;
         color-scheme: light;
     }
+
+    /* Modal upload Excel: ringkas, bersih, dan tetap memakai aksen hijau tema aplikasi */
+    .upload-modal .modal-content {
+        border: 0;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .upload-modal .modal-header {
+        padding: 1.1rem 1.35rem;
+        background: #fff;
+    }
+    .upload-modal .modal-title-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #e8f5ee;
+        color: #198754;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .upload-modal .modal-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #212529;
+    }
+    .upload-modal .modal-subtitle {
+        font-size: .82rem;
+        color: #6c757d;
+    }
+    .upload-modal .modal-body {
+        padding: 1.35rem;
+    }
+    .upload-modal .form-label {
+        font-size: .9rem;
+        font-weight: 600;
+        color: #343a40;
+    }
+    .upload-modal .file-select-box {
+        padding: 14px;
+        border: 1px dashed #ced4da;
+        border-radius: 10px;
+        background: #f8f9fa;
+    }
+    .upload-modal .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .12);
+    }
+    .upload-modal .template-download {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 12px;
+        border: 1px solid #dcefe3;
+        border-radius: 10px;
+        background: #f1f8f4;
+    }
+    .upload-modal .template-icon {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #d9efe2;
+        color: #198754;
+        flex-shrink: 0;
+    }
+    .upload-modal .template-copy {
+        min-width: 0;
+        flex: 1;
+    }
+    .upload-modal .template-copy strong {
+        display: block;
+        font-size: .86rem;
+        color: #24543b;
+    }
+    .upload-modal .template-copy small {
+        display: block;
+        font-size: .76rem;
+        color: #6c757d;
+    }
+    .upload-modal .modal-footer {
+        padding: .95rem 1.35rem;
+        background: #fbfcfb;
+    }
+
 </style>
 <?= $this->endSection() ?>
 
@@ -96,38 +186,58 @@
 </section>
 
 <!-- ========================================================= -->
+<!-- ========================================================= -->
 <!-- MODAL UPLOAD EXCEL -->
 <!-- ========================================================= -->
 <div class="modal fade" id="modalUploadExcel" tabindex="-1" aria-labelledby="modalUploadExcelLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="modalUploadExcelLabel"><i class="fas fa-file-excel me-1"></i> Import Excel Data ID Button</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content upload-modal shadow">
+            <div class="modal-header border-bottom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-title-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-1" id="modalUploadExcelLabel">Upload Data Button</h5>
+                        <div class="modal-subtitle">Import data menggunakan file Microsoft Excel</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form action="<?= base_url('buttoncontroller/processExcel') ?>" method="post" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label for="file_excel" class="font-weight-normal fw-bold">Pilih File Excel</label>
+                    <label for="file_excel" class="form-label">Pilih File Excel</label>
+                    <div class="file-select-box">
                         <input type="file" class="form-control" id="file_excel" name="file_excel" accept=".xls,.xlsx" required>
+                        <div class="form-text mt-2">Format file yang didukung: .xlsx dan .xls</div>
                     </div>
-                    <div class="template-download text-muted mt-3" style="font-size: 0.95rem;">
-                        <i class="fas fa-info-circle"></i> Template Upload :
-                        <a href="<?= base_url('assets/templates/button_id.xlsx') ?>" download class="text-success text-decoration-none fw-bold">
-                            <i class="far fa-file-excel"></i> button_id.xlsx
+
+                    <div class="template-download">
+                        <div class="template-icon">
+                            <i class="fas fa-file-download"></i>
+                        </div>
+                        <div class="template-copy">
+                            <strong>Belum memiliki template?</strong>
+                            <small>Download format Excel resmi untuk import data.</small>
+                        </div>
+                        <a href="<?= base_url('assets/templates/button_id.xlsx') ?>" download class="btn btn-outline-success btn-sm flex-shrink-0">
+                            <i class="fas fa-download me-1"></i> Template
                         </a>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success"><i></i> Submit</button>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fas fa-upload me-1"></i> Upload
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- ========================================================= -->
 <!-- MODAL EDIT DATA -->
 <!-- ========================================================= -->
 <div class="modal fade" id="modalEditButton" tabindex="-1" aria-labelledby="modalEditButtonLabel" aria-hidden="true">
