@@ -27,9 +27,12 @@ function isMenuActive($path, $current_path)
 $isDashboardActive     = isMenuActive('', $current_path);
 $isMasterButtonActive  = isMenuActive('andon/update-button', $current_path);
 $isUserManagementActive = isMenuActive('users', $current_path);
-$isAuditActive          = isMenuActive('audit-andon', $current_path);
-$isPendataanActive = isMenuActive('pendataan', $current_path);
-$isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
+$isAuditActive             = isMenuActive('audit-andon', $current_path);
+$isPendataanActive        = isMenuActive('pendataan', $current_path);
+$isPendataanDashboard     = $current_path === 'pendataan';
+$isPendataanMasterActive  = isMenuActive('pendataan/master', $current_path);
+$isPendataanFactoryActive = isMenuActive('pendataan/master/factory', $current_path);
+$isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
           <!--begin::Brand Link-->
@@ -85,15 +88,114 @@ $isSettingsActive      = $isMasterButtonActive || $isUserManagementActive;
                   </a>
                 </li>
               <?php endif; ?>
-                    <?php if (\App\Libraries\Roles::hasAny(['admin', 'petugas_area', 'verifikator', 'viewer'])): ?>
-                <li class="nav-item">
-                    <a href="<?= base_url('pendataan') ?>" class="nav-link<?= $isPendataanActive ? ' active' : '' ?>"
-                       data-bs-toggle="tooltip" data-bs-placement="right" title="Pendataan Barang">
-                        <i class="nav-icon bi bi-boxes"></i>
-                        <p>Pendataan Barang</p>
-                    </a>
+              <?php if (\App\Libraries\Roles::hasAny(['admin', 'petugas_area', 'verifikator', 'viewer'])): ?>
+                <!-- Menu Pendataan Barang -->
+                <li class="nav-item<?= $isPendataanActive ? ' menu-open' : '' ?>">
+                  <a
+                    href="<?= base_url('pendataan') ?>"
+                    class="nav-link<?= $isPendataanActive ? ' active' : '' ?>"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    title="Pendataan Barang"
+                  >
+                    <i class="nav-icon bi bi-boxes"></i>
+                    <p>
+                      Pendataan Barang
+                      <i class="nav-arrow bi bi-chevron-right"></i>
+                    </p>
+                  </a>
+
+                  <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                      <a
+                        href="<?= base_url('pendataan') ?>"
+                        class="nav-link<?= $isPendataanDashboard ? ' active' : '' ?>"
+                        title="Dashboard Pendataan"
+                      >
+                        <i class="nav-icon bi bi-house-door"></i>
+                        <p>Dashboard</p>
+                      </a>
+                    </li>
+
+                    <li class="nav-item<?= $isPendataanMasterActive ? ' menu-open' : '' ?>">
+                      <a
+                        href="#"
+                        class="nav-link<?= $isPendataanMasterActive ? ' active' : '' ?>"
+                        title="Master Data"
+                      >
+                        <i class="nav-icon bi bi-database"></i>
+                        <p>
+                          Master Data
+                          <i class="nav-arrow bi bi-chevron-right"></i>
+                        </p>
+                      </a>
+
+                      <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                          <a
+                            href="<?= base_url('pendataan/master/factory') ?>"
+                            class="nav-link<?= $isPendataanFactoryActive ? ' active' : '' ?>"
+                            title="Master Factory"
+                          >
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Factory</p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                             title="Menu akan tersedia setelah modul Area dibuat">
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Area <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                             title="Menu akan tersedia setelah modul Kategori dibuat">
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Kategori Barang <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                             title="Menu akan tersedia setelah modul Satuan dibuat">
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Satuan <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                             title="Menu akan tersedia setelah modul Barang dibuat">
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Barang <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                          </a>
+                        </li>
+                      </ul>
+                    </li>
+
+                    <li class="nav-item">
+                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                         title="Modul Transaksi akan dibuat setelah Master Data selesai">
+                        <i class="nav-icon bi bi-arrow-left-right"></i>
+                        <p>Transaksi <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                         title="Modul Saldo Barang akan dibuat setelah Transaksi selesai">
+                        <i class="nav-icon bi bi-box-seam"></i>
+                        <p>Saldo Barang <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
+                         title="Modul Laporan akan dibuat setelah Transaksi selesai">
+                        <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
+                        <p>Laporan <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                      </a>
+                    </li>
+                  </ul>
                 </li>
-                <?php endif; ?>
+              <?php endif; ?>
                 <?php if (\App\Libraries\Roles::has('admin')): ?>
               <li class="nav-item<?= $isSettingsActive ? ' menu-open' : '' ?>">
                 <a
