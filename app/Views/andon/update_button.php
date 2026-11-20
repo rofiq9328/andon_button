@@ -537,13 +537,13 @@
 
         if (typeof Swal !== 'undefined') {
             Swal.fire({
-                title: 'DELETE ALL DATA?',
-                text: 'Semua data button akan dihapus. Setelah itu upload file Excel baru untuk mengisi ulang.',
+                title: 'HAPUS SEMUA BUTTON?',
+                text: 'Semua data button akan dihapus. Lanjutkan?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'DELETE ALL',
+                confirmButtonText: 'DELETE',
                 cancelButtonText: 'CANCEL'
             }).then((result) => {
                 if (result.isConfirmed) {
