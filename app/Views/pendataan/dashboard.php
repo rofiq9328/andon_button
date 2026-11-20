@@ -83,7 +83,7 @@
                 [
                     'Master Data',
                     'fa-database',
-                    'Factory, area, kategori, satuan, dan barang.',
+                    'Factory, area, kategori, satuan, barang, dan kebutuhan tiap Area.',
                     base_url('pendataan/master/factory'),
                 ],
                 [
