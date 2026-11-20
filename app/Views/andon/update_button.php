@@ -194,12 +194,9 @@
         <div class="modal-content upload-modal shadow">
             <div class="modal-header border-bottom">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="modal-title-icon">
-                        <i class="fas fa-file-excel"></i>
-                    </div>
+                    
                     <div>
-                        <h5 class="modal-title mb-1" id="modalUploadExcelLabel">Upload Data Button</h5>
-                        <div class="modal-subtitle">Import data menggunakan file Microsoft Excel</div>
+                        <h5 class="modal-title mb-1" id="modalUploadExcelLabel">UPLOAD DATA BUTTON</h5>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -207,10 +204,10 @@
 
             <form action="<?= base_url('buttoncontroller/processExcel') ?>" method="post" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <label for="file_excel" class="form-label">Pilih File Excel</label>
+                    <label for="file_excel" class="form-label">Pilih File </label>
                     <div class="file-select-box">
                         <input type="file" class="form-control" id="file_excel" name="file_excel" accept=".xls,.xlsx" required>
-                        <div class="form-text mt-2">Format file yang didukung: .xlsx dan .xls</div>
+                        <div class="form-text mt-2">Format file: .xlsx dan .xls</div>
                     </div>
 
                     <div class="template-download">
@@ -219,7 +216,7 @@
                         </div>
                         <div class="template-copy">
                             <strong>Belum memiliki template?</strong>
-                            <small>Download format Excel resmi untuk import data.</small>
+                            <small>Download format Excel.</small>
                         </div>
                         <a href="<?= base_url('assets/templates/button_id.xlsx') ?>" download class="btn btn-outline-success btn-sm flex-shrink-0">
                             <i class="fas fa-download me-1"></i> Template
@@ -228,9 +225,9 @@
                 </div>
 
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">CANCEL</button>
                     <button type="submit" class="btn btn-success px-4">
-                        <i class="fas fa-upload me-1"></i> Upload
+                        </i> UPLOAD
                     </button>
                 </div>
             </form>
