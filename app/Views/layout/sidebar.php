@@ -35,6 +35,7 @@ $isPendataanFactoryActive = isMenuActive('pendataan/master/factory', $current_pa
 $isPendataanAreaActive    = isMenuActive('pendataan/master/area', $current_path);
 $isPendataanKategoriActive = isMenuActive('pendataan/master/kategori', $current_path);
 $isPendataanSatuanActive = isMenuActive('pendataan/master/satuan', $current_path);
+$isPendataanBarangActive = isMenuActive('pendataan/master/barang', $current_path);
 $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
@@ -175,10 +176,13 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                           </a>
                         </li>
                         <li class="nav-item">
-                          <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
-                             title="Menu akan tersedia setelah modul Barang dibuat">
+                          <a
+                            href="<?= base_url('pendataan/master/barang') ?>"
+                            class="nav-link<?= $isPendataanBarangActive ? ' active' : '' ?>"
+                            title="Master Barang"
+                          >
                             <i class="nav-icon bi bi-circle"></i>
-                            <p>Barang <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                            <p>Barang</p>
                           </a>
                         </li>
                       </ul>
