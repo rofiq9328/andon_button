@@ -95,8 +95,8 @@
                 [
                     'Saldo Barang',
                     'fa-warehouse',
-                    'Jumlah barang berdasarkan area dan kondisi.',
-                    null,
+                    'Jumlah barang berdasarkan area, kondisi, dan kebutuhan standar.',
+                    base_url('pendataan/saldo'),
                 ],
                 [
                     'Laporan',
