@@ -434,17 +434,8 @@ $lineTotal  = count($units);
                         <tbody>
                             <?php foreach ($units as $u): ?>
                                 <tr id="unit-<?= (int) $u['id'] ?>" data-unit="<?= (int) $u['id'] ?>" data-state="empty">
-                                    <td class="sticky-col bg-body">
-                                        <div class="d-flex align-items-center justify-content-between gap-2">
-                                            <span class="unit-no fw-bold">#<?= (int) $u['line_no'] ?></span>
-                                            <span class="led-dot text-secondary" id="led-<?= (int) $u['id'] ?>"></span>
-                                        </div>
-                                        <div class="seg-bar" id="seg-<?= (int) $u['id'] ?>">
-                                            <?php foreach ($flat as $key => $def): ?>
-                                                <span data-seg="<?= $key ?>"></span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        <div class="unit-count" id="cnt-<?= (int) $u['id'] ?>">0 / <?= $fieldCount ?></div>
+                                    <td class="sticky-col bg-body text-center">
+                                        <span class="unit-no fw-bold"><?= (int) $u['line_no'] ?></span>
                                     </td>
 
                                     <?php foreach ($flat as $key => $def): ?>
@@ -537,18 +528,11 @@ $lineTotal  = count($units);
     }
 
     function refreshRow(tr) {
-        const id = tr.dataset.unit;
-        const dot = document.getElementById('led-' + id);
-        const cnt = document.getElementById('cnt-' + id);
-        const seg = document.getElementById('seg-' + id);
         let filled = 0;
         let bad = false;
 
         tr.querySelectorAll('td[data-field]').forEach(td => {
-            const key = td.dataset.field;
-            const bar = seg.querySelector('[data-seg="' + key + '"]');
             td.classList.remove('cell-ok', 'cell-bad', 'cell-empty');
-            bar.classList.remove('seg-ok', 'seg-bad');
 
             const checked = td.querySelector('input.audit-radio:checked');
             if (!checked) {
@@ -559,11 +543,9 @@ $lineTotal  = count($units);
             filled++;
             if (checked.dataset.bad === '1') {
                 td.classList.add('cell-bad');
-                bar.classList.add('seg-bad');
                 bad = true;
             } else {
                 td.classList.add('cell-ok');
-                bar.classList.add('seg-ok');
             }
         });
 
@@ -579,14 +561,6 @@ $lineTotal  = count($units);
         }
 
         tr.dataset.state = state;
-        cnt.textContent = filled + ' / ' + CFG.fieldCount + ' terisi';
-
-        Object.values(LED).forEach(c => dot.classList.remove(c));
-        dot.classList.remove('is-active');
-        dot.classList.add(LED[state]);
-        if (state !== 'empty') {
-            dot.classList.add('is-active');
-        }
     }
 
     function refreshToolbar() {
