@@ -64,7 +64,7 @@
                         <i class="fas fa-file-excel me-1"></i>
                         <span class="d-none d-sm-inline">Upload Excel</span>
                     </button>
-                    <button type="button" class="btn btn-danger btn-sm shadow-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalClearAll" title="Kosongkan semua data">
+                    <button type="button" class="btn btn-success btn-sm shadow-sm ms-1" onclick="clearAllButton()" title="Kosongkan semua data">
                         <i class="fas fa-trash me-1"></i> Kosongkan Data
                     </button>
                 </div>
@@ -93,32 +93,6 @@
 </section>
 
 <!-- ========================================================= -->
-<!-- MODAL KOSONGKAN SEMUA DATA -->
-<div class="modal fade" id="modalClearAll" tabindex="-1" aria-labelledby="modalClearAllLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="modalClearAllLabel"><i class="fas fa-trash me-1"></i> Kosongkan Semua Data Button</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="<?= base_url('buttoncontroller/clearAll') ?>" method="post">
-                <?= csrf_field() ?>
-                <div class="modal-body">
-                    <div class="alert alert-warning small mb-3">
-                        Semua data di tabel button akan dihapus. Setelah itu, upload file Excel baru untuk mengisi ulang.
-                    </div>
-                    <label for="konfirmasi-clear" class="form-label fw-bold">Ketik <code>KOSONGKAN</code> untuk melanjutkan</label>
-                    <input type="text" name="konfirmasi" id="konfirmasi-clear" class="form-control" autocomplete="off" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-danger">Kosongkan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- MODAL UPLOAD EXCEL -->
 <!-- ========================================================= -->
 <div class="modal fade" id="modalUploadExcel" tabindex="-1" aria-labelledby="modalUploadExcelLabel" aria-hidden="true">
@@ -431,6 +405,43 @@
             if (confirm(`Anda yakin ingin menghapus data dengan ID ${id}?`)) {
                 window.location.href = `<?= base_url('buttoncontroller/delete/') ?>${id}`;
             }
+        }
+    };
+
+    // Kosongkan semua data button, konfirmasi lewat SweetAlert2 (sama seperti hapus data)
+    window.clearAllButton = function() {
+        const kirim = function() {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '<?= base_url('buttoncontroller/clearAll') ?>';
+
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = '<?= csrf_token() ?>';
+            token.value = '<?= csrf_hash() ?>';
+            form.appendChild(token);
+
+            document.body.appendChild(form);
+            form.submit();
+        };
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Kosongkan Semua Data?',
+                text: 'Semua data button akan dihapus. Setelah itu upload file Excel baru untuk mengisi ulang.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Kosongkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    kirim();
+                }
+            });
+        } else if (confirm('Semua data button akan dihapus. Lanjutkan?')) {
+            kirim();
         }
     };
 </script>
