@@ -91,6 +91,14 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // Pendataan barang: memakai login andon (satu login)
     $routes->group('pendataan', ['filter' => 'auth'], function ($routes) {
-        $routes->get('/', 'Pendataan\HomeController::index', ['filter' => 'role:admin,petugas_area,verifikator,viewer']);
+        $rolesPendataan = ['filter' => 'role:admin,petugas_area,verifikator,viewer'];
+
+        $routes->get('/', 'Pendataan\HomeController::index', $rolesPendataan);
+
+        // Master Factory: dapat dilihat role Pendataan, perubahan hanya Admin.
+        $routes->get('master/factory', 'Pendataan\FactoryController::index', $rolesPendataan);
+        $routes->post('master/factory/simpan', 'Pendataan\FactoryController::store', ['filter' => 'role:admin']);
+        $routes->post('master/factory/ubah/(:num)', 'Pendataan\FactoryController::update/$1', ['filter' => 'role:admin']);
+        $routes->post('master/factory/status/(:num)', 'Pendataan\FactoryController::toggleStatus/$1', ['filter' => 'role:admin']);
     });
 });
