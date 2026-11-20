@@ -49,6 +49,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
         $routes->post('buttoncontroller/updateSingle', 'ButtonController::updateSingle');
 
+        // Kosongkan semua data button (hanya admin, wajib konfirmasi)
+        $routes->post('buttoncontroller/clearAll', 'ButtonController::clearAll');
+
         // Route untuk Delete Data
         $routes->get('buttoncontroller/delete/(:any)', 'ButtonController::delete/$1');
 
