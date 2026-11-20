@@ -118,7 +118,7 @@
                             <p class="pendataan-menu-description mb-3"><?= esc($deskripsi) ?></p>
                             <?php if ($url): ?>
                                 <a href="<?= esc($url, 'attr') ?>" class="btn btn-success btn-sm fw-bold">
-                                    <?= $judul === 'Master Data' ? 'BUKA MASTER DATA' : 'BUKA TRANSAKSI' ?>
+                                    <?= $judul === 'Master Data' ? 'BUKA MASTER DATA' : ($judul === 'Transaksi' ? 'BUKA TRANSAKSI' : 'BUKA SALDO BARANG') ?>
                                     <i class="fa-solid fa-arrow-right ms-1"></i>
                                 </a>
                             <?php else: ?>
