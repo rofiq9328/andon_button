@@ -84,25 +84,29 @@
                     'Master Data',
                     'fa-database',
                     'Factory, area, kategori, satuan, dan barang.',
+                    base_url('pendataan/master/factory'),
                 ],
                 [
                     'Transaksi',
                     'fa-right-left',
                     'Penerimaan, penempatan, transfer, dan persetujuan.',
+                    null,
                 ],
                 [
                     'Saldo Barang',
                     'fa-warehouse',
                     'Jumlah barang berdasarkan area dan kondisi.',
+                    null,
                 ],
                 [
                     'Laporan',
                     'fa-file-lines',
                     'Rekap stok dan riwayat transaksi.',
+                    null,
                 ],
             ];
 
-            foreach ($menu as [$judul, $ikon, $deskripsi]):
+            foreach ($menu as [$judul, $ikon, $deskripsi, $url]):
             ?>
                 <div class="col-12 col-sm-6 col-xl-3">
                     <div class="card pendataan-menu-card shadow-sm mb-0">
@@ -112,9 +116,15 @@
                             </div>
                             <h2 class="pendataan-menu-title"><?= esc($judul) ?></h2>
                             <p class="pendataan-menu-description mb-3"><?= esc($deskripsi) ?></p>
-                            <span class="badge rounded-pill text-bg-secondary pendataan-status">
-                                SEGERA HADIR
-                            </span>
+                            <?php if ($url): ?>
+                                <a href="<?= esc($url, 'attr') ?>" class="btn btn-success btn-sm fw-bold">
+                                    BUKA MASTER DATA <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="badge rounded-pill text-bg-secondary pendataan-status">
+                                    SEGERA HADIR
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
