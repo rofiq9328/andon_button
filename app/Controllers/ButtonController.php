@@ -182,6 +182,30 @@ class ButtonController extends BaseController
         return redirect()->back();
     }
 
+    public function clearAll()
+    {
+        // Wajib mengetik KOSONGKAN sebagai konfirmasi supaya tidak terhapus tidak sengaja
+        if (trim((string) $this->request->getPost('konfirmasi')) !== 'KOSONGKAN') {
+            session()->setFlashdata('error', 'Konfirmasi tidak sesuai. Ketik KOSONGKAN untuk menghapus semua data button.');
+            return redirect()->back();
+        }
+
+        $db = \Config\Database::connect();
+        $jumlah = $db->table('button_id')->countAllResults();
+
+        try {
+            $db->table('button_id')->truncate();
+        } catch (\Throwable $e) {
+            log_message('error', 'Kosongkan data button gagal: ' . $e->getMessage());
+            session()->setFlashdata('error', 'Gagal mengosongkan data button: ' . $e->getMessage());
+            return redirect()->back();
+        }
+
+        log_message('warning', 'Semua data button dikosongkan oleh ' . session()->get('username') . " ({$jumlah} baris)");
+        session()->setFlashdata('success', "{$jumlah} data button berhasil dikosongkan. Silakan upload file Excel baru.");
+        return redirect()->back();
+    }
+
     public function delete($id)
     {
         $buttonModel = new ButtonModel();
