@@ -101,7 +101,7 @@ class BarangController extends BaseController
         if (!in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png', 'webp'], true)) {
             return [$oldPhoto, ['Foto Barang harus berformat JPG, JPEG, PNG, atau WEBP.']];
         }
-        if ($file->getSizeByUnit('mb') > 2) return [$oldPhoto, ['Ukuran Foto Barang maksimal 2 MB.']];
+        if ($file->getSize() > (2 * 1024 * 1024)) return [$oldPhoto, ['Ukuran Foto Barang maksimal 2 MB.']];
 
         $directory = FCPATH . 'uploads/pendataan/barang';
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
