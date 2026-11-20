@@ -64,6 +64,9 @@
                         <i class="fas fa-file-excel me-1"></i>
                         <span class="d-none d-sm-inline">Upload Excel</span>
                     </button>
+                    <button type="button" class="btn btn-danger btn-sm shadow-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalClearAll" title="Kosongkan semua data">
+                        <i class="fas fa-trash me-1"></i> Kosongkan Data
+                    </button>
                 </div>
             </div>
         </div>
@@ -90,6 +93,32 @@
 </section>
 
 <!-- ========================================================= -->
+<!-- MODAL KOSONGKAN SEMUA DATA -->
+<div class="modal fade" id="modalClearAll" tabindex="-1" aria-labelledby="modalClearAllLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalClearAllLabel"><i class="fas fa-trash me-1"></i> Kosongkan Semua Data Button</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?= base_url('buttoncontroller/clearAll') ?>" method="post">
+                <?= csrf_field() ?>
+                <div class="modal-body">
+                    <div class="alert alert-warning small mb-3">
+                        Semua data di tabel button akan dihapus. Setelah itu, upload file Excel baru untuk mengisi ulang.
+                    </div>
+                    <label for="konfirmasi-clear" class="form-label fw-bold">Ketik <code>KOSONGKAN</code> untuk melanjutkan</label>
+                    <input type="text" name="konfirmasi" id="konfirmasi-clear" class="form-control" autocomplete="off" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Kosongkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL UPLOAD EXCEL -->
 <!-- ========================================================= -->
 <div class="modal fade" id="modalUploadExcel" tabindex="-1" aria-labelledby="modalUploadExcelLabel" aria-hidden="true">
