@@ -36,6 +36,7 @@ $isPendataanAreaActive    = isMenuActive('pendataan/master/area', $current_path)
 $isPendataanKategoriActive = isMenuActive('pendataan/master/kategori', $current_path);
 $isPendataanSatuanActive = isMenuActive('pendataan/master/satuan', $current_path);
 $isPendataanBarangActive = isMenuActive('pendataan/master/barang', $current_path);
+$isPendataanKebutuhanActive = isMenuActive('pendataan/master/kebutuhan-area', $current_path);
 $isPendataanTransaksiActive = isMenuActive('pendataan/transaksi', $current_path);
 $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
@@ -184,6 +185,16 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                           >
                             <i class="nav-icon bi bi-circle"></i>
                             <p>Barang</p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a
+                            href="<?= base_url('pendataan/master/kebutuhan-area') ?>"
+                            class="nav-link<?= $isPendataanKebutuhanActive ? ' active' : '' ?>"
+                            title="Kebutuhan Area"
+                          >
+                            <i class="nav-icon bi bi-circle"></i>
+                            <p>Kebutuhan Area</p>
                           </a>
                         </li>
                       </ul>
