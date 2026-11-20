@@ -152,7 +152,7 @@
                     <h1 class="mb-0 fs-3">DATA BUTTON ID</h1>
                     <button type="button" class="btn btn-success btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalUploadExcel" title="Upload Excel">
                         <i class="fas fa-file-excel me-1"></i>
-                        <span class="d-none d-sm-inline">Upload Excel</span>
+                        <span class="d-none d-sm-inline">UPLOAD EXCEL</span>
                     </button>
                 </div>
             </div>
