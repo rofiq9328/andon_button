@@ -70,8 +70,9 @@ class StandarBarangAreaController extends BaseController
             ->getResultArray();
 
         $today = date('Y-m-d');
-        $summaryQuery = $db->table('standar_barang_area')->where('status', 1);
-        $activeCount = (clone $summaryQuery)->countAllResults();
+        $activeCount = $db->table('standar_barang_area')
+            ->where('status', 1)
+            ->countAllResults();
         $currentCount = $db->table('standar_barang_area')
             ->where('status', 1)
             ->where('berlaku_mulai <=', $today)
@@ -181,8 +182,11 @@ class StandarBarangAreaController extends BaseController
             }
         }
 
+        $jumlahStandar = null;
         if (!preg_match('/^\d{1,12}(?:\.\d{1,2})?$/', $jumlahRaw) || (float) $jumlahRaw <= 0) {
             $errors[] = 'Jumlah standar harus lebih dari nol dan maksimal dua angka desimal.';
+        } else {
+            $jumlahStandar = number_format((float) $jumlahRaw, 2, '.', '');
         }
 
         if (!$this->isValidDate($mulai)) {
@@ -222,9 +226,7 @@ class StandarBarangAreaController extends BaseController
         return [[
             'id_area'        => $areaId,
             'id_barang'      => $barangId,
-            'jumlah_standar' => $errors && !preg_match('/^\d{1,12}(?:\.\d{1,2})?$/', $jumlahRaw)
-                ? null
-                : number_format((float) $jumlahRaw, 2, '.', ''),
+            'jumlah_standar' => $jumlahStandar,
             'berlaku_mulai'  => $mulai,
             'berlaku_sampai' => $sampaiValue,
             'keterangan'     => $keterangan === '' ? null : $keterangan,
