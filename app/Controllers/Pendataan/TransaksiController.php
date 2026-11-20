@@ -163,15 +163,15 @@ class TransaksiController extends BaseController
                 'b.nama_barang',
                 's.kode_satuan',
                 's.nama_satuan',
-                'aa.kode_area AS kode_area_asal',
-                'aa.nama_area AS nama_area_asal',
-                'at.kode_area AS kode_area_tujuan',
-                'at.nama_area AS nama_area_tujuan',
+                'a_asal.kode_area AS kode_area_asal',
+                'a_asal.nama_area AS nama_area_asal',
+                'a_tujuan.kode_area AS kode_area_tujuan',
+                'a_tujuan.nama_area AS nama_area_tujuan',
             ])
             ->join('barang b', 'b.id_barang = d.id_barang')
             ->join('satuan s', 's.id_satuan = b.id_satuan')
-            ->join('area aa', 'aa.id_area = d.id_area_asal', 'left')
-            ->join('area at', 'at.id_area = d.id_area_tujuan', 'left')
+            ->join('area a_asal', 'a_asal.id_area = d.id_area_asal', 'left')
+            ->join('area a_tujuan', 'a_tujuan.id_area = d.id_area_tujuan', 'left')
             ->where('d.id_transaksi', $id)
             ->orderBy('d.id_detail', 'ASC')
             ->get()
