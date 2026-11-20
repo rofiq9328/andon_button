@@ -138,5 +138,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         // Pembuatan transaksi Draft: Admin dan Petugas Area.
         $routes->get('transaksi/tambah', 'Pendataan\TransaksiController::create', ['filter' => 'role:admin,petugas_area']);
         $routes->post('transaksi/simpan', 'Pendataan\TransaksiController::store', ['filter' => 'role:admin,petugas_area']);
+
+        // Saldo Barang: hanya menampilkan saldo aktual dan perbandingan kebutuhan.
+        $routes->get('saldo', 'Pendataan\SaldoBarangController::index', $rolesPendataan);
     });
 });
