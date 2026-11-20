@@ -61,11 +61,11 @@ class TransaksiController extends BaseController
         }
 
         if ($this->isValidDate($tanggalMulai)) {
-            $builder->where('DATE(t.tanggal_transaksi) >=', $tanggalMulai);
+            $builder->where('t.tanggal_transaksi >=', $tanggalMulai . ' 00:00:00');
         }
 
         if ($this->isValidDate($tanggalSelesai)) {
-            $builder->where('DATE(t.tanggal_transaksi) <=', $tanggalSelesai);
+            $builder->where('t.tanggal_transaksi <=', $tanggalSelesai . ' 23:59:59');
         }
 
         $transaksi = $builder
