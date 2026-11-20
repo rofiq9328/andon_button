@@ -38,6 +38,7 @@ $isPendataanSatuanActive = isMenuActive('pendataan/master/satuan', $current_path
 $isPendataanBarangActive = isMenuActive('pendataan/master/barang', $current_path);
 $isPendataanKebutuhanActive = isMenuActive('pendataan/master/kebutuhan-area', $current_path);
 $isPendataanTransaksiActive = isMenuActive('pendataan/transaksi', $current_path);
+$isPendataanSaldoActive = isMenuActive('pendataan/saldo', $current_path);
 $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
@@ -209,10 +210,11 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
-                         title="Modul Saldo Barang akan dibuat setelah Transaksi selesai">
+                      <a href="<?= base_url('pendataan/saldo') ?>"
+                         class="nav-link<?= $isPendataanSaldoActive ? ' active' : '' ?>"
+                         title="Saldo Barang">
                         <i class="nav-icon bi bi-box-seam"></i>
-                        <p>Saldo Barang <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                        <p>Saldo Barang</p>
                       </a>
                     </li>
                     <li class="nav-item">
