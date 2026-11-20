@@ -127,6 +127,63 @@ class TransaksiController extends BaseController
         ]);
     }
 
+    public function detail(int $id)
+    {
+        $db = db_connect();
+
+        $transaksi = $db->table('transaksi_barang t')
+            ->select([
+                't.*',
+                'p.full_name AS nama_pembuat',
+                'a.full_name AS nama_penyetuju',
+                'pr.full_name AS nama_pemroses',
+                'po.full_name AS nama_pemosting',
+            ])
+            ->join('users p', 'p.id = t.dibuat_oleh', 'left')
+            ->join('users a', 'a.id = t.disetujui_oleh', 'left')
+            ->join('users pr', 'pr.id = t.diproses_oleh', 'left')
+            ->join('users po', 'po.id = t.diposting_oleh', 'left')
+            ->where('t.id_transaksi', $id)
+            ->get()
+            ->getRowArray();
+
+        if (!$transaksi) {
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Data transaksi tidak ditemukan.');
+        }
+
+        $detail = $db->table('detail_transaksi_barang d')
+            ->select([
+                'd.id_detail',
+                'd.jumlah',
+                'd.keterangan AS keterangan_detail',
+                'd.kondisi_asal',
+                'd.kondisi_tujuan',
+                'b.kode_barang',
+                'b.nama_barang',
+                's.kode_satuan',
+                's.nama_satuan',
+                'aa.kode_area AS kode_area_asal',
+                'aa.nama_area AS nama_area_asal',
+                'at.kode_area AS kode_area_tujuan',
+                'at.nama_area AS nama_area_tujuan',
+            ])
+            ->join('barang b', 'b.id_barang = d.id_barang')
+            ->join('satuan s', 's.id_satuan = b.id_satuan')
+            ->join('area aa', 'aa.id_area = d.id_area_asal', 'left')
+            ->join('area at', 'at.id_area = d.id_area_tujuan', 'left')
+            ->where('d.id_transaksi', $id)
+            ->orderBy('d.id_detail', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return view('pendataan/transaksi/detail', [
+            'title'     => 'Detail Transaksi',
+            'transaksi' => $transaksi,
+            'detail'    => $detail,
+        ]);
+    }
+
     public function create()
     {
         if ($response = $this->createOnly()) {
