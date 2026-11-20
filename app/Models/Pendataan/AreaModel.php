@@ -14,6 +14,7 @@ class AreaModel extends PendataanModel
         'kode_area',
         'nama_area',
         'jenis_area',
+        'fungsi_stok',
         'deskripsi',
         'status',
     ];
