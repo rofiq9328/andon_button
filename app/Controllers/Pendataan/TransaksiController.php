@@ -260,11 +260,11 @@ class TransaksiController extends BaseController
             }
 
             $barangId = (int) $barangRaw;
-            $jumlah = filter_var($jumlahRaw, FILTER_VALIDATE_FLOAT);
-            if ($jumlah === false || !is_finite((float) $jumlah) || (float) $jumlah <= 0 || (float) $jumlah > 999999999999.99) {
-                $errors[] = 'Jumlah barang harus berupa angka lebih dari nol.';
+            if (!preg_match('/^\d{1,12}(?:\.\d{1,2})?$/', $jumlahRaw) || (float) $jumlahRaw <= 0) {
+                $errors[] = 'Jumlah barang harus berupa angka lebih dari nol dan maksimal dua angka desimal.';
                 continue;
             }
+            $jumlah = (float) $jumlahRaw;
 
             $activeBarangIds[] = $barangId;
             $detailRows[] = [
