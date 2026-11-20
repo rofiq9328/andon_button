@@ -190,7 +190,7 @@
 <!-- MODAL UPLOAD EXCEL -->
 <!-- ========================================================= -->
 <div class="modal fade" id="modalUploadExcel" tabindex="-1" aria-labelledby="modalUploadExcelLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="max-width: 600px;">
         <div class="modal-content upload-modal shadow">
             <div class="modal-header border-bottom">
                 <div class="d-flex align-items-center gap-3">
