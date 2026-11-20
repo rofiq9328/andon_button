@@ -124,5 +124,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('master/barang/simpan', 'Pendataan\BarangController::store', ['filter' => 'role:admin']);
         $routes->post('master/barang/ubah/(:num)', 'Pendataan\BarangController::update/$1', ['filter' => 'role:admin']);
         $routes->post('master/barang/status/(:num)', 'Pendataan\BarangController::toggleStatus/$1', ['filter' => 'role:admin']);
+
+        // Riwayat transaksi: dapat dilihat seluruh role Pendataan.
+        $routes->get('transaksi', 'Pendataan\TransaksiController::index', $rolesPendataan);
     });
 });
