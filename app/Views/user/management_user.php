@@ -378,8 +378,8 @@
               aria-labelledby="modal-edit-user-label"
               aria-hidden="true"
             >
-              <div class="modal-dialog">
-                <div class="modal-content">
+              <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+                <div class="modal-content user-modal shadow">
                   <form id="form-edit-user" action="" method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="id" id="edit-user-id" value="" />
@@ -428,8 +428,8 @@
                         <label class="form-check-label" for="edit-user-active">Aktifkan akun ini</label>
                       </div>
                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
                         Cancel
                       </button>
                       <button type="submit" class="btn btn-success">Save changes</button>
@@ -448,8 +448,8 @@
               aria-labelledby="modal-delete-user-label"
               aria-hidden="true"
             >
-              <div class="modal-dialog">
-                <div class="modal-content">
+              <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+                <div class="modal-content user-modal shadow">
                   <form id="form-delete-user" action="" method="post">
                     <?= csrf_field() ?>
                     <div class="modal-header border-bottom">
@@ -459,7 +459,7 @@
                       </h5>
                       <button
                         type="button"
-                        class="btn-close btn-close-white"
+                        class="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"
                       ></button>
@@ -470,8 +470,8 @@
                         Tindakan ini tidak bisa dibatalkan.
                       </p>
                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
                         Cancel
                       </button>
                       <button type="submit" class="btn btn-danger">Delete user</button>
