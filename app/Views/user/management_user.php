@@ -25,6 +25,73 @@
     .card-footer .pagination .page-link:focus {
         box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
     }
+
+    /* Desain modal Manajemen User disamakan dengan modal Upload Excel */
+    .user-modal .modal-content {
+        border: 0;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .user-modal .modal-header {
+        padding: 1.1rem 1.35rem;
+        background: #fff;
+    }
+    .user-modal .modal-title {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #212529;
+    }
+    .user-modal .modal-title-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #e8f5ee;
+        color: #198754;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .user-modal .modal-title-icon.icon-warning {
+        background: #fff4df;
+        color: #b7791f;
+    }
+    .user-modal .modal-title-icon.icon-danger {
+        background: #fde8e8;
+        color: #dc3545;
+    }
+    .user-modal .modal-body {
+        padding: 1.35rem;
+    }
+    .user-modal .form-label {
+        font-size: .9rem;
+        font-weight: 600;
+        color: #343a40;
+    }
+    .user-modal .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .12);
+    }
+    .user-modal .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    .user-modal .modal-footer {
+        padding: .95rem 1.35rem;
+        background: #fbfcfb;
+    }
+    .user-modal .delete-warning {
+        padding: 1rem;
+        border: 1px solid #f5d4d7;
+        border-radius: 10px;
+        background: #fff7f7;
+        color: #842029;
+    }
+
 </style>
 <?= $this->endSection() ?>
 
@@ -206,15 +273,18 @@
               aria-labelledby="modal-add-user-label"
               aria-hidden="true"
             >
-              <div class="modal-dialog">
-                <div class="modal-content">
+              <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+                <div class="modal-content user-modal shadow">
                   <form action="<?= base_url('users') ?>" method="post">
                     <?= csrf_field() ?>
-                    <div class="modal-header bg-success text-white">
-                      <h5 class="modal-title" id="modal-add-user-label"><i class="fas fa-user-plus me-1"></i> Add new user</h5>
+                    <div class="modal-header border-bottom">
+                      <h5 class="modal-title" id="modal-add-user-label">
+                        <span class="modal-title-icon"><i class="fas fa-user-plus"></i></span>
+                        <span>Add new user</span>
+                      </h5>
                       <button
                         type="button"
-                        class="btn-close btn-close-white"
+                        class="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"
                       ></button>
@@ -288,8 +358,8 @@
                         </label>
                       </div>
                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
                         Cancel
                       </button>
                       <button type="submit" class="btn btn-success">Create user</button>
@@ -313,8 +383,11 @@
                   <form id="form-edit-user" action="" method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="id" id="edit-user-id" value="" />
-                    <div class="modal-header bg-warning">
-                      <h5 class="modal-title" id="modal-edit-user-label"><i class="fas fa-edit me-1"></i> Edit user</h5>
+                    <div class="modal-header border-bottom">
+                      <h5 class="modal-title" id="modal-edit-user-label">
+                        <span class="modal-title-icon icon-warning"><i class="fas fa-edit"></i></span>
+                        <span>Edit user</span>
+                      </h5>
                       <button
                         type="button"
                         class="btn-close"
@@ -379,8 +452,11 @@
                 <div class="modal-content">
                   <form id="form-delete-user" action="" method="post">
                     <?= csrf_field() ?>
-                    <div class="modal-header bg-danger text-white">
-                      <h5 class="modal-title" id="modal-delete-user-label"><i class="fas fa-trash me-1"></i> Delete user</h5>
+                    <div class="modal-header border-bottom">
+                      <h5 class="modal-title" id="modal-delete-user-label">
+                        <span class="modal-title-icon icon-danger"><i class="fas fa-trash"></i></span>
+                        <span>Delete user</span>
+                      </h5>
                       <button
                         type="button"
                         class="btn-close btn-close-white"
@@ -389,7 +465,7 @@
                       ></button>
                     </div>
                     <div class="modal-body">
-                      <p class="mb-0">
+                      <p class="mb-0 delete-warning">
                         Yakin ingin menghapus user <strong id="delete-user-username">ini</strong>?
                         Tindakan ini tidak bisa dibatalkan.
                       </p>
