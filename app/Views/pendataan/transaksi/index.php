@@ -21,6 +21,7 @@
 <?= $this->section('content') ?>
 <?php
 $jenisLabel = [
+    'SALDO_AWAL' => 'Saldo Awal',
     'PENERIMAAN' => 'Barang Masuk',
     'PENGELUARAN' => 'Barang Keluar',
     'TRANSFER' => 'Pindah Area',
@@ -138,19 +139,25 @@ $totalTransaksi = array_sum($ringkasan);
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="trx-type-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+                            <div><div class="fw-bold">Saldo Awal</div><div class="small text-secondary">Pencatatan stok yang sudah dimiliki area sebelum transaksi berjalan.</div></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
                         <div class="d-flex align-items-center gap-3">
                             <span class="trx-type-icon"><i class="fa-solid fa-arrow-down-to-bracket"></i></span>
                             <div><div class="fw-bold">Barang Masuk</div><div class="small text-secondary">Penerimaan barang ke area penyimpanan atau pemakai.</div></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="d-flex align-items-center gap-3">
                             <span class="trx-type-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
                             <div><div class="fw-bold">Barang Keluar</div><div class="small text-secondary">Pengeluaran barang dari area.</div></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="d-flex align-items-center gap-3">
                             <span class="trx-type-icon"><i class="fa-solid fa-right-left"></i></span>
                             <div><div class="fw-bold">Pindah Area</div><div class="small text-secondary">Pemindahan barang dari satu area ke area lain.</div></div>
