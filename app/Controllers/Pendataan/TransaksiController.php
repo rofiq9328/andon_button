@@ -8,6 +8,7 @@ use App\Libraries\Roles;
 class TransaksiController extends BaseController
 {
     private const JENIS_TRANSAKSI = [
+        'SALDO_AWAL'  => 'Saldo Awal',
         'PENERIMAAN'  => 'Barang Masuk',
         'PENGELUARAN' => 'Barang Keluar',
         'TRANSFER'    => 'Pindah Area',
@@ -252,7 +253,7 @@ class TransaksiController extends BaseController
                 $areaAsal = (int) $areaAsalRaw;
             }
         }
-        if ($jenis === 'PENERIMAAN' || $jenis === 'TRANSFER') {
+        if (in_array($jenis, ['SALDO_AWAL', 'PENERIMAAN', 'TRANSFER'], true)) {
             if ($areaTujuanRaw === '' || !ctype_digit($areaTujuanRaw) || (int) $areaTujuanRaw < 1) {
                 $errors[] = 'Area tujuan wajib dipilih.';
             } else {
@@ -329,7 +330,7 @@ class TransaksiController extends BaseController
                 'id_area_asal'    => $areaAsal,
                 'id_area_tujuan'  => $areaTujuan,
                 'kondisi_asal'    => in_array($jenis, ['PENGELUARAN', 'TRANSFER'], true) ? $kondisi : null,
-                'kondisi_tujuan'  => in_array($jenis, ['PENERIMAAN', 'TRANSFER'], true) ? $kondisi : null,
+                'kondisi_tujuan'  => in_array($jenis, ['SALDO_AWAL', 'PENERIMAAN', 'TRANSFER'], true) ? $kondisi : null,
                 'jumlah'          => number_format((float) $jumlah, 2, '.', ''),
                 'keterangan'      => null,
             ];
