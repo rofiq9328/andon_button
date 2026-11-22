@@ -112,7 +112,7 @@ $oldAreaTujuan = (string) (old('id_area_tujuan') ?? '');
                             </select>
                         </div>
                         <div class="col-md-6" id="areaTujuanWrapper">
-                            <label class="form-label" for="areaTujuan">Area Tujuan <span class="text-danger">*</span></label>
+                            <label class="form-label" for="areaTujuan" id="areaTujuanLabel">Area Tujuan <span class="text-danger">*</span></label>
                             <select class="form-select" id="areaTujuan" name="id_area_tujuan">
                                 <option value="">Pilih Area Tujuan</option>
                                 <?php foreach ($areas as $area): ?>
@@ -182,7 +182,7 @@ $oldAreaTujuan = (string) (old('id_area_tujuan') ?? '');
 
             <div class="trx-note mb-3">
                 <i class="fa-solid fa-shield-halved me-1"></i>
-                <strong>Penyimpanan Draft:</strong> transaksi ini belum mengubah saldo barang. Saldo akan diproses setelah alur verifikasi dan posting ditetapkan.
+                <strong>Penyimpanan Draft:</strong> transaksi ini belum mengubah saldo barang. Untuk Saldo Awal, data stok yang sudah ada akan dicatat sebagai Draft terlebih dahulu dan belum masuk ke saldo aktual sampai proses posting ditetapkan.
             </div>
 
             <div class="d-flex justify-content-end gap-2 flex-wrap trx-actions">
@@ -231,11 +231,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateTypeFields() {
         const value = type.value;
         const needSource = value === 'PENGELUARAN' || value === 'TRANSFER';
-        const needTarget = value === 'PENERIMAAN' || value === 'TRANSFER';
+        const needTarget = value === 'SALDO_AWAL' || value === 'PENERIMAAN' || value === 'TRANSFER';
         sourceWrap.classList.toggle('d-none', !needSource);
         targetWrap.classList.toggle('d-none', !needTarget);
         source.required = needSource;
         target.required = needTarget;
+        document.getElementById('areaTujuanLabel').innerHTML = value === 'SALDO_AWAL' ? 'Area Pencatatan Stok <span class="text-danger">*</span>' : 'Area Tujuan <span class="text-danger">*</span>';
         if (!needSource) source.value = '';
         if (!needTarget) target.value = '';
     }
