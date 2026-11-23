@@ -366,7 +366,7 @@ class TransaksiController extends BaseController
 
         return view('pendataan/transaksi/create', [
             'title'          => 'Buat Transaksi Barang',
-            'jenisTransaksi' => self::JENIS_TRANSAKSI,
+            'jenisTransaksi' => $availableTypes,
             'kondisiBarang'  => self::KONDISI_BARANG,
             'barang'         => $barang,
             'areas'          => $areas,
