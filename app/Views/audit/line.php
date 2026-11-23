@@ -439,7 +439,7 @@ $lineTotal  = count($units);
                             toast: true,
                             position: 'top-end',
                             icon: 'success',
-                            title: 'Berhasil',
+                            title: 'Berhasil disimpan',
                             showConfirmButton: false,
                             timer: 1800,
                             timerProgressBar: true
@@ -680,7 +680,7 @@ $lineTotal  = count($units);
                             toast: true,
                             position: 'top-end',
                             icon: 'success',
-                            title: 'Berhasil',
+                            title: 'Berhasil disimpan',
                             showConfirmButton: false,
                             timer: 1800,
                             timerProgressBar: true
