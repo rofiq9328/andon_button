@@ -134,13 +134,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         // Riwayat transaksi: dapat dilihat seluruh role Pendataan.
         $routes->get('transaksi', 'Pendataan\TransaksiController::index', $rolesPendataan);
         $routes->get('transaksi/detail/(:num)', 'Pendataan\TransaksiController::detail/$1', $rolesPendataan);
-        $routes->post('transaksi/ajukan/(:num)', 'Pendataan\\TransaksiController::submit/$1', ['filter' => 'role:admin,petugas_area']);
-        $routes->get('transaksi/verifikasi', 'Pendataan\\TransaksiController::verifikasi', ['filter' => 'role:verifikator']);
-        $routes->post('transaksi/setujui/(:num)', 'Pendataan\\TransaksiController::setujui/$1', ['filter' => 'role:verifikator']);
-        $routes->post('transaksi/tolak/(:num)', 'Pendataan\\TransaksiController::tolak/$1', ['filter' => 'role:verifikator']);
-        $routes->post('transaksi/posting/(:num)', 'Pendataan\\TransaksiController::post/$1', ['filter' => 'role:admin']);
 
-        // Pembuatan transaksi Draft: Admin dan Petugas Area.
+        // Seluruh transaksi langsung memperbarui saldo. Saldo Awal dan Pindah Area divalidasi khusus Admin pada controller.
         $routes->get('transaksi/tambah', 'Pendataan\TransaksiController::create', ['filter' => 'role:admin,petugas_area']);
         $routes->post('transaksi/simpan', 'Pendataan\TransaksiController::store', ['filter' => 'role:admin,petugas_area']);
 
