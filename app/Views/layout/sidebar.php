@@ -95,7 +95,7 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                   </a>
                 </li>
               <?php endif; ?>
-              <?php if (\App\Libraries\Roles::hasAny(['admin', 'petugas_area', 'verifikator', 'viewer'])): ?>
+              <?php if (\App\Libraries\Roles::hasAny(['admin', 'petugas_area', 'viewer'])): ?>
                 <!-- Menu Pendataan Barang -->
                 <li class="nav-item<?= $isPendataanActive ? ' menu-open' : '' ?>">
                   <a
