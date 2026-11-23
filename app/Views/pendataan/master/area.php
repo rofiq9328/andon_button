@@ -140,7 +140,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
             <div class="col-md-7">
                 <div class="text-secondary small text-uppercase fw-semibold">Pendataan Barang / Master Data</div>
                 <h1 class="mb-1 fs-3">MASTER AREA</h1>
-                <div class="master-intro">Kelola lokasi Pusat dan Factory, termasuk pembagian area dan induknya.</div>
+                <div class="master-intro">Kelola Area Pusat maupun Factory serta pengaturan fungsi stok setiap lokasi.</div>
             </div>
             <div class="col-md-5 d-flex justify-content-md-end gap-2 flex-wrap">
                 <a href="<?= base_url('pendataan') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
