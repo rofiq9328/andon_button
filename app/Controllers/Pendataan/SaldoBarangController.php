@@ -41,7 +41,10 @@ class SaldoBarangController extends BaseController
             if ($areaFilter !== '') {
                 $builder->where('a.id_area', (int) $areaFilter);
             }
-            if ($fungsiFilter !== '') {
+            if ($fungsiFilter === 'PENYIMPANAN') {
+                // Fungsi Penyimpanan juga mencakup area dengan fungsi KEDUANYA.
+                $builder->whereIn('a.fungsi_stok', ['PENYIMPANAN', 'KEDUANYA']);
+            } elseif ($fungsiFilter !== '') {
                 $builder->where('a.fungsi_stok', $fungsiFilter);
             }
             if ($kategoriFilter !== '') {
