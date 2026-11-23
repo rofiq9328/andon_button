@@ -113,6 +113,21 @@ class AuditController extends BaseController
     }
 
     /**
+     * Button dianggap sudah diaudit jika seluruh kolom pemeriksaan sudah terisi.
+     * Hasil pemeriksaan bermasalah tetap dihitung sebagai sudah diaudit.
+     */
+    private function isUnitAudited(array $unit): bool
+    {
+        foreach (array_keys(self::BAD) as $field) {
+            if ($unit[$field] === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Sesi yang boleh dilihat user ini.
      */
     private function resolveSession(?int $sessionId): ?array
@@ -196,9 +211,11 @@ class AuditController extends BaseController
 
         $lines = [];
         foreach ($grouped as $line => $units) {
-            $row = ['line' => (int) $line, 'total' => count($units), 'ok' => 0, 'bad' => 0, 'partial' => 0, 'empty' => 0];
+            $row = ['line' => (int) $line, 'total' => count($units), 'audited' => 0];
             foreach ($units as $u) {
-                $row[$this->unitState($u)]++;
+                if ($this->isUnitAudited($u)) {
+                    $row['audited']++;
+                }
             }
             $lines[] = $row;
         }
