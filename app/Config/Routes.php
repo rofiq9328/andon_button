@@ -118,6 +118,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('master/kategori/simpan', 'Pendataan\KategoriBarangController::store', ['filter' => 'role:admin']);
         $routes->post('master/kategori/ubah/(:num)', 'Pendataan\KategoriBarangController::update/$1', ['filter' => 'role:admin']);
         $routes->post('master/kategori/status/(:num)', 'Pendataan\KategoriBarangController::toggleStatus/$1', ['filter' => 'role:admin']);
+        $routes->post('master/kategori/hapus/(:num)', 'Pendataan\KategoriBarangController::delete/$1', ['filter' => 'role:admin']);
 
         // Master Satuan: dapat dilihat role Pendataan, perubahan hanya Admin.
         $routes->get('master/satuan', 'Pendataan\SatuanController::index', $rolesPendataan);
