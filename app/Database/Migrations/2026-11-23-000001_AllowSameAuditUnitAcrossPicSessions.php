@@ -23,7 +23,7 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
 
         foreach ($indexes as $name => $columns) {
             if ($columns === self::OLD_COLUMNS) {
-                $this->forge->dropKey(self::TABLE, $name);
+                $this->forge->dropKey(self::TABLE, $name, false);
             }
         }
 
@@ -65,7 +65,7 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
 
         foreach ($this->getUniqueIndexes() as $name => $columns) {
             if ($columns === self::NEW_COLUMNS) {
-                $this->forge->dropKey(self::TABLE, $name);
+                $this->forge->dropKey(self::TABLE, $name, false);
             }
         }
 
