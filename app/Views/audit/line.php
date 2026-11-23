@@ -526,19 +526,6 @@ $lineTotal  = count($units);
             <div class="alert alert-danger shadow-sm"><?= esc(session()->getFlashdata('error')) ?></div>
         <?php endif; ?>
 
-        <!-- Toolbar -->
-        <div class="audit-toolbar mb-3">
-            <div class="d-flex justify-content-end align-items-center">
-                <span class="status-pill is-idle" id="save-status">
-                    <i class="fa-solid fa-circle-check"></i><span>Siap</span>
-                </span>
-            </div>
-
-            <?php if (!$editable): ?>
-                <div class="small text-secondary mt-2">Sesi terkunci. Data hanya bisa dilihat.</div>
-            <?php endif; ?>
-        </div>
-
         <?php if ($editable): ?>
             <form id="column-fill-form" method="post" action="<?= base_url('audit-andon/isi-cepat') ?>" class="d-none">
                 <?= csrf_field() ?>
