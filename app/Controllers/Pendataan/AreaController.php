@@ -37,9 +37,8 @@ class AreaController extends BaseController
     public function index()
     {
         $areas = db_connect()->table('area a')
-            ->select('a.*, f.kode_factory, f.nama_factory, p.kode_area AS parent_kode, p.nama_area AS parent_nama')
+            ->select('a.*, f.kode_factory, f.nama_factory')
             ->join('factory f', 'f.id_factory = a.id_factory', 'left')
-            ->join('area p', 'p.id_area = a.parent_area_id', 'left')
             ->orderBy('a.cakupan_area', 'ASC')
             ->orderBy('f.kode_factory', 'ASC')
             ->orderBy('a.kode_area', 'ASC')
