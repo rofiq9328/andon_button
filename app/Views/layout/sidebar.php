@@ -26,6 +26,7 @@ function isMenuActive($path, $current_path)
 
 $isDashboardActive     = isMenuActive('', $current_path);
 $isMasterButtonActive  = isMenuActive('andon/update-button', $current_path);
+$isAuditUnitMasterActive = isMenuActive('audit-andon/master-button', $current_path);
 $isUserManagementActive = isMenuActive('users', $current_path);
 $isAuditActive             = isMenuActive('audit-andon', $current_path);
 $isPendataanActive        = isMenuActive('pendataan', $current_path);
@@ -40,7 +41,7 @@ $isPendataanKebutuhanActive = isMenuActive('pendataan/master/kebutuhan-area', $c
 $isPendataanTransaksiActive = isMenuActive('pendataan/transaksi', $current_path);
 $isPendataanSaldoActive = isMenuActive('pendataan/saldo', $current_path);
 $isPendataanLaporanActive = isMenuActive('pendataan/laporan', $current_path);
-$isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
+$isSettingsActive         = $isMasterButtonActive || $isAuditUnitMasterActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
           <!--begin::Brand Link-->
@@ -255,6 +256,18 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                     >
                       <i class="nav-icon bi bi-circle"></i>
                       <p>Master Button</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a
+                      href="<?= base_url('audit-andon/master-button') ?>"
+                      class="nav-link<?= $isAuditUnitMasterActive ? ' active' : '' ?>"
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="right"
+                      title="Master Button Audit"
+                    >
+                      <i class="nav-icon bi bi-circle"></i>
+                      <p>Master Button Audit</p>
                     </a>
                   </li>
                   <li class="nav-item">
