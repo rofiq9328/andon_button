@@ -57,6 +57,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
         // User Management
         $routes->get('users', [UserController::class, 'index']);
+        $routes->post('audit-andon/hapus-sesi/(:num)', 'AuditController::deleteSession/$1');
         $routes->post('users', [UserController::class, 'store']);
         $routes->post('users/update/(:num)', [UserController::class, 'update/$1']);
         $routes->post('users/delete/(:num)', [UserController::class, 'delete/$1']);
