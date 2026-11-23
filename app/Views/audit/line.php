@@ -256,6 +256,221 @@
         padding: 0.25rem 0.6rem;
         font-size: 0.65rem;
     }
+
+
+    /* ===== Grid pemeriksaan audit per unit ===== */
+    .audit-unit-list {
+        display: grid;
+        gap: 0.85rem;
+        padding: 0.85rem;
+    }
+
+    .audit-unit-card {
+        overflow: hidden;
+        border: 1px solid var(--bs-border-color);
+        border-left: 4px solid var(--bs-secondary);
+        border-radius: 12px;
+        background: var(--bs-body-bg);
+    }
+
+    .audit-unit-card[data-state="ok"] { border-left-color: var(--bs-success); }
+    .audit-unit-card[data-state="bad"] { border-left-color: var(--bs-danger); }
+    .audit-unit-card[data-state="partial"] { border-left-color: var(--bs-warning); }
+    .audit-unit-card[data-state="empty"] { border-left-color: var(--bs-secondary); }
+
+    .audit-unit-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.55rem 0.85rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+    }
+
+    .audit-unit-identity,
+    .audit-unit-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .audit-unit-caption {
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--bs-secondary-color);
+    }
+
+    .audit-unit-number {
+        min-width: 2.1rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        color: var(--bs-body-color);
+    }
+
+    .audit-unit-state {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: var(--bs-secondary-bg);
+        color: var(--bs-secondary-color);
+    }
+
+    .audit-unit-card[data-state="ok"] .audit-unit-state {
+        background: var(--bs-success-bg-subtle);
+        color: var(--bs-success-text-emphasis);
+    }
+
+    .audit-unit-card[data-state="bad"] .audit-unit-state {
+        background: var(--bs-danger-bg-subtle);
+        color: var(--bs-danger-text-emphasis);
+    }
+
+    .audit-unit-card[data-state="partial"] .audit-unit-state {
+        background: var(--bs-warning-bg-subtle);
+        color: var(--bs-warning-text-emphasis);
+    }
+
+    .audit-unit-count {
+        font-size: 0.68rem;
+        color: var(--bs-secondary-color);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .audit-groups-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.6rem;
+        padding: 0.7rem;
+        align-items: stretch;
+    }
+
+    .audit-group-panel {
+        min-width: 0;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 9px;
+        overflow: hidden;
+        background: var(--bs-body-bg);
+    }
+
+    .audit-group-head {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-height: 32px;
+        padding: 0.38rem 0.55rem;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.035em;
+        text-transform: uppercase;
+        background: var(--bs-secondary-bg);
+        color: var(--bs-body-color);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .audit-group-head i { color: var(--bs-secondary-color); }
+
+    .audit-group-fields {
+        display: grid;
+        gap: 0.4rem;
+        padding: 0.45rem;
+    }
+
+    .audit-field {
+        min-width: 0;
+        padding: 0.38rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 7px;
+        background: var(--bs-tertiary-bg);
+    }
+
+    .audit-field.cell-ok {
+        background: rgba(25, 135, 84, 0.10);
+        border-color: rgba(25, 135, 84, 0.35);
+    }
+
+    .audit-field.cell-bad {
+        background: rgba(220, 53, 69, 0.10);
+        border-color: rgba(220, 53, 69, 0.35);
+    }
+
+    .audit-field.cell-empty { background: var(--bs-tertiary-bg); }
+
+    .audit-field-title {
+        margin-bottom: 0.3rem;
+        font-size: 0.66rem;
+        font-weight: 700;
+        color: var(--bs-secondary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+    .audit-choice-group {
+        display: flex;
+        width: 100%;
+        gap: 0.25rem;
+    }
+
+    .audit-choice-group .btn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0.27rem 0.25rem;
+        font-size: 0.66rem;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: normal;
+    }
+
+    .audit-choice-group .btn i {
+        font-size: 0.58rem;
+        margin-right: 0.12rem;
+    }
+
+    .audit-unit-note {
+        display: grid;
+        grid-template-columns: 115px minmax(0, 1fr);
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.85rem 0.7rem;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    .audit-unit-note label {
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--bs-secondary-color);
+    }
+
+    .audit-unit-note .form-control {
+        font-size: 0.75rem;
+    }
+
+    .audit-card > .card-footer {
+        padding: 0.55rem 0.85rem;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    @media (max-width: 1399.98px) {
+        .audit-groups-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 767.98px) {
+        .audit-groups-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .audit-unit-head { align-items: flex-start; }
+        .audit-unit-summary { align-items: flex-end; flex-direction: column; gap: 0.15rem; }
+    }
+
+    @media (max-width: 575.98px) {
+        .audit-unit-list { padding: 0.5rem; gap: 0.65rem; }
+        .audit-groups-grid { grid-template-columns: 1fr; gap: 0.5rem; padding: 0.5rem; }
+        .audit-group-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .audit-unit-note { grid-template-columns: 1fr; gap: 0.25rem; padding: 0.5rem; }
+    }
+
 </style>
 <?= $this->endSection() ?>
 
@@ -382,81 +597,85 @@ $lineTotal  = count($units);
             <?php endif; ?>
         </div>
 
-        <!-- Tabel unit -->
-        <div class="card audit-card">
-            <div class="card-body p-0">
-                <div class="table-responsive audit-wrap">
-                    <table class="table table-sm align-middle mb-0 audit-table">
-                        <thead>
-                            <tr>
-                                <th rowspan="2" class="sticky-col col-label text-start">Unit</th>
-                                <?php $gIdx = 0; foreach ($groups as $gName => $fields): ?>
-                                    <th colspan="<?= count($fields) ?>"
-                                        class="text-center grp-head<?= $gIdx % 2 ? ' grp-alt' : '' ?><?= $gIdx > 0 ? ' grp-start' : '' ?>">
-                                        <i class="fa-solid <?= $groupIcons[$gName] ?? 'fa-circle' ?>"></i><?= esc($gName) ?>
-                                    </th>
-                                    <?php $gIdx++; ?>
-                                <?php endforeach; ?>
-                                <th rowspan="2" class="col-label text-start grp-start">Catatan</th>
-                            </tr>
-                            <tr>
-                                <?php foreach ($flat as $def): ?>
-                                    <th class="text-center col-label<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"><?= esc($def['label']) ?></th>
-                                <?php endforeach; ?>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($units as $u): ?>
-                                <tr id="unit-<?= (int) $u['id'] ?>" data-unit="<?= (int) $u['id'] ?>" data-state="empty">
-                                    <td class="sticky-col bg-body text-center">
-                                        <span class="unit-no fw-bold"><?= (int) $u['line_no'] ?></span>
-                                    </td>
+        <!-- Grid pemeriksaan per unit -->
+        <div class="audit-card">
+            <div class="audit-unit-list" id="audit-unit-list">
+                <?php foreach ($units as $u): ?>
+                    <section class="audit-unit-card" id="unit-<?= (int) $u['id'] ?>"
+                             data-unit="<?= (int) $u['id'] ?>" data-state="empty"
+                             data-audit-filled="0" data-audit-bad="0">
+                        <div class="audit-unit-head">
+                            <div class="audit-unit-identity">
+                                <span class="audit-unit-caption">UNIT</span>
+                                <strong class="audit-unit-number"><?= (int) $u['line_no'] ?></strong>
+                            </div>
+                            <div class="audit-unit-summary">
+                                <span class="audit-unit-state">Belum diisi</span>
+                                <span class="audit-unit-count">0 / <?= (int) $fieldCount ?> pemeriksaan</span>
+                            </div>
+                        </div>
 
-                                    <?php foreach ($flat as $key => $def): ?>
-                                        <td class="text-center<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"
-                                            data-field="<?= $key ?>">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <?php foreach ($def['opts'] as $i => [$value, $good]): ?>
-                                                    <?php $rid = 'u' . (int) $u['id'] . '_' . $key . '_' . $i; ?>
-                                                    <input type="radio" class="btn-check audit-radio"
-                                                           name="u<?= (int) $u['id'] ?>_<?= $key ?>"
-                                                           id="<?= $rid ?>"
-                                                           value="<?= esc($value) ?>"
-                                                           data-unit="<?= (int) $u['id'] ?>"
-                                                           data-field="<?= $key ?>"
-                                                           data-bad="<?= $good ? '0' : '1' ?>"
-                                                           autocomplete="off"
-                                                           <?= ($u[$key] === $value) ? 'checked' : '' ?>
-                                                           <?= $editable ? '' : 'disabled' ?>>
-                                                    <label class="btn btn-outline-<?= $good ? 'success' : 'danger' ?>"
-                                                           for="<?= $rid ?>">
-                                                        <i class="fa-solid <?= $good ? 'fa-check' : 'fa-xmark' ?>"></i><?= esc($value) ?>
-                                                    </label>
-                                                <?php endforeach; ?>
+                        <div class="audit-groups-grid">
+                            <?php $gIdx = 0; foreach ($groups as $gName => $fields): ?>
+                                <section class="audit-group-panel">
+                                    <div class="audit-group-head group-tone-<?= (int) $gIdx ?>">
+                                        <i class="fa-solid <?= $groupIcons[$gName] ?? 'fa-circle' ?>"></i>
+                                        <span><?= esc($gName) ?></span>
+                                    </div>
+
+                                    <div class="audit-group-fields">
+                                        <?php foreach ($fields as $key => $def): ?>
+                                            <div class="audit-field cell-empty" data-field="<?= $key ?>"
+                                                 data-audit-filled="0" data-audit-bad="0">
+                                                <div class="audit-field-title"><?= esc($def['label']) ?></div>
+                                                <div class="btn-group btn-group-sm audit-choice-group" role="group">
+                                                    <?php foreach ($def['opts'] as $i => [$value, $good]): ?>
+                                                        <?php $rid = 'u' . (int) $u['id'] . '_' . $key . '_' . $i; ?>
+                                                        <input type="radio" class="btn-check audit-radio"
+                                                               name="u<?= (int) $u['id'] ?>_<?= $key ?>"
+                                                               id="<?= $rid ?>"
+                                                               value="<?= esc($value) ?>"
+                                                               data-unit="<?= (int) $u['id'] ?>"
+                                                               data-field="<?= $key ?>"
+                                                               data-bad="<?= $good ? '0' : '1' ?>"
+                                                               autocomplete="off"
+                                                               <?= ($u[$key] === $value) ? 'checked' : '' ?>
+                                                               <?= $editable ? '' : 'disabled' ?>>
+                                                        <label class="btn btn-outline-<?= $good ? 'success' : 'danger' ?>"
+                                                               for="<?= $rid ?>">
+                                                            <i class="fa-solid <?= $good ? 'fa-check' : 'fa-xmark' ?>"></i>
+                                                            <?= esc($value) ?>
+                                                        </label>
+                                                    <?php endforeach; ?>
+                                                </div>
                                             </div>
-                                        </td>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </section>
+                            <?php $gIdx++; endforeach; ?>
+                        </div>
 
-                                    <td class="grp-start">
-                                        <div class="input-group input-group-sm note-input">
-                                            <span class="input-group-text text-secondary"><i class="fa-solid fa-comment-dots"></i></span>
-                                            <input type="text" class="form-control"
-                                                   data-unit="<?= (int) $u['id'] ?>" data-field="catatan"
-                                                   value="<?= esc($u['catatan'] ?? '') ?>"
-                                                   placeholder="Tulis catatan"
-                                                   <?= $editable ? '' : 'disabled' ?>>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                        <div class="audit-unit-note">
+                            <label for="note-unit-<?= (int) $u['id'] ?>">
+                                <i class="fa-solid fa-comment-dots me-1"></i> Catatan Unit
+                            </label>
+                            <input type="text" class="form-control form-control-sm"
+                                   id="note-unit-<?= (int) $u['id'] ?>"
+                                   data-unit="<?= (int) $u['id'] ?>" data-field="catatan"
+                                   value="<?= esc($u['catatan'] ?? '') ?>"
+                                   placeholder="Tambahkan catatan bila diperlukan"
+                                   <?= $editable ? '' : 'disabled' ?>>
+                        </div>
+                    </section>
+                <?php endforeach; ?>
             </div>
             <?php if ($editable): ?>
                 <div class="card-footer small text-secondary d-flex justify-content-between flex-wrap gap-2">
                     <span><i class="fa-solid fa-cloud-arrow-up me-1"></i> Perubahan tersimpan otomatis.</span>
-                    <span>Tiap garis kecil di bawah nomor unit mewakili satu kolom: hijau normal, merah perlu perhatian, abu-abu belum diisi.</span>
+                    <span><i class="fa-solid fa-circle-check text-success me-1"></i> Normal
+                        <i class="fa-solid fa-circle-xmark text-danger ms-2 me-1"></i> Perlu perhatian
+                        <i class="fa-solid fa-circle text-secondary ms-2 me-1"></i> Belum diisi
+                    </span>
                 </div>
             <?php endif; ?>
         </div>
@@ -479,8 +698,8 @@ $lineTotal  = count($units);
         csrfHash:   <?= json_encode(csrf_hash()) ?>,
     };
 
-    const tableBody = document.querySelector('.audit-table tbody');
-    const rows = tableBody ? Array.from(tableBody.querySelectorAll('tr[data-unit]')) : [];
+    const unitList = document.getElementById('audit-unit-list');
+    const rows = unitList ? Array.from(unitList.querySelectorAll('.audit-unit-card[data-unit]')) : [];
     const statusEl = document.getElementById('save-status');
     const PILL = { idle: 'is-idle', saving: 'is-saving', saved: 'is-saved', error: 'is-error' };
     const ICON = {
@@ -499,47 +718,57 @@ $lineTotal  = count($units);
         statusEl.querySelector('span').textContent = text;
     }
 
-    function setCellState(td, selected) {
+    function setCellState(field, selected) {
         const filled = !!selected;
         const bad = filled && selected.dataset.bad === '1';
 
-        td.classList.toggle('cell-ok', filled && !bad);
-        td.classList.toggle('cell-bad', bad);
-        td.classList.toggle('cell-empty', !filled);
-        td.dataset.auditFilled = filled ? '1' : '0';
-        td.dataset.auditBad = bad ? '1' : '0';
+        field.classList.toggle('cell-ok', filled && !bad);
+        field.classList.toggle('cell-bad', bad);
+        field.classList.toggle('cell-empty', !filled);
+        field.dataset.auditFilled = filled ? '1' : '0';
+        field.dataset.auditBad = bad ? '1' : '0';
 
         return { filled: filled, bad: bad };
     }
 
-    function setRowState(tr, filled, badCount) {
+    function setRowState(row, filled, badCount) {
         let state = 'empty';
+        let label = 'Belum diisi';
+
         if (badCount > 0) {
             state = 'bad';
+            label = 'Perlu perhatian';
         } else if (filled === CFG.fieldCount) {
             state = 'ok';
+            label = 'Lengkap';
         } else if (filled > 0) {
             state = 'partial';
+            label = 'Belum lengkap';
         }
 
-        tr.dataset.auditFilled = String(filled);
-        tr.dataset.auditBad = String(badCount);
-        tr.dataset.state = state;
+        row.dataset.auditFilled = String(filled);
+        row.dataset.auditBad = String(badCount);
+        row.dataset.state = state;
+
+        const stateEl = row.querySelector('.audit-unit-state');
+        const countEl = row.querySelector('.audit-unit-count');
+        if (stateEl) stateEl.textContent = label;
+        if (countEl) countEl.textContent = filled + ' / ' + CFG.fieldCount + ' pemeriksaan';
     }
 
-    // Hitung sekali saat halaman dibuka; selanjutnya hanya sel yang berubah yang diperbarui.
-    rows.forEach(function (tr) {
+    // Inisialisasi status saat halaman dibuka.
+    rows.forEach(function (row) {
         let filled = 0;
         let badCount = 0;
 
-        tr.querySelectorAll('td[data-field]').forEach(function (td) {
-            const selected = td.querySelector('input.audit-radio:checked');
-            const state = setCellState(td, selected);
+        row.querySelectorAll('.audit-field[data-field]').forEach(function (field) {
+            const selected = field.querySelector('input.audit-radio:checked');
+            const state = setCellState(field, selected);
             if (state.filled) filled++;
             if (state.bad) badCount++;
         });
 
-        setRowState(tr, filled, badCount);
+        setRowState(row, filled, badCount);
     });
 
     async function autosave(payload) {
@@ -562,39 +791,37 @@ $lineTotal  = count($units);
             }
 
             inFlight--;
-            if (inFlight === 0) {
-                setStatus('saved', 'Tersimpan ' + data.time);
-            }
+            if (inFlight === 0) setStatus('saved', 'Tersimpan ' + data.time);
         } catch (e) {
             inFlight--;
             setStatus('error', 'Gagal menyimpan: ' + e.message);
         }
     }
 
-    // Satu listener untuk seluruh pilihan audit dan kolom catatan.
-    if (tableBody) {
-        tableBody.addEventListener('change', function (event) {
+    // Satu listener untuk pilihan audit dan catatan seluruh unit.
+    if (unitList) {
+        unitList.addEventListener('change', function (event) {
             const target = event.target;
             if (!(target instanceof HTMLInputElement)) return;
 
             if (target.matches('input.audit-radio')) {
-                const tr = target.closest('tr[data-unit]');
-                const td = target.closest('td[data-field]');
-                if (!tr || !td) return;
+                const row = target.closest('.audit-unit-card[data-unit]');
+                const field = target.closest('.audit-field[data-field]');
+                if (!row || !field) return;
 
-                const wasFilled = td.dataset.auditFilled === '1';
-                const wasBad = td.dataset.auditBad === '1';
+                const wasFilled = field.dataset.auditFilled === '1';
+                const wasBad = field.dataset.auditBad === '1';
                 const isBad = target.dataset.bad === '1';
 
-                let filled = Number(tr.dataset.auditFilled || 0);
-                let badCount = Number(tr.dataset.auditBad || 0);
+                let filled = Number(row.dataset.auditFilled || 0);
+                let badCount = Number(row.dataset.auditBad || 0);
 
                 if (!wasFilled) filled++;
                 if (wasBad) badCount--;
                 if (isBad) badCount++;
 
-                setCellState(td, target);
-                setRowState(tr, filled, badCount);
+                setCellState(field, target);
+                setRowState(row, filled, badCount);
 
                 if (CFG.editable) {
                     autosave({
@@ -616,7 +843,7 @@ $lineTotal  = count($units);
         });
     }
 
-    // Isi cepat: periksa cache status sel, tanpa mencari radio checked berulang kali.
+    // Isi cepat: jumlahkan kotak yang masih kosong tanpa memeriksa tiap radio ulang.
     const quickForm = document.getElementById('quick-form');
     if (quickForm) {
         quickForm.addEventListener('submit', function (e) {
@@ -626,27 +853,27 @@ $lineTotal  = count($units);
                 return;
             }
 
-            const field = quickForm.elements['field'].value;
-            let kosong = 0;
+            const selectedField = quickForm.elements['field'].value;
+            let emptyCount = 0;
 
-            rows.forEach(function (tr) {
-                tr.querySelectorAll('td[data-field]').forEach(function (td) {
-                    const cocok = field === 'all' || td.dataset.field === field;
-                    if (cocok && td.dataset.auditFilled !== '1') kosong++;
+            rows.forEach(function (row) {
+                row.querySelectorAll('.audit-field[data-field]').forEach(function (field) {
+                    const matches = selectedField === 'all' || field.dataset.field === selectedField;
+                    if (matches && field.dataset.auditFilled !== '1') emptyCount++;
                 });
             });
 
-            if (kosong === 0) {
+            if (emptyCount === 0) {
                 e.preventDefault();
                 alert('Tidak ada kotak kosong untuk pilihan ini.');
                 return;
             }
 
-            const ok = confirm(
-                'Isi ' + kosong + ' kotak kosong dengan nilai normal?\n\n' +
+            const confirmed = confirm(
+                'Isi ' + emptyCount + ' kotak kosong dengan nilai normal?\n\n' +
                 'Kotak yang sudah diisi tidak akan berubah.'
             );
-            if (!ok) e.preventDefault();
+            if (!confirmed) e.preventDefault();
         });
     }
 
