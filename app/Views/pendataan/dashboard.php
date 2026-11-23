@@ -101,8 +101,8 @@
                 [
                     'Laporan',
                     'fa-file-lines',
-                    'Rekap stok dan riwayat transaksi.',
-                    null,
+                    'Saldo per Area, riwayat barang masuk/keluar, dan mutasi pindah area.',
+                    base_url('pendataan/laporan'),
                 ],
             ];
 
@@ -118,7 +118,7 @@
                             <p class="pendataan-menu-description mb-3"><?= esc($deskripsi) ?></p>
                             <?php if ($url): ?>
                                 <a href="<?= esc($url, 'attr') ?>" class="btn btn-success btn-sm fw-bold">
-                                    <?= $judul === 'Master Data' ? 'BUKA MASTER DATA' : ($judul === 'Transaksi' ? 'BUKA TRANSAKSI' : 'BUKA SALDO BARANG') ?>
+                                    <?= $judul === 'Master Data' ? 'BUKA MASTER DATA' : ($judul === 'Transaksi' ? 'BUKA TRANSAKSI' : ($judul === 'Saldo Barang' ? 'BUKA SALDO BARANG' : 'BUKA LAPORAN')) ?>
                                     <i class="fa-solid fa-arrow-right ms-1"></i>
                                 </a>
                             <?php else: ?>
