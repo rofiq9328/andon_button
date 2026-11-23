@@ -189,10 +189,12 @@ class PicAssignmentController extends BaseController
      */
     public function delete(int $id)
     {
+        // Hanya hapus hubungan PIC dengan line.
+        // Hasil audit di audit_andon_detail adalah riwayat dan tidak ikut dihapus.
         (new PicAreaModel())->delete($id);
 
         return redirect()->to('/audit-andon/penugasan')
-            ->with('success', 'Penugasan dihapus.');
+            ->with('success', 'Penugasan dihapus. Hasil audit yang sudah tersimpan tetap dipertahankan.');
     }
 
 }
