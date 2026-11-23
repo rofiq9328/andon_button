@@ -170,11 +170,6 @@
         padding: 0.45rem 0.6rem;
     }
 
-    .audit-toolbar .progress-thin {
-        height: 6px;
-    }
-
-    .audit-toolbar .legend-chip,
     .audit-toolbar .status-pill {
         font-size: 0.7rem;
     }
@@ -353,27 +348,8 @@ $lineTotal  = count($units);
         <!-- Toolbar -->
         <div class="audit-toolbar mb-3">
             <div class="row g-3 align-items-center">
-                <div class="col-lg-4">
-                    <div class="d-flex justify-content-between small mb-1">
-                        <span class="fw-semibold">Progres line</span>
-                        <span class="text-secondary" id="prog-text">0 dari <?= $lineTotal ?> unit lengkap</span>
-                    </div>
-                    <div class="progress-thin progress">
-                        <div class="progress-bar bg-success" id="prog-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="d-flex flex-wrap gap-3">
-                        <span class="legend-chip"><span class="led-dot text-secondary"></span>Belum</span>
-                        <span class="legend-chip"><span class="led-dot text-warning"></span>Sebagian</span>
-                        <span class="legend-chip"><span class="led-dot text-success"></span>Lengkap</span>
-                        <span class="legend-chip"><span class="led-dot text-danger"></span>Perlu perhatian</span>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end align-items-center">
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center">
                         <span class="status-pill is-idle" id="save-status">
                             <i class="fa-solid fa-circle-check"></i><span>Siap</span>
                         </span>
@@ -507,9 +483,6 @@ $lineTotal  = count($units);
 
     const rows = Array.from(document.querySelectorAll('tr[data-unit]'));
     const statusEl = document.getElementById('save-status');
-    const progText = document.getElementById('prog-text');
-    const progBar  = document.getElementById('prog-bar');
-
     const LED  = { bad: 'text-danger', ok: 'text-success', partial: 'text-warning', empty: 'text-secondary' };
     const PILL = { idle: 'is-idle', saving: 'is-saving', saved: 'is-saved', error: 'is-error' };
     const ICON = {
@@ -563,18 +536,6 @@ $lineTotal  = count($units);
         tr.dataset.state = state;
     }
 
-    function refreshToolbar() {
-        let ok = 0;
-        rows.forEach(tr => {
-            if (tr.dataset.state === 'ok') {
-                ok++;
-            }
-        });
-        const total = rows.length;
-        progText.textContent = ok + ' dari ' + total + ' unit lengkap';
-        progBar.style.width = (total ? (ok / total * 100) : 0) + '%';
-    }
-
     async function autosave(payload) {
         inFlight++;
         setStatus('saving', 'Menyimpan…');
@@ -609,7 +570,6 @@ $lineTotal  = count($units);
         tr.querySelectorAll('input.audit-radio').forEach(r => {
             r.addEventListener('change', () => {
                 refreshRow(tr);
-                refreshToolbar();
                 if (CFG.editable) {
                     autosave({ unit_id: r.dataset.unit, field: r.dataset.field, value: r.value });
                 }
@@ -626,7 +586,6 @@ $lineTotal  = count($units);
 
         refreshRow(tr);
     });
-    refreshToolbar();
 
     // Isi cepat: hitung kotak kosong dulu, lalu minta konfirmasi
     const quickForm = document.getElementById('quick-form');
