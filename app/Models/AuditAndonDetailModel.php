@@ -70,6 +70,67 @@ class AuditAndonDetailModel extends Model
     }
 
     /**
+     * Ambil daftar line dalam satu sesi tanpa memuat semua detail unit.
+     */
+    public function getLinesForSession(int $auditId): array
+    {
+        $rows = $this->db->table($this->table)
+            ->select('line')
+            ->distinct()
+            ->where('audit_id', $auditId)
+            ->orderBy('line', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return array_map('intval', array_column($rows, 'line'));
+    }
+
+    /**
+     * Ambil detail hanya untuk line yang sedang dibuka.
+     */
+    public function getForSessionLine(int $auditId, int $line): array
+    {
+        return $this->where([
+            'audit_id' => $auditId,
+            'line'     => $line,
+        ])->orderBy('line_no', 'ASC')->findAll();
+    }
+
+    /**
+     * Ringkasan jumlah unit dan unit yang seluruh kolomnya sudah terisi.
+     * Menghitung langsung di database agar halaman daftar line tidak
+     * perlu mengambil semua baris detail ke memori PHP.
+     */
+    public function getProgressByLine(int $auditId): array
+    {
+        $requiredFields = [
+            'tersedia', 'kondisi_remote', 'visual_nomor',
+            'material_lampu', 'material_layar',
+            'mekanik_lampu', 'mekanik_layar',
+            'qc_lampu', 'qc_layar',
+            'spv_lampu', 'spv_layar',
+            'perbaikan_rusak', 'ganti_baterai',
+        ];
+
+        $conditions = array_map(
+            static function ($field) {
+                return $field . ' IS NOT NULL';
+            },
+            $requiredFields
+        );
+
+        $completeCase = 'CASE WHEN ' . implode(' AND ', $conditions) . ' THEN 1 ELSE 0 END';
+
+        return $this->db->table($this->table)
+            ->select('line, COUNT(*) AS total, SUM(' . $completeCase . ') AS audited', false)
+            ->where('audit_id', $auditId)
+            ->groupBy('line')
+            ->orderBy('line', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Semua unit untuk satu sesi, dikelompokkan per line.
      */
     public function getForSessionGrouped(int $auditId): array
