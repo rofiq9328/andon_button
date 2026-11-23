@@ -193,7 +193,7 @@
 
     .audit-table thead tr:nth-child(2) th {
         top: 26px;
-        height: 24px;
+        height: 48px;
     }
 
     .audit-table thead th.grp-head {
@@ -303,7 +303,50 @@
         border-color: rgba(220, 53, 69, 0.24);
     }
 
-    </style>
+    
+    /* Jarak tipis antar cell pemeriksaan, tanpa mengubah struktur tabel. */
+    .audit-table td[data-field] {
+        border: 2px solid var(--bs-body-bg) !important;
+        border-radius: 6px;
+        background-clip: padding-box;
+        box-shadow: inset 0 0 0 1px rgba(108, 117, 125, 0.30);
+    }
+
+    .audit-table td[data-field].grp-start {
+        border-left: 3px solid var(--bs-secondary-color) !important;
+    }
+
+    .audit-table .audit-column-header {
+        min-width: 76px;
+        padding: 0.2rem 0.12rem !important;
+        vertical-align: middle;
+    }
+
+    .audit-column-title {
+        margin-bottom: 0.18rem;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    .audit-column-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .audit-column-actions .btn {
+        min-width: 0;
+        padding: 0.08rem 0.18rem;
+        border-width: 1px;
+        border-radius: 4px;
+        font-size: 0.52rem;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -395,39 +438,26 @@ $lineTotal  = count($units);
 
         <!-- Toolbar -->
         <div class="audit-toolbar mb-3">
-            <div class="row g-3 align-items-center">
-                <div class="col-12">
-                    <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center">
-                        <span class="status-pill is-idle" id="save-status">
-                            <i class="fa-solid fa-circle-check"></i><span>Siap</span>
-                        </span>
-
-                        <?php if ($editable): ?>
-                            <form id="quick-form" method="post" action="<?= base_url('audit-andon/isi-cepat') ?>"
-                                  class="d-flex gap-2 align-items-center">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
-                                <input type="hidden" name="line" value="<?= (int) $line ?>">
-                                <select name="field" class="form-select form-select-sm" style="max-width: 240px;">
-                                    <option value="all">Semua kolom kosong</option>
-                                    <?php foreach ($flat as $key => $def): ?>
-                                        <option value="<?= $key ?>"><?= esc($def['group'] . ' · ' . $def['label']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button type="submit" class="btn btn-outline-success btn-sm fw-bold text-nowrap">
-                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> ISI CEPAT
-                                </button>
-                            </form>
-
-                        <?php endif; ?>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-end align-items-center">
+                <span class="status-pill is-idle" id="save-status">
+                    <i class="fa-solid fa-circle-check"></i><span>Siap</span>
+                </span>
             </div>
 
             <?php if (!$editable): ?>
                 <div class="small text-secondary mt-2">Sesi terkunci. Data hanya bisa dilihat.</div>
             <?php endif; ?>
         </div>
+
+        <?php if ($editable): ?>
+            <form id="column-fill-form" method="post" action="<?= base_url('audit-andon/isi-cepat') ?>" class="d-none">
+                <?= csrf_field() ?>
+                <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
+                <input type="hidden" name="line" value="<?= (int) $line ?>">
+                <input type="hidden" name="field" id="column-fill-field">
+                <input type="hidden" name="value" id="column-fill-value">
+            </form>
+        <?php endif; ?>
 
         <!-- Tabel unit -->
         <div class="card audit-card">
@@ -447,8 +477,24 @@ $lineTotal  = count($units);
                                 <th rowspan="2" class="col-label text-start grp-start">Catatan</th>
                             </tr>
                             <tr>
-                                <?php foreach ($flat as $def): ?>
-                                    <th class="text-center col-label<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"><?= esc($def['label']) ?></th>
+                                <?php foreach ($flat as $key => $def): ?>
+                                    <th class="text-center col-label audit-column-header<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>">
+                                        <div class="audit-column-title"><?= esc($def['label']) ?></div>
+                                        <?php if ($editable): ?>
+                                            <div class="audit-column-actions">
+                                                <?php foreach ($def['opts'] as [$optionValue, $optionGood]): ?>
+                                                    <button type="button"
+                                                            class="btn btn-outline-<?= $optionGood ? 'success' : 'danger' ?> audit-column-fill"
+                                                            data-field="<?= esc($key) ?>"
+                                                            data-value="<?= esc($optionValue) ?>"
+                                                            data-label="<?= esc($def['group'] . ' · ' . $def['label']) ?>"
+                                                            title="Terapkan <?= esc($optionValue) ?> ke semua unit">
+                                                        <?= esc($optionValue) ?>
+                                                    </button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </th>
                                 <?php endforeach; ?>
                             </tr>
                         </thead>
@@ -663,37 +709,35 @@ $lineTotal  = count($units);
         });
     }
 
-    // Isi cepat: periksa cache status sel, tanpa mencari radio checked berulang kali.
-    const quickForm = document.getElementById('quick-form');
-    if (quickForm) {
-        quickForm.addEventListener('submit', function (e) {
+    // Pilihan di header menerapkan satu nilai ke seluruh unit pada kolom terkait.
+    const columnFillForm = document.getElementById('column-fill-form');
+    const auditTable = document.querySelector('.audit-table');
+
+    if (auditTable && columnFillForm) {
+        auditTable.addEventListener('click', function (event) {
+            const button = event.target.closest('button.audit-column-fill');
+            if (!button || !CFG.editable) return;
+
             if (inFlight > 0) {
-                e.preventDefault();
                 alert('Tunggu sampai penyimpanan selesai, lalu coba lagi.');
                 return;
             }
 
-            const field = quickForm.elements['field'].value;
-            let kosong = 0;
+            const field = button.dataset.field;
+            const value = button.dataset.value;
+            const label = button.dataset.label || field;
+            const unitCount = rows.length;
 
-            rows.forEach(function (tr) {
-                tr.querySelectorAll('td[data-field]').forEach(function (td) {
-                    const cocok = field === 'all' || td.dataset.field === field;
-                    if (cocok && td.dataset.auditFilled !== '1') kosong++;
-                });
-            });
-
-            if (kosong === 0) {
-                e.preventDefault();
-                alert('Tidak ada kotak kosong untuk pilihan ini.');
-                return;
-            }
-
-            const ok = confirm(
-                'Isi ' + kosong + ' kotak kosong dengan nilai normal?\n\n' +
-                'Kotak yang sudah diisi tidak akan berubah.'
+            const confirmed = confirm(
+                'Terapkan "' + value + '" ke semua ' + unitCount + ' unit pada kolom ' + label + '?\n\n' +
+                'Isian lama pada kolom ini, jika ada, akan diganti.'
             );
-            if (!ok) e.preventDefault();
+
+            if (!confirmed) return;
+
+            columnFillForm.elements['field'].value = field;
+            columnFillForm.elements['value'].value = value;
+            columnFillForm.submit();
         });
     }
 
