@@ -206,7 +206,7 @@
                                             <?php
                                                 $assignedUserId = $assignedByLine[$line] ?? null;
                                                 $assignedName = $assignedUserId !== null
-                                                    ? ($picNames[$assignedUserId] ?? 'PIC lain')
+                                                    ? ($picNames[$assignedUserId] ?? 'IE LINE lain')
                                                     : '';
                                             ?>
                                             <label class="pic-line-option<?= $assignedUserId !== null ? ' is-assigned' : '' ?>">
@@ -304,7 +304,7 @@
         </div>
 
         <div class="small text-secondary mt-3">
-            Setiap line dipilih dan ditugaskan secara terpisah. Line yang sudah menjadi penugasan PIC lain tidak dapat dipilih kembali.
+            Setiap line dipilih dan ditugaskan secara terpisah. Line yang sudah menjadi penugasan IE LINE lain tidak dapat dipilih kembali.
             Mengubah penugasan tidak mengubah sesi yang sudah dibuat; perubahan berlaku saat PIC membuka form berikutnya.
         </div>
 
