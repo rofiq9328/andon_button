@@ -119,10 +119,10 @@
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-sm-7">
-                <div class="text-secondary small text-uppercase fw-semibold">Audit Andon <?= esc($session['periode']) ?></div>
+                <div class="text-secondary small text-uppercase fw-semibold">IE LINE · AUDIT ANDON <?= esc($session['periode']) ?></div>
                 <h1 class="mb-0 fs-3">DAFTAR LINE</h1>
                 <div class="text-secondary small">
-                    PIC: <?= esc($owner['full_name'] ?? $owner['username'] ?? '-') ?> ·
+                    IE LINE: <?= esc($owner['full_name'] ?? $owner['username'] ?? '-') ?> ·
                     Status: <span id="audit-session-status" class="fw-semibold"><?= strtoupper(esc($session['status'])) ?></span>
                 </div>
             </div>
@@ -173,7 +173,7 @@
                                                 <i class="fa-solid fa-table-cells-large"></i>
                                             </span>
                                             <div>
-                                                <div class="audit-line-caption">AUDIT ANDON</div>
+                                                <div class="audit-line-caption">IE LINE</div>
                                                 <div class="audit-line-title">LINE <?= (int) $l['line'] ?></div>
                                             </div>
                                         </div>
