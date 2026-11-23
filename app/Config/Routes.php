@@ -138,6 +138,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         // Seluruh transaksi langsung memperbarui saldo. Saldo Awal dan Pindah Area divalidasi khusus Admin pada controller.
         $routes->get('transaksi/tambah', 'Pendataan\TransaksiController::create', ['filter' => 'role:admin,petugas_area']);
         $routes->post('transaksi/simpan', 'Pendataan\TransaksiController::store', ['filter' => 'role:admin,petugas_area']);
+        $routes->post('transaksi/hapus-alur-lama/(:num)', 'Pendataan\TransaksiController::deleteLegacy/$1', ['filter' => 'role:admin']);
 
         // Laporan Barang: saldo per Area, riwayat transaksi, dan mutasi.
         $routes->get('laporan', 'Pendataan\LaporanBarangController::index', $rolesPendataan);
