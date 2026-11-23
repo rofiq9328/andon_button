@@ -43,6 +43,7 @@ $statusClass = [
     'DIBATALKAN' => 'text-bg-dark',
 ];
 $totalTransaksi = (int) $totalTransaksi;
+$isAdmin = \App\Libraries\Roles::has('admin');
 ?>
 <div class="app-content-header">
     <div class="container-fluid">
@@ -233,11 +234,21 @@ $totalTransaksi = (int) $totalTransaksi;
                                     </td>
                                     <td><span class="badge <?= esc($statusClass[$row['status_transaksi']] ?? 'text-bg-secondary') ?>"><?= esc($statusLabel[$row['status_transaksi']] ?? $row['status_transaksi']) ?></span></td>
                                     <td class="text-secondary"><?= esc($row['keterangan'] ?: '-') ?></td>
-                                    <td class="text-center">
+                                    <td class="text-center text-nowrap">
                                         <a href="<?= base_url('pendataan/transaksi/detail/' . (int) $row['id_transaksi']) ?>"
                                            class="btn btn-sm btn-outline-success" title="Lihat Detail">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
+                                        <?php if ($isAdmin && $row['alur_persetujuan'] === 'APPROVAL' && $row['status_transaksi'] !== 'DIPOSTING'): ?>
+                                            <form method="post" action="<?= base_url('pendataan/transaksi/hapus-alur-lama/' . (int) $row['id_transaksi']) ?>"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Hapus transaksi alur lama ini beserta rinciannya? Saldo barang tidak akan berubah.');">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Alur Lama">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
