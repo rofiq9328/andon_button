@@ -310,7 +310,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                             <?php endif; ?>
 
                             <tr id="areaNoResult" class="d-none">
-                                <td colspan="<?= $isAdmin ? 10 : 9 ?>" class="text-center text-secondary py-4">
+                                <td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-secondary py-4">
                                     Tidak ada Area yang cocok dengan pencarian.
                                 </td>
                             </tr>
