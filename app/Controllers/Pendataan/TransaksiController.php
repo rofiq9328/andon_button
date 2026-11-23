@@ -181,13 +181,95 @@ class TransaksiController extends BaseController
         $currentUserId = (int) (session()->get('user_id') ?? 0);
         $canSubmit = $transaksi['status_transaksi'] === 'DRAFT'
             && (Roles::has('admin') || (Roles::has('petugas_area') && (int) $transaksi['dibuat_oleh'] === $currentUserId));
+        $canVerify = $transaksi['status_transaksi'] === 'DIAJUKAN' && Roles::has('verifikator');
 
         return view('pendataan/transaksi/detail', [
             'title'     => 'Detail Transaksi',
             'transaksi' => $transaksi,
             'detail'    => $detail,
             'canSubmit' => $canSubmit,
+            'canVerify' => $canVerify,
         ]);
+    }
+
+    public function verifikasi()
+    {
+        if (!Roles::has('verifikator')) {
+            return redirect()->to('pendataan/transaksi')->with('error', 'Halaman ini khusus Verifikator.');
+        }
+
+        $rows = db_connect()->table('transaksi_barang t')
+            ->select('t.id_transaksi, t.nomor_transaksi, t.jenis_transaksi, t.tanggal_transaksi, t.keterangan, u.full_name AS nama_pembuat')
+            ->join('users u', 'u.id = t.dibuat_oleh', 'left')
+            ->where('t.status_transaksi', 'DIAJUKAN')
+            ->orderBy('t.tanggal_transaksi', 'ASC')
+            ->orderBy('t.id_transaksi', 'ASC')
+            ->get()->getResultArray();
+
+        return view('pendataan/transaksi/verifikasi', [
+            'title' => 'Verifikasi Transaksi',
+            'transaksi' => $rows,
+        ]);
+    }
+
+    public function setujui(int $id)
+    {
+        if (!Roles::has('verifikator')) {
+            return redirect()->to('pendataan/transaksi')->with('error', 'Anda tidak memiliki hak verifikasi.');
+        }
+
+        $userId = (int) (session()->get('user_id') ?? 0);
+        if ($userId < 1) {
+            return redirect()->to('pendataan/transaksi')->with('error', 'Sesi pengguna tidak valid.');
+        }
+
+        $db = db_connect();
+        $updated = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->where('status_transaksi', 'DIAJUKAN')
+            ->update([
+                'status_transaksi' => 'DISETUJUI',
+                'disetujui_oleh' => $userId,
+                'alasan_penolakan' => null,
+            ]);
+
+        if (!$updated || !$db->affectedRows()) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Transaksi tidak dapat disetujui. Pastikan statusnya masih Diajukan.');
+        }
+
+        return redirect()->to('pendataan/transaksi/detail/' . $id)
+            ->with('success', 'Transaksi berhasil disetujui. Saldo barang belum berubah.');
+    }
+
+    public function tolak(int $id)
+    {
+        if (!Roles::has('verifikator')) {
+            return redirect()->to('pendataan/transaksi')->with('error', 'Anda tidak memiliki hak verifikasi.');
+        }
+
+        $alasan = trim((string) $this->request->getPost('alasan_penolakan'));
+        if ($alasan === '' || strlen($alasan) > 5000) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Alasan penolakan wajib diisi dan maksimal 5.000 karakter.');
+        }
+
+        $db = db_connect();
+        $updated = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->where('status_transaksi', 'DIAJUKAN')
+            ->update([
+                'status_transaksi' => 'DITOLAK',
+                'alasan_penolakan' => $alasan,
+            ]);
+
+        if (!$updated || !$db->affectedRows()) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Transaksi tidak dapat ditolak. Pastikan statusnya masih Diajukan.');
+        }
+
+        return redirect()->to('pendataan/transaksi/detail/' . $id)
+            ->with('success', 'Transaksi berhasil ditolak dan alasan penolakan tersimpan. Saldo barang belum berubah.');
     }
 
     public function submit(int $id)
