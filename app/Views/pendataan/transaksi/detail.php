@@ -56,6 +56,12 @@ $kondisiLabel = [
                 <div class="trx-intro">Informasi transaksi dan rincian barang yang tercatat.</div>
             </div>
             <div class="col-md-4 d-flex justify-content-md-end flex-wrap gap-2">
+                <?php if (!empty($canVerify)): ?>
+                    <form method="post" action="<?= base_url('pendataan/transaksi/setujui/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Setujui transaksi ini? Saldo barang belum akan berubah.');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa-solid fa-check me-1"></i> SETUJUI</button>
+                    </form>
+                <?php endif; ?>
                 <?php if (!empty($canSubmit)): ?>
                     <form method="post" action="<?= base_url('pendataan/transaksi/ajukan/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Ajukan transaksi ini untuk diverifikasi?');">
                         <?= csrf_field() ?>
@@ -181,6 +187,14 @@ $kondisiLabel = [
                         <div class="trx-label">Diposting Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pemosting'] ?: '-') ?></div>
                     </div></div>
                 </div>
+                <?php if (!empty($canVerify)): ?>
+                    <form method="post" action="<?= base_url('pendataan/transaksi/tolak/' . (int) $transaksi['id_transaksi']) ?>" class="mt-3" onsubmit="return confirm('Tolak transaksi ini dengan alasan tersebut?');">
+                        <?= csrf_field() ?>
+                        <label for="alasan_penolakan" class="form-label fw-semibold">Alasan Penolakan <span class="text-danger">*</span></label>
+                        <textarea name="alasan_penolakan" id="alasan_penolakan" class="form-control mb-2" rows="3" maxlength="5000" required placeholder="Jelaskan alasan transaksi ditolak..."></textarea>
+                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-xmark me-1"></i> TOLAK TRANSAKSI</button>
+                    </form>
+                <?php endif; ?>
                 <?php if (!empty($transaksi['alasan_penolakan'])): ?>
                     <div class="alert alert-danger mt-3 mb-0">
                         <div class="fw-bold mb-1">Alasan Penolakan</div>
