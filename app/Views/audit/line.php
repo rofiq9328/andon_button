@@ -317,8 +317,8 @@
     }
 
     .audit-table .audit-column-header {
-        min-width: 76px;
-        padding: 0.2rem 0.12rem !important;
+        min-width: 100px;
+        padding: 0.28rem 0.2rem !important;
         vertical-align: middle;
     }
 
@@ -336,11 +336,13 @@
     }
 
     .audit-column-actions .btn {
+        flex: 0 0 auto;
         min-width: 0;
-        padding: 0.08rem 0.18rem;
+        min-height: 25px;
+        padding: 0.16rem 0.32rem;
         border-width: 1px;
-        border-radius: 4px;
-        font-size: 0.52rem;
+        border-radius: 5px;
+        font-size: 0.62rem;
         font-weight: 700;
         line-height: 1.25;
         white-space: nowrap;
@@ -719,7 +721,15 @@ $lineTotal  = count($units);
             if (!button || !CFG.editable) return;
 
             if (inFlight > 0) {
-                alert('Tunggu sampai penyimpanan selesai, lalu coba lagi.');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Penyimpanan berlangsung',
+                        text: 'Tunggu sampai penyimpanan selesai, lalu coba lagi.',
+                        icon: 'info',
+                        confirmButtonColor: '#0d6efd',
+                        confirmButtonText: 'OK'
+                    });
+                }
                 return;
             }
 
@@ -728,16 +738,28 @@ $lineTotal  = count($units);
             const label = button.dataset.label || field;
             const unitCount = rows.length;
 
-            const confirmed = confirm(
-                'Terapkan "' + value + '" ke semua ' + unitCount + ' unit pada kolom ' + label + '?\n\n' +
-                'Isian lama pada kolom ini, jika ada, akan diganti.'
-            );
+            if (typeof Swal === 'undefined') {
+                console.error('SweetAlert2 belum tersedia pada halaman ini.');
+                return;
+            }
 
-            if (!confirmed) return;
+            Swal.fire({
+                title: 'Terapkan ke Semua Unit?',
+                text: 'Nilai "' + value + '" pada kolom ' + label + ' akan diterapkan ke ' + unitCount +
+                      ' unit. Isian lama pada kolom ini akan diganti.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Terapkan',
+                cancelButtonText: 'Batal'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
 
-            columnFillForm.elements['field'].value = field;
-            columnFillForm.elements['value'].value = value;
-            columnFillForm.submit();
+                columnFillForm.elements['field'].value = field;
+                columnFillForm.elements['value'].value = value;
+                columnFillForm.submit();
+            });
         });
     }
 
