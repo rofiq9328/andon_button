@@ -109,75 +109,7 @@
 </style>
 <?= $this->endSection() ?>
 
-<?= $this->section('scripts') ?>
-<script>
-(function () {
-    const grid = document.getElementById('pic-line-grid');
-    if (!grid) return;
 
-    const checkboxes = Array.from(grid.querySelectorAll('.pic-line-checkbox'));
-    const countEl = document.getElementById('pic-line-selected-count');
-    const selectAllBtn = document.getElementById('pic-line-select-all');
-    const clearBtn = document.getElementById('pic-line-clear');
-    const form = document.getElementById('pic-assignment-form');
-
-    function updateCount() {
-        const selected = checkboxes.filter(function (checkbox) {
-            return checkbox.checked;
-        }).length;
-
-        countEl.textContent = selected + ' LINE DIPILIH';
-    }
-
-    checkboxes.forEach(function (checkbox) {
-        checkbox.addEventListener('change', updateCount);
-    });
-
-    if (selectAllBtn) {
-        selectAllBtn.addEventListener('click', function () {
-            checkboxes.forEach(function (checkbox) {
-                if (!checkbox.disabled) checkbox.checked = true;
-            });
-            updateCount();
-        });
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-            checkboxes.forEach(function (checkbox) {
-                checkbox.checked = false;
-            });
-            updateCount();
-        });
-    }
-
-    if (form) {
-        form.addEventListener('submit', function (event) {
-            const selected = checkboxes.some(function (checkbox) {
-                return checkbox.checked && !checkbox.disabled;
-            });
-
-            if (!selected) {
-                event.preventDefault();
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Pilih Line',
-                        text: 'Pilih minimal satu line untuk PIC ini.',
-                        confirmButtonColor: '#198754',
-                        confirmButtonText: 'OK'
-                    });
-                } else {
-                    alert('Pilih minimal satu line untuk PIC ini.');
-                }
-            }
-        });
-    }
-
-    updateCount();
-})();
-</script>
-<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
@@ -380,4 +312,74 @@
 </div>
 <!--end::App Content-->
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+(function () {
+    const grid = document.getElementById('pic-line-grid');
+    if (!grid) return;
+
+    const checkboxes = Array.from(grid.querySelectorAll('.pic-line-checkbox'));
+    const countEl = document.getElementById('pic-line-selected-count');
+    const selectAllBtn = document.getElementById('pic-line-select-all');
+    const clearBtn = document.getElementById('pic-line-clear');
+    const form = document.getElementById('pic-assignment-form');
+
+    function updateCount() {
+        const selected = checkboxes.filter(function (checkbox) {
+            return checkbox.checked;
+        }).length;
+
+        countEl.textContent = selected + ' LINE DIPILIH';
+    }
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', updateCount);
+    });
+
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function () {
+            checkboxes.forEach(function (checkbox) {
+                if (!checkbox.disabled) checkbox.checked = true;
+            });
+            updateCount();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = false;
+            });
+            updateCount();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            const selected = checkboxes.some(function (checkbox) {
+                return checkbox.checked && !checkbox.disabled;
+            });
+
+            if (!selected) {
+                event.preventDefault();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Pilih Line',
+                        text: 'Pilih minimal satu line untuk PIC ini.',
+                        confirmButtonColor: '#198754',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert('Pilih minimal satu line untuk PIC ini.');
+                }
+            }
+        });
+    }
+
+    updateCount();
+})();
+</script>
 <?= $this->endSection() ?>
