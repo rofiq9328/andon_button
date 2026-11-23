@@ -544,6 +544,47 @@ class AuditController extends BaseController
         return redirect()->to($target)->with('success', 'Data tersimpan.');
     }
 
+    /**
+     * Hapus satu sesi audit beserta seluruh detail hasil pemeriksaannya.
+     * Hanya admin yang dapat menghapus sesi.
+     */
+    public function deleteSession(int $sessionId)
+    {
+        if (!$this->isAdmin()) {
+            return redirect()->to('audit-andon/isi')
+                ->with('error', 'Hanya admin yang bisa menghapus sesi audit.');
+        }
+
+        $auditModel = new AuditAndonModel();
+        $session = $auditModel->find($sessionId);
+
+        if (!$session) {
+            return redirect()->to('audit-andon')
+                ->with('error', 'Sesi audit tidak ditemukan.');
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+
+        $db->table('audit_andon_detail')
+            ->where('audit_id', $sessionId)
+            ->delete();
+
+        $deleted = $auditModel->delete($sessionId);
+
+        if (!$deleted || !$db->transStatus()) {
+            $db->transRollback();
+
+            return redirect()->to('audit-andon?periode=' . rawurlencode($session['periode']))
+                ->with('error', 'Sesi audit gagal dihapus. Tidak ada data yang diubah.');
+        }
+
+        $db->transCommit();
+
+        return redirect()->to('audit-andon?periode=' . rawurlencode($session['periode']))
+            ->with('success', 'Sesi audit beserta seluruh hasil pemeriksaannya berhasil dihapus.');
+    }
+
     public function reopen(int $sessionId)
     {
         if (!$this->isAdmin()) {
