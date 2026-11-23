@@ -256,7 +256,54 @@
         padding: 0.25rem 0.6rem;
         font-size: 0.65rem;
     }
-</style>
+    /* ===== Per-cell visual refinement (layout and input behavior unchanged) ===== */
+    .audit-table td[data-field] {
+        padding: 0.2rem 0.24rem;
+        border: 1px solid rgba(108, 117, 125, 0.38);
+        border-radius: 7px;
+        background-clip: padding-box;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+        vertical-align: middle;
+    }
+
+    .audit-table td[data-field].cell-empty {
+        background-color: rgba(108, 117, 125, 0.065);
+        border-color: rgba(108, 117, 125, 0.38);
+    }
+
+    .audit-table td[data-field].cell-ok {
+        background-color: rgba(25, 135, 84, 0.085);
+        border-color: rgba(25, 135, 84, 0.42);
+    }
+
+    .audit-table td[data-field].cell-bad {
+        background-color: rgba(220, 53, 69, 0.09);
+        border-color: rgba(220, 53, 69, 0.44);
+    }
+
+    .audit-table td[data-field] .btn-group {
+        display: inline-flex;
+        gap: 2px;
+        padding: 2px;
+        border: 1px solid rgba(108, 117, 125, 0.24);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.52);
+    }
+
+    .audit-table td[data-field] .btn-group .btn {
+        min-width: 42px;
+        border-radius: 4px;
+    }
+
+    .audit-table td[data-field].cell-ok .btn-group {
+        border-color: rgba(25, 135, 84, 0.22);
+    }
+
+    .audit-table td[data-field].cell-bad .btn-group {
+        border-color: rgba(220, 53, 69, 0.24);
+    }
+
+    </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
