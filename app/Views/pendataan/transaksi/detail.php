@@ -56,6 +56,12 @@ $kondisiLabel = [
                 <div class="trx-intro">Informasi transaksi dan rincian barang yang tercatat.</div>
             </div>
             <div class="col-md-4 d-flex justify-content-md-end flex-wrap gap-2">
+                <?php if (!empty($canPost)): ?>
+                    <form method="post" action="<?= base_url('pendataan/transaksi/posting/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Posting transaksi ini dan perbarui saldo barang? Tindakan ini tidak dapat diulang.');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa-solid fa-boxes-stacked me-1"></i> POSTING TRANSAKSI</button>
+                    </form>
+                <?php endif; ?>
                 <?php if (!empty($canVerify)): ?>
                     <form method="post" action="<?= base_url('pendataan/transaksi/setujui/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Setujui transaksi ini? Saldo barang belum akan berubah.');">
                         <?= csrf_field() ?>
@@ -204,7 +210,12 @@ $kondisiLabel = [
             </div>
         </div>
 
-        <?php if ($transaksi['status_transaksi'] !== 'DIPOSTING'): ?>
+        <?php if (!empty($canPost)): ?>
+            <div class="trx-info">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Transaksi sudah disetujui dan menunggu posting Administrator. Saldo belum berubah sampai transaksi diposting.
+            </div>
+        <?php elseif ($transaksi['status_transaksi'] !== 'DIPOSTING'): ?>
             <div class="trx-info">
                 <i class="fa-solid fa-circle-info me-1"></i>
                 Transaksi ini belum berstatus Diposting. Tampilan detail ini tidak mengubah saldo barang.
