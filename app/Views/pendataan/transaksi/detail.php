@@ -25,12 +25,12 @@ $jenisLabel = [
     'TRANSFER' => 'Pindah Area',
 ];
 $statusLabel = [
-    'DRAFT' => 'Draft',
-    'DIAJUKAN' => 'Diajukan',
-    'DISETUJUI' => 'Disetujui',
-    'DITOLAK' => 'Ditolak',
-    'DIPOSTING' => 'Diposting',
-    'DIBATALKAN' => 'Dibatalkan',
+    'DRAFT' => 'Draft (Alur Lama)',
+    'DIAJUKAN' => 'Diajukan (Alur Lama)',
+    'DISETUJUI' => 'Disetujui (Alur Lama)',
+    'DITOLAK' => 'Ditolak (Alur Lama)',
+    'DIPOSTING' => 'Saldo Diperbarui',
+    'DIBATALKAN' => 'Dibatalkan (Alur Lama)',
 ];
 $statusClass = [
     'DRAFT' => 'text-bg-secondary',
@@ -94,8 +94,8 @@ $kondisiLabel = [
                         <div class="trx-value"><?= esc($jenisLabel[$transaksi['jenis_transaksi']] ?? $transaksi['jenis_transaksi']) ?></div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="trx-label">Alur Persetujuan</div>
-                        <div class="trx-value"><?= $transaksi['alur_persetujuan'] === 'LANGSUNG' ? 'Langsung' : 'Approval' ?></div>
+                        <div class="trx-label">Metode Pencatatan</div>
+                        <div class="trx-value"><?= $transaksi['alur_persetujuan'] === 'LANGSUNG' ? 'Langsung' : 'Alur Lama' ?></div>
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="trx-label">Dibuat Oleh</div>
