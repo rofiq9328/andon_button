@@ -64,7 +64,8 @@ class AuditAndonDetailModel extends Model
             ];
         }
 
-        // ignore: unit yang sudah ada (unique periode+line+line_no) tidak dobel
+        // ignore hanya unit yang sudah ada pada sesi audit yang sama.
+        // Line yang sama boleh memiliki hasil audit terpisah pada sesi/PIC lain.
         $this->db->table($this->table)->ignore(true)->insertBatch($rows);
     }
 
