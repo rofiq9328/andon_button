@@ -68,10 +68,20 @@ class AuditAndonModel extends Model
      */
     public function markSubmitted(int $sessionId): bool
     {
-        return (bool) $this->update($sessionId, [
-            'status'       => 'submitted',
-            'submitted_at' => date('Y-m-d H:i:s'),
-        ]);
+        $session = $this->find($sessionId);
+        if (!$session) {
+            return false;
+        }
+
+        $data = ['status' => 'submitted'];
+
+        // Simpan waktu submit pertama kali saja; autosave berikutnya tidak
+        // menggeser waktu submit setiap kali PIC mengubah isian.
+        if (empty($session['submitted_at'])) {
+            $data['submitted_at'] = date('Y-m-d H:i:s');
+        }
+
+        return (bool) $this->update($sessionId, $data);
     }
 
     /**
