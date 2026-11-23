@@ -42,7 +42,7 @@ $statusClass = [
     'DIPOSTING' => 'text-bg-success',
     'DIBATALKAN' => 'text-bg-dark',
 ];
-$totalTransaksi = array_sum($ringkasan);
+$totalTransaksi = (int) $totalTransaksi;
 ?>
 <div class="app-content-header">
     <div class="container-fluid">
@@ -50,7 +50,7 @@ $totalTransaksi = array_sum($ringkasan);
             <div class="col-md-8">
                 <div class="text-secondary small text-uppercase fw-semibold">Pendataan Barang / Transaksi</div>
                 <h1 class="mb-1 fs-3">TRANSAKSI BARANG</h1>
-                <div class="trx-intro">Pantau riwayat barang masuk, barang keluar, dan perpindahan barang antar area.</div>
+                <div class="trx-intro">Setiap transaksi langsung memperbarui saldo barang dan tercatat pada riwayat.</div>
             </div>
             <div class="col-md-4 d-flex justify-content-md-end">
                 <a href="<?= base_url('pendataan') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
@@ -71,64 +71,39 @@ $totalTransaksi = array_sum($ringkasan);
         <?php endif; ?>
 
         <div class="row g-3 mb-3">
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col-6 col-md-4 col-xl">
                 <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Total Transaksi</span>
-                        <span class="trx-type-icon"><i class="fa-solid fa-list-check"></i></span>
-                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2"><span class="trx-label">Total Transaksi</span><span class="trx-type-icon"><i class="fa-solid fa-list-check"></i></span></div>
                     <div class="trx-count"><?= number_format($totalTransaksi) ?></div>
-                    <div class="small text-secondary mt-1">Semua status</div>
+                    <div class="small text-secondary mt-1">Semua jenis transaksi</div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col-6 col-md-4 col-xl">
                 <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Draft</span>
-                        <span class="trx-type-icon"><i class="fa-regular fa-file-lines"></i></span>
-                    </div>
-                    <div class="trx-count"><?= number_format($ringkasan['DRAFT']) ?></div>
-                    <div class="small text-secondary mt-1">Belum diajukan</div>
+                    <div class="d-flex align-items-center justify-content-between mb-2"><span class="trx-label">Saldo Awal</span><span class="trx-type-icon"><i class="fa-solid fa-boxes-stacked"></i></span></div>
+                    <div class="trx-count"><?= number_format($ringkasanJenis['SALDO_AWAL']) ?></div>
+                    <div class="small text-secondary mt-1">Pencatatan saldo awal</div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col-6 col-md-4 col-xl">
                 <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Diajukan</span>
-                        <span class="trx-type-icon"><i class="fa-regular fa-paper-plane"></i></span>
-                    </div>
-                    <div class="trx-count"><?= number_format($ringkasan['DIAJUKAN']) ?></div>
-                    <div class="small text-secondary mt-1">Menunggu proses</div>
+                    <div class="d-flex align-items-center justify-content-between mb-2"><span class="trx-label">Barang Masuk</span><span class="trx-type-icon"><i class="fa-solid fa-arrow-down-to-bracket"></i></span></div>
+                    <div class="trx-count"><?= number_format($ringkasanJenis['PENERIMAAN']) ?></div>
+                    <div class="small text-secondary mt-1">Penambahan saldo</div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col-6 col-md-4 col-xl">
                 <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Disetujui</span>
-                        <span class="trx-type-icon"><i class="fa-regular fa-circle-check"></i></span>
-                    </div>
-                    <div class="trx-count"><?= number_format($ringkasan['DISETUJUI']) ?></div>
-                    <div class="small text-secondary mt-1">Siap diproses</div>
+                    <div class="d-flex align-items-center justify-content-between mb-2"><span class="trx-label">Barang Keluar</span><span class="trx-type-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span></div>
+                    <div class="trx-count"><?= number_format($ringkasanJenis['PENGELUARAN']) ?></div>
+                    <div class="small text-secondary mt-1">Pengurangan saldo</div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col-6 col-md-4 col-xl">
                 <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Diposting</span>
-                        <span class="trx-type-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
-                    </div>
-                    <div class="trx-count"><?= number_format($ringkasan['DIPOSTING']) ?></div>
-                    <div class="small text-secondary mt-1">Sudah diproses</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="trx-type-card p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="trx-label">Ditolak</span>
-                        <span class="trx-type-icon"><i class="fa-solid fa-ban"></i></span>
-                    </div>
-                    <div class="trx-count"><?= number_format($ringkasan['DITOLAK']) ?></div>
-                    <div class="small text-secondary mt-1">Perlu ditinjau</div>
+                    <div class="d-flex align-items-center justify-content-between mb-2"><span class="trx-label">Pindah Area</span><span class="trx-type-icon"><i class="fa-solid fa-right-left"></i></span></div>
+                    <div class="trx-count"><?= number_format($ringkasanJenis['TRANSFER']) ?></div>
+                    <div class="small text-secondary mt-1">Perpindahan saldo</div>
                 </div>
             </div>
         </div>
@@ -227,7 +202,7 @@ $totalTransaksi = array_sum($ringkasan);
                                 <th>Tanggal</th>
                                 <th>Jenis</th>
                                 <th>Dibuat Oleh</th>
-                                <th>Alur</th>
+                                <th>Metode</th>
                                 <th>Status</th>
                                 <th>Keterangan</th>
                                 <th class="text-center">Aksi</th>
@@ -253,7 +228,7 @@ $totalTransaksi = array_sum($ringkasan);
                                         <?php if ($row['alur_persetujuan'] === 'LANGSUNG'): ?>
                                             <span class="badge text-bg-secondary">Langsung</span>
                                         <?php else: ?>
-                                            <span class="badge text-bg-primary">Approval</span>
+                                            <span class="badge text-bg-warning">Alur Lama</span>
                                         <?php endif; ?>
                                     </td>
                                     <td><span class="badge <?= esc($statusClass[$row['status_transaksi']] ?? 'text-bg-secondary') ?>"><?= esc($statusLabel[$row['status_transaksi']] ?? $row['status_transaksi']) ?></span></td>
@@ -273,7 +248,7 @@ $totalTransaksi = array_sum($ringkasan);
             </div>
             <div class="card-footer bg-white small text-secondary">
                 <i class="fa-solid fa-circle-info me-1"></i>
-                Saldo Awal dan Pindah Area memperbarui saldo secara langsung oleh Administrator. Barang Masuk/Keluar memperbarui saldo setelah disetujui dan diposting.
+                Semua transaksi langsung memperbarui saldo saat disimpan. Saldo Awal dan Pindah Area hanya dapat dilakukan Administrator.
             </div>
         </div>
     </div>
