@@ -178,11 +178,68 @@ class TransaksiController extends BaseController
             ->get()
             ->getResultArray();
 
+        $currentUserId = (int) (session()->get('user_id') ?? 0);
+        $canSubmit = $transaksi['status_transaksi'] === 'DRAFT'
+            && (Roles::has('admin') || (Roles::has('petugas_area') && (int) $transaksi['dibuat_oleh'] === $currentUserId));
+
         return view('pendataan/transaksi/detail', [
             'title'     => 'Detail Transaksi',
             'transaksi' => $transaksi,
             'detail'    => $detail,
+            'canSubmit' => $canSubmit,
         ]);
+    }
+
+    public function submit(int $id)
+    {
+        $db = db_connect();
+        $currentUserId = (int) (session()->get('user_id') ?? 0);
+
+        if ($currentUserId < 1 || !Roles::hasAny(['admin', 'petugas_area'])) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Anda tidak memiliki hak untuk mengajukan transaksi.');
+        }
+
+        $transaction = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->get()
+            ->getRowArray();
+
+        if (!$transaction) {
+            return redirect()->to('pendataan/transaksi')->with('error', 'Data transaksi tidak ditemukan.');
+        }
+
+        if ($transaction['status_transaksi'] !== 'DRAFT') {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Hanya transaksi berstatus Draft yang dapat diajukan.');
+        }
+
+        if (!Roles::has('admin') && (int) $transaction['dibuat_oleh'] !== $currentUserId) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Petugas Area hanya dapat mengajukan Draft yang dibuat sendiri.');
+        }
+
+        $detailCount = $db->table('detail_transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->countAllResults();
+
+        if ($detailCount < 1) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Transaksi tidak memiliki rincian barang dan tidak dapat diajukan.');
+        }
+
+        $updated = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->where('status_transaksi', 'DRAFT')
+            ->update(['status_transaksi' => 'DIAJUKAN']);
+
+        if (!$updated || !$db->affectedRows()) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Pengajuan transaksi gagal. Silakan muat ulang halaman dan coba kembali.');
+        }
+
+        return redirect()->to('pendataan/transaksi/detail/' . $id)
+            ->with('success', 'Transaksi berhasil diajukan dan menunggu verifikasi. Saldo barang belum berubah.');
     }
 
     public function create()
