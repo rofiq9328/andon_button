@@ -37,6 +37,23 @@ class AuditController extends BaseController
         'ganti_baterai'   => 'NO',
     ];
 
+    /** Pilihan yang sah untuk pengisian massal per kolom. */
+    private const OPTIONS = [
+        'tersedia'        => ['ADA', 'TIDAK ADA'],
+        'kondisi_remote'  => ['ON', 'OFF'],
+        'visual_nomor'    => ['ADA', 'TIDAK ADA'],
+        'material_lampu'  => ['ON', 'OFF'],
+        'material_layar'  => ['MUNCUL', 'TIDAK'],
+        'mekanik_lampu'   => ['ON', 'OFF'],
+        'mekanik_layar'  => ['MUNCUL', 'TIDAK'],
+        'qc_lampu'        => ['ON', 'OFF'],
+        'qc_layar'        => ['MUNCUL', 'TIDAK'],
+        'spv_lampu'       => ['ON', 'OFF'],
+        'spv_layar'      => ['MUNCUL', 'TIDAK'],
+        'perbaikan_rusak' => ['NO', 'YES'],
+        'ganti_baterai'   => ['NO', 'YES'],
+    ];
+
     /** Nilai yang berarti perlu perhatian, dipakai untuk status unit. */
     private const BAD = [
         'tersedia'        => 'TIDAK ADA',
@@ -353,6 +370,37 @@ class AuditController extends BaseController
             return redirect()->to($target)->with('error', 'Sesi sudah terkunci.');
         }
 
+        // Pengisian massal untuk satu kolom: nilai dipilih dari tombol di header tabel.
+        $value = trim((string) $this->request->getPost('value'));
+        if ($value !== '') {
+            if (!isset(self::OPTIONS[$field]) || !in_array($value, self::OPTIONS[$field], true)) {
+                return redirect()->to($target)->with('error', 'Pilihan nilai tidak valid untuk kolom tersebut.');
+            }
+
+            $db = db_connect();
+            $total = $db->table('audit_andon_detail')
+                ->where('audit_id', $sessionId)
+                ->where('line', $line)
+                ->countAllResults();
+
+            if ($total < 1) {
+                return redirect()->to($target)->with('error', 'Tidak ada unit pada line ini.');
+            }
+
+            $db->table('audit_andon_detail')
+                ->where('audit_id', $sessionId)
+                ->where('line', $line)
+                ->update([
+                    $field       => $value,
+                    'updated_by' => $this->userId(),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+            return redirect()->to($target)
+                ->with('success', "{$field}: {$value} diterapkan ke {$total} unit.");
+        }
+
+        // Dukungan alur isi cepat lama tetap dipertahankan untuk kompatibilitas.
         $fields = $field === 'all' ? array_keys(self::NORMAL) : (isset(self::NORMAL[$field]) ? [$field] : []);
         if (empty($fields)) {
             return redirect()->to($target)->with('error', 'Kolom tidak valid.');
