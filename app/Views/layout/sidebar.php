@@ -39,6 +39,7 @@ $isPendataanBarangActive = isMenuActive('pendataan/master/barang', $current_path
 $isPendataanKebutuhanActive = isMenuActive('pendataan/master/kebutuhan-area', $current_path);
 $isPendataanTransaksiActive = isMenuActive('pendataan/transaksi', $current_path);
 $isPendataanSaldoActive = isMenuActive('pendataan/saldo', $current_path);
+$isPendataanLaporanActive = isMenuActive('pendataan/laporan', $current_path);
 $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
 ?>
 <div class="sidebar-brand">
@@ -218,10 +219,11 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a href="#" class="nav-link disabled" aria-disabled="true" tabindex="-1"
-                         title="Modul Laporan akan dibuat setelah Transaksi selesai">
+                      <a href="<?= base_url('pendataan/laporan') ?>"
+                         class="nav-link<?= $isPendataanLaporanActive ? ' active' : '' ?>"
+                         title="Laporan Barang">
                         <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
-                        <p>Laporan <span class="badge text-bg-secondary ms-2">Segera</span></p>
+                        <p>Laporan</p>
                       </a>
                     </li>
                   </ul>
