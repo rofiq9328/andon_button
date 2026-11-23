@@ -19,6 +19,7 @@
 <?= $this->section('content') ?>
 <?php
 $jenisLabel = [
+    'SALDO_AWAL' => 'Saldo Awal',
     'PENERIMAAN' => 'Barang Masuk',
     'PENGELUARAN' => 'Barang Keluar',
     'TRANSFER' => 'Pindah Area',
@@ -54,7 +55,15 @@ $kondisiLabel = [
                 <h1 class="mb-1 fs-3">DETAIL TRANSAKSI</h1>
                 <div class="trx-intro">Informasi transaksi dan rincian barang yang tercatat.</div>
             </div>
-            <div class="col-md-4 d-flex justify-content-md-end">
+            <div class="col-md-4 d-flex justify-content-md-end flex-wrap gap-2">
+                <?php if (!empty($canSubmit)): ?>
+                    <form method="post" action="<?= base_url('pendataan/transaksi/ajukan/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Ajukan transaksi ini untuk diverifikasi?');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-success btn-sm fw-bold">
+                            <i class="fa-solid fa-paper-plane me-1"></i> AJUKAN TRANSAKSI
+                        </button>
+                    </form>
+                <?php endif; ?>
                 <a href="<?= base_url('pendataan/transaksi') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
                     <i class="fa-solid fa-arrow-left me-1"></i> KEMBALI KE TRANSAKSI
                 </a>
@@ -65,6 +74,12 @@ $kondisiLabel = [
 
 <div class="app-content">
     <div class="container-fluid">
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success shadow-sm"><?= esc(session()->getFlashdata('success')) ?></div>
+        <?php endif; ?>
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alert alert-danger shadow-sm"><?= esc(session()->getFlashdata('error')) ?></div>
+        <?php endif; ?>
         <div class="card trx-card mb-3">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
