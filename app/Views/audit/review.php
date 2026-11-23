@@ -135,21 +135,15 @@ $tiles = [
         </div>
 
         <div class="card audit-card">
-            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="card-body">
                 <?php if ($editable): ?>
-                    <div class="text-secondary small">
-                        Setelah diserahkan, data masih bisa diubah sampai akhir bulan.
+                    <div class="alert alert-success mb-0">
+                        <i class="fa-solid fa-cloud-arrow-up me-2"></i>
+                        Setiap perubahan yang berhasil disimpan otomatis mengubah status sesi menjadi
+                        <strong>SUBMITTED</strong>. Data tetap bisa diperbarui selama periode berjalan.
                     </div>
-                    <form method="post" action="<?= base_url('audit-andon/simpan') ?>"
-                          onsubmit="return confirm('Serahkan data bulan ini?')">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="session_id" value="<?= (int) $session['id'] ?>">
-                        <button type="submit" name="action" value="serahkan" class="btn btn-success fw-bold">
-                            <i class="fa-solid fa-paper-plane me-1"></i> SERAHKAN DATA
-                        </button>
-                    </form>
                 <?php else: ?>
-                    <div class="alert alert-secondary mb-0 w-100">
+                    <div class="alert alert-secondary mb-0">
                         Sesi ini terkunci. Hanya admin yang bisa membukanya kembali.
                     </div>
                 <?php endif; ?>
