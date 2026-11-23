@@ -90,10 +90,10 @@ $isSettingsActive         = $isMasterButtonActive || $isAuditUnitMasterActive ||
                     class="nav-link<?= $isAuditActive ? ' active' : '' ?>"
                     data-bs-toggle="tooltip"
                     data-bs-placement="right"
-                    title="Audit Andon"
+                    title="IE LINE"
                   >
                     <i class="nav-icon bi bi-clipboard-check"></i>
-                    <p>Audit Andon</p>
+                    <p>IE LINE</p>
                   </a>
                 </li>
               <?php endif; ?>
