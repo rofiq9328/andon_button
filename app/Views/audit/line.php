@@ -335,17 +335,84 @@
         gap: 2px;
     }
 
+    /* Header tabel: seluruh judul kapital dan tebal. Warna hanya pada sel nama grup. */
+    .audit-table thead th {
+        text-transform: uppercase !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.055em;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-material {
+        background: #dc3545 !important;
+        color: #fff !important;
+        border-bottom: 2px solid #b02a37;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-mekanik {
+        background: #ffc107 !important;
+        color: #332701 !important;
+        border-bottom: 2px solid #d39e00;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-qc {
+        background: #198754 !important;
+        color: #fff !important;
+        border-bottom: 2px solid #146c43;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-spv {
+        background: #0d6efd !important;
+        color: #fff !important;
+        border-bottom: 2px solid #0a58ca;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-material i,
+    .audit-table thead tr:first-child th.grp-head.grp-qc i,
+    .audit-table thead tr:first-child th.grp-head.grp-spv i {
+        color: inherit;
+    }
+
+    .audit-table thead tr:first-child th.grp-head.grp-mekanik i {
+        color: inherit;
+    }
+
+    .audit-column-title {
+        font-weight: 800;
+    }
+
     .audit-column-actions .btn {
-        flex: 0 0 auto;
+        flex: 1 1 0;
         min-width: 0;
-        min-height: 25px;
-        padding: 0.16rem 0.32rem;
+        min-height: 28px;
+        padding: 0.18rem 0.2rem;
         border-width: 1px;
-        border-radius: 5px;
-        font-size: 0.62rem;
-        font-weight: 700;
-        line-height: 1.25;
+        border-radius: 6px !important;
+        font-size: 0.59rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: 0.015em;
+        text-transform: uppercase;
         white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(33, 37, 41, 0.10);
+        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .audit-column-actions .btn:hover {
+        box-shadow: 0 2px 5px rgba(33, 37, 41, 0.16);
+        transform: translateY(-1px);
+    }
+
+    .audit-column-actions .btn:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    .audit-column-actions .btn-outline-success {
+        background: rgba(25, 135, 84, 0.07);
+    }
+
+    .audit-column-actions .btn-outline-danger {
+        background: rgba(220, 53, 69, 0.07);
     }
 
 </style>
@@ -390,6 +457,13 @@ $groupIcons = [
     'QC/QA'     => 'fa-magnifying-glass-chart',
     'SPV'       => 'fa-user-tie',
     'Perbaikan' => 'fa-screwdriver-wrench',
+];
+
+$groupHeaderClasses = [
+    'Material'  => 'grp-material',
+    'Mekanik'   => 'grp-mekanik',
+    'QC/QA'     => 'grp-qc',
+    'SPV'       => 'grp-spv',
 ];
 
 $flat = [];
@@ -485,7 +559,7 @@ $lineTotal  = count($units);
                                 <th rowspan="2" class="sticky-col col-label text-start">Unit</th>
                                 <?php $gIdx = 0; foreach ($groups as $gName => $fields): ?>
                                     <th colspan="<?= count($fields) ?>"
-                                        class="text-center grp-head<?= $gIdx % 2 ? ' grp-alt' : '' ?><?= $gIdx > 0 ? ' grp-start' : '' ?>">
+                                        class="text-center grp-head<?= $gIdx % 2 ? ' grp-alt' : '' ?><?= $gIdx > 0 ? ' grp-start' : '' ?> <?= esc($groupHeaderClasses[$gName] ?? '') ?>">
                                         <i class="fa-solid <?= $groupIcons[$gName] ?? 'fa-circle' ?>"></i><?= esc($gName) ?>
                                     </th>
                                     <?php $gIdx++; ?>
