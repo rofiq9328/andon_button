@@ -350,60 +350,74 @@
 
     .audit-group-panel {
         min-width: 0;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid rgba(108, 117, 125, 0.55);
         border-radius: 9px;
         overflow: hidden;
         background: var(--bs-body-bg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .audit-group-head {
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        min-height: 32px;
-        padding: 0.38rem 0.55rem;
-        font-size: 0.68rem;
+        min-height: 34px;
+        padding: 0.42rem 0.6rem;
+        font-size: 0.69rem;
         font-weight: 800;
-        letter-spacing: 0.035em;
+        letter-spacing: 0.045em;
         text-transform: uppercase;
         background: var(--bs-secondary-bg);
         color: var(--bs-body-color);
-        border-bottom: 1px solid var(--bs-border-color);
+        border-bottom: 2px solid rgba(108, 117, 125, 0.35);
     }
 
     .audit-group-head i { color: var(--bs-secondary-color); }
 
     .audit-group-fields {
         display: grid;
-        gap: 0.4rem;
-        padding: 0.45rem;
+        gap: 0.5rem;
+        padding: 0.55rem;
+        background: var(--bs-tertiary-bg);
     }
 
+    /* Setiap pemeriksaan dibuat seperti satu cell tersendiri agar batasnya jelas. */
     .audit-field {
         min-width: 0;
-        padding: 0.38rem;
-        border: 1px solid var(--bs-border-color);
+        min-height: 66px;
+        padding: 0.45rem;
+        border: 1px solid rgba(108, 117, 125, 0.55);
+        border-left: 3px solid var(--bs-secondary);
         border-radius: 7px;
-        background: var(--bs-tertiary-bg);
+        background: var(--bs-body-bg);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     .audit-field.cell-ok {
         background: rgba(25, 135, 84, 0.10);
-        border-color: rgba(25, 135, 84, 0.35);
+        border-color: rgba(25, 135, 84, 0.50);
+        border-left-color: var(--bs-success);
     }
 
     .audit-field.cell-bad {
         background: rgba(220, 53, 69, 0.10);
-        border-color: rgba(220, 53, 69, 0.35);
+        border-color: rgba(220, 53, 69, 0.50);
+        border-left-color: var(--bs-danger);
     }
 
-    .audit-field.cell-empty { background: var(--bs-tertiary-bg); }
+    .audit-field.cell-empty {
+        background: var(--bs-tertiary-bg);
+        border-left-color: var(--bs-secondary);
+    }
 
     .audit-field-title {
-        margin-bottom: 0.3rem;
-        font-size: 0.66rem;
-        font-weight: 700;
-        color: var(--bs-secondary-color);
+        margin: 0 0 0.42rem;
+        padding-bottom: 0.32rem;
+        border-bottom: 1px solid rgba(108, 117, 125, 0.30);
+        font-size: 0.67rem;
+        font-weight: 750;
+        line-height: 1.2;
+        color: var(--bs-body-color);
         text-transform: uppercase;
         letter-spacing: 0.035em;
     }
@@ -417,7 +431,9 @@
     .audit-choice-group .btn {
         flex: 1 1 0;
         min-width: 0;
+        min-height: 30px;
         padding: 0.27rem 0.25rem;
+        border-width: 1.5px;
         font-size: 0.66rem;
         font-weight: 700;
         line-height: 1.25;
