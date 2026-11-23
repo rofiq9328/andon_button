@@ -201,7 +201,6 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                 <th>Nama Area</th>
                                 <th style="width:125px;">Cakupan</th>
                                 <th>Factory</th>
-                                <th>Induk Area</th>
                                 <th style="width:145px;">Jenis</th>
                                 <th style="width:165px;">Fungsi Stok</th>
                                 <th class="text-center" style="width:105px;">Status</th>
@@ -213,7 +212,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                         <tbody id="areaTableBody">
                             <?php if (empty($areas)): ?>
                                 <tr>
-                                    <td colspan="<?= $isAdmin ? 10 : 9 ?>" class="text-center text-secondary py-5">
+                                    <td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-secondary py-5">
                                         <i class="fa-solid fa-map-location-dot fa-2x mb-2 d-block opacity-50"></i>
                                         Belum ada data Area. Silakan tambahkan Area pertama.
                                     </td>
@@ -224,14 +223,10 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                     $factoryLabel = $area['kode_factory']
                                         ? $area['kode_factory'] . ' - ' . $area['nama_factory']
                                         : '-';
-                                    $parentLabel = $area['parent_kode']
-                                        ? $area['parent_kode'] . ' - ' . $area['parent_nama']
-                                        : '-';
                                     $searchText = strtolower(
                                         $area['kode_area'] . ' ' .
                                         $area['nama_area'] . ' ' .
                                         $factoryLabel . ' ' .
-                                        $parentLabel . ' ' .
                                         $area['jenis_area'] . ' ' .
                                         $area['fungsi_stok'] . ' ' .
                                         $area['cakupan_area']
@@ -254,7 +249,6 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                             <?php endif; ?>
                                         </td>
                                         <td><?= esc($factoryLabel) ?></td>
-                                        <td><?= esc($parentLabel) ?></td>
                                         <td>
                                             <span class="badge text-bg-light border text-dark">
                                                 <?= esc(str_replace('_', ' ', $area['jenis_area'])) ?>
