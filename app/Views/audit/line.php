@@ -383,25 +383,22 @@
     .audit-field {
         min-width: 0;
         padding: 0.38rem;
-        border: 1.5px solid rgba(108, 117, 125, 0.55);
+        border: 1px solid var(--bs-border-color);
         border-radius: 7px;
-        background: var(--bs-body-bg);
+        background: var(--bs-tertiary-bg);
     }
 
     .audit-field.cell-ok {
         background: rgba(25, 135, 84, 0.10);
-        border-color: rgba(25, 135, 84, 0.55);
+        border-color: rgba(25, 135, 84, 0.35);
     }
 
     .audit-field.cell-bad {
         background: rgba(220, 53, 69, 0.10);
-        border-color: rgba(220, 53, 69, 0.55);
+        border-color: rgba(220, 53, 69, 0.35);
     }
 
-    .audit-field.cell-empty {
-        background: var(--bs-tertiary-bg);
-        border-color: rgba(108, 117, 125, 0.55);
-    }
+    .audit-field.cell-empty { background: var(--bs-tertiary-bg); }
 
     .audit-field-title {
         margin-bottom: 0.3rem;
@@ -428,7 +425,7 @@
         white-space: normal;
     }
 
-        .audit-choice-group .btn i {
+    .audit-choice-group .btn i {
         font-size: 0.58rem;
         margin-right: 0.12rem;
     }
