@@ -273,7 +273,7 @@ $totalTransaksi = array_sum($ringkasan);
             </div>
             <div class="card-footer bg-white small text-secondary">
                 <i class="fa-solid fa-circle-info me-1"></i>
-                Halaman ini menampilkan riwayat dan status transaksi. Form input, persetujuan, dan pembaruan saldo akan dibuat mengikuti alur kerja yang ditetapkan.
+                Saldo Awal dan Pindah Area memperbarui saldo secara langsung oleh Administrator. Barang Masuk/Keluar memperbarui saldo setelah disetujui dan diposting.
             </div>
         </div>
     </div>
