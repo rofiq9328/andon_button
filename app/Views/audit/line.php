@@ -658,7 +658,19 @@ $lineTotal  = count($units);
 
             inFlight--;
             if (inFlight === 0) {
-                setStatus('saved', 'Tersimpan ' + data.time);
+                setStatus('saved', 'Berhasil');
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Berhasil',
+                        showConfirmButton: false,
+                        timer: 1400,
+                        timerProgressBar: true
+                    });
+                }
             }
         } catch (e) {
             inFlight--;
