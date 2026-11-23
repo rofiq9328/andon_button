@@ -115,7 +115,7 @@ class TransaksiController extends BaseController
             'title'          => 'Transaksi Barang',
             'transaksi'      => $transaksi,
             'ringkasan'      => $ringkasan,
-            'jenisTransaksi' => self::JENIS_TRANSAKSI,
+            'jenisTransaksi' => $availableTypes,
             'statusTransaksi'=> self::STATUS_TRANSAKSI,
             'canCreate'      => $this->canCreate(),
             'filter'         => [
@@ -179,9 +179,13 @@ class TransaksiController extends BaseController
             ->getResultArray();
 
         $currentUserId = (int) (session()->get('user_id') ?? 0);
-        $canSubmit = $transaksi['status_transaksi'] === 'DRAFT'
+        $isDirectStockType = in_array($transaksi['jenis_transaksi'], ['SALDO_AWAL', 'TRANSFER'], true);
+        $canSubmit = !$isDirectStockType
+            && $transaksi['status_transaksi'] === 'DRAFT'
             && (Roles::has('admin') || (Roles::has('petugas_area') && (int) $transaksi['dibuat_oleh'] === $currentUserId));
-        $canVerify = $transaksi['status_transaksi'] === 'DIAJUKAN' && Roles::has('verifikator');
+        $canVerify = !$isDirectStockType
+            && $transaksi['status_transaksi'] === 'DIAJUKAN'
+            && Roles::has('verifikator');
 
         return view('pendataan/transaksi/detail', [
             'title'     => 'Detail Transaksi',
@@ -202,6 +206,7 @@ class TransaksiController extends BaseController
             ->select('t.id_transaksi, t.nomor_transaksi, t.jenis_transaksi, t.tanggal_transaksi, t.keterangan, u.full_name AS nama_pembuat')
             ->join('users u', 'u.id = t.dibuat_oleh', 'left')
             ->where('t.status_transaksi', 'DIAJUKAN')
+            ->whereNotIn('t.jenis_transaksi', ['SALDO_AWAL', 'TRANSFER'])
             ->orderBy('t.tanggal_transaksi', 'ASC')
             ->orderBy('t.id_transaksi', 'ASC')
             ->get()->getResultArray();
@@ -227,6 +232,7 @@ class TransaksiController extends BaseController
         $updated = $db->table('transaksi_barang')
             ->where('id_transaksi', $id)
             ->where('status_transaksi', 'DIAJUKAN')
+            ->whereNotIn('jenis_transaksi', ['SALDO_AWAL', 'TRANSFER'])
             ->update([
                 'status_transaksi' => 'DISETUJUI',
                 'disetujui_oleh' => $userId,
@@ -258,6 +264,7 @@ class TransaksiController extends BaseController
         $updated = $db->table('transaksi_barang')
             ->where('id_transaksi', $id)
             ->where('status_transaksi', 'DIAJUKAN')
+            ->whereNotIn('jenis_transaksi', ['SALDO_AWAL', 'TRANSFER'])
             ->update([
                 'status_transaksi' => 'DITOLAK',
                 'alasan_penolakan' => $alasan,
@@ -296,6 +303,11 @@ class TransaksiController extends BaseController
                 ->with('error', 'Hanya transaksi berstatus Draft yang dapat diajukan.');
         }
 
+        if (in_array($transaction['jenis_transaksi'], ['SALDO_AWAL', 'TRANSFER'], true)) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Saldo Awal dan Pindah Area menggunakan pencatatan langsung oleh Administrator, bukan alur pengajuan.');
+        }
+
         if (!Roles::has('admin') && (int) $transaction['dibuat_oleh'] !== $currentUserId) {
             return redirect()->to('pendataan/transaksi/detail/' . $id)
                 ->with('error', 'Petugas Area hanya dapat mengajukan Draft yang dibuat sendiri.');
@@ -331,7 +343,11 @@ class TransaksiController extends BaseController
         }
 
         $jenis = strtoupper(trim((string) $this->request->getGet('jenis')));
-        if (!isset(self::JENIS_TRANSAKSI[$jenis])) {
+        $availableTypes = self::JENIS_TRANSAKSI;
+        if (!Roles::has('admin')) {
+            unset($availableTypes['SALDO_AWAL'], $availableTypes['TRANSFER']);
+        }
+        if (!isset($availableTypes[$jenis])) {
             $jenis = 'PENERIMAAN';
         }
 
@@ -376,6 +392,9 @@ class TransaksiController extends BaseController
 
         if (!isset(self::JENIS_TRANSAKSI[$jenis])) {
             $errors[] = 'Jenis transaksi tidak valid.';
+        }
+        if (in_array($jenis, ['SALDO_AWAL', 'TRANSFER'], true) && !Roles::has('admin')) {
+            $errors[] = 'Saldo Awal dan Pindah Area hanya dapat dilakukan oleh Administrator.';
         }
 
         $tanggal = \DateTime::createFromFormat('!Y-m-d\TH:i', $tanggalRaw);
@@ -503,16 +522,54 @@ class TransaksiController extends BaseController
             return redirect()->back()->withInput()->with('errors', array_values(array_unique($errors)));
         }
 
+        $isDirectStock = in_array($jenis, ['SALDO_AWAL', 'TRANSFER'], true);
         $nomor = $this->generateTransactionNumber($db, $tanggal->format('YmdHis'));
         $db->transBegin();
+
+        // Lock saldo sumber sebelum Pindah Area agar stok tidak dipindahkan
+        // melebihi jumlah yang benar-benar tersedia.
+        $transferNeeds = [];
+        if ($jenis === 'TRANSFER') {
+            foreach ($detailRows as $row) {
+                $key = (int) $row['id_barang'] . ':' . $row['kondisi_asal'];
+                if (!isset($transferNeeds[$key])) {
+                    $transferNeeds[$key] = [
+                        'id_barang' => (int) $row['id_barang'],
+                        'kondisi' => $row['kondisi_asal'],
+                        'jumlah' => 0.0,
+                    ];
+                }
+                $transferNeeds[$key]['jumlah'] += (float) $row['jumlah'];
+            }
+            ksort($transferNeeds, SORT_STRING);
+
+            foreach ($transferNeeds as $need) {
+                $sourceBalance = $db->query(
+                    'SELECT jumlah FROM saldo_barang_area WHERE id_area = ? AND id_barang = ? AND kondisi = ? FOR UPDATE',
+                    [$areaAsal, $need['id_barang'], $need['kondisi']]
+                )->getRowArray();
+
+                $available = $sourceBalance ? (float) $sourceBalance['jumlah'] : 0.0;
+                if ($available + 0.00001 < $need['jumlah']) {
+                    $db->transRollback();
+                    return redirect()->back()->withInput()->with('errors', [
+                        'Saldo ' . $need['kondisi'] . ' untuk barang ID ' . $need['id_barang']
+                        . ' di area asal tidak mencukupi. Tersedia ' . number_format($available, 2, ',', '.')
+                        . ', dibutuhkan ' . number_format($need['jumlah'], 2, ',', '.') . '.',
+                    ]);
+                }
+            }
+        }
 
         $db->table('transaksi_barang')->insert([
             'nomor_transaksi'  => $nomor,
             'jenis_transaksi'  => $jenis,
-            'alur_persetujuan' => 'APPROVAL',
+            'alur_persetujuan' => $isDirectStock ? 'LANGSUNG' : 'APPROVAL',
             'tanggal_transaksi'=> $tanggal->format('Y-m-d H:i:s'),
             'dibuat_oleh'      => $userId,
-            'status_transaksi' => 'DRAFT',
+            'diproses_oleh'    => $isDirectStock ? $userId : null,
+            'diposting_oleh'   => $isDirectStock ? $userId : null,
+            'status_transaksi' => $isDirectStock ? 'DIPOSTING' : 'DRAFT',
             'keterangan'       => $keterangan === '' ? null : $keterangan,
         ]);
 
@@ -524,6 +581,36 @@ class TransaksiController extends BaseController
             }
         }
 
+        // Saldo Awal menambahkan stok; Pindah Area mengurangi sumber dan
+        // menambahkan tujuan menggunakan kondisi barang yang sama.
+        if ($idTransaksi > 0 && $isDirectStock) {
+            if ($jenis === 'TRANSFER') {
+                foreach ($transferNeeds as $need) {
+                    $updated = $db->query(
+                        'UPDATE saldo_barang_area
+                         SET jumlah = jumlah - ?, updated_at = CURRENT_TIMESTAMP
+                         WHERE id_area = ? AND id_barang = ? AND kondisi = ? AND jumlah >= ?',
+                        [$need['jumlah'], $areaAsal, $need['id_barang'], $need['kondisi'], $need['jumlah']]
+                    );
+                    if (!$updated || $db->affectedRows() !== 1) {
+                        $db->transRollback();
+                        return redirect()->back()->withInput()->with('errors', [
+                            'Saldo area asal berubah saat proses berlangsung. Pindah Area dibatalkan; silakan periksa saldo lalu ulangi.',
+                        ]);
+                    }
+                }
+            }
+
+            foreach ($detailRows as $row) {
+                $db->query(
+                    'INSERT INTO saldo_barang_area (id_area, id_barang, kondisi, jumlah, updated_at)
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                     ON DUPLICATE KEY UPDATE jumlah = jumlah + VALUES(jumlah), updated_at = CURRENT_TIMESTAMP',
+                    [$areaTujuan, $row['id_barang'], $row['kondisi_tujuan'], $row['jumlah']]
+                );
+            }
+        }
+
         if ($idTransaksi < 1 || !$db->transStatus()) {
             $db->transRollback();
             return redirect()->back()->withInput()
@@ -532,8 +619,16 @@ class TransaksiController extends BaseController
 
         $db->transCommit();
 
+        if ($jenis === 'TRANSFER') {
+            $message = 'Barang berhasil dipindahkan dan saldo Area asal/tujuan langsung diperbarui. Nomor transaksi: ' . $nomor . '.';
+        } elseif ($jenis === 'SALDO_AWAL') {
+            $message = 'Saldo Awal berhasil dicatat dan saldo Area langsung diperbarui. Nomor transaksi: ' . $nomor . '.';
+        } else {
+            $message = 'Transaksi Draft berhasil disimpan dengan nomor ' . $nomor . '. Saldo barang belum berubah.';
+        }
+
         return redirect()->to('pendataan/transaksi')
-            ->with('success', 'Transaksi Draft berhasil disimpan dengan nomor ' . $nomor . '. Saldo barang belum berubah.');
+            ->with('success', $message);
     }
 
     private function generateTransactionNumber($db, string $datePart): string
