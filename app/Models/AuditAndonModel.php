@@ -68,20 +68,19 @@ class AuditAndonModel extends Model
      */
     public function markSubmitted(int $sessionId): bool
     {
-        $session = $this->find($sessionId);
-        if (!$session) {
-            return false;
-        }
+        // Satu query UPDATE: tidak perlu SELECT sesi lebih dulu pada setiap autosave.
+        $now = date('Y-m-d H:i:s');
+        $builder = $this->db->table($this->table);
 
-        $data = ['status' => 'submitted'];
+        $builder->set('status', 'submitted');
+        $builder->set('updated_at', $now);
+        $builder->set(
+            'submitted_at',
+            'COALESCE(submitted_at, ' . $this->db->escape($now) . ')',
+            false
+        );
 
-        // Simpan waktu submit pertama kali saja; autosave berikutnya tidak
-        // menggeser waktu submit setiap kali PIC mengubah isian.
-        if (empty($session['submitted_at'])) {
-            $data['submitted_at'] = date('Y-m-d H:i:s');
-        }
-
-        return (bool) $this->update($sessionId, $data);
+        return (bool) $builder->where('id', $sessionId)->update();
     }
 
     /**
