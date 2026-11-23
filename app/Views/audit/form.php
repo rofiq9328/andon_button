@@ -7,20 +7,7 @@
 <?= $this->section('content') ?>
 
 <?php
-$totals = ['total' => 0, 'ok' => 0, 'bad' => 0, 'partial' => 0, 'empty' => 0];
-foreach ($lines as $l) {
-    foreach (array_keys($totals) as $k) {
-        $totals[$k] += $l[$k];
-    }
-}
-$belum   = $totals['partial'] + $totals['empty'];
-$pctOk   = $totals['total'] > 0 ? $totals['ok'] / $totals['total'] * 100 : 0;
-$tiles   = [
-    ['Total unit', $totals['total'], 'neutral'],
-    ['Lengkap', $totals['ok'], 'ok'],
-    ['Perlu perhatian', $totals['bad'], 'bad'],
-    ['Belum lengkap', $belum, 'partial'],
-];
+// Daftar line hanya menampilkan jumlah button dan jumlah yang sudah diaudit.
 ?>
 
 <!--begin::App Content Header-->
@@ -71,81 +58,29 @@ $tiles   = [
             <div class="alert alert-danger shadow-sm"><?= esc(session()->getFlashdata('error')) ?></div>
         <?php endif; ?>
 
-        <?php if ($editable && (int) date('j') >= 25 && $session['status'] === 'draft'): ?>
-            <div class="alert alert-warning shadow-sm">Sudah tanggal 25. Silakan tinjau dan serahkan data bulan ini.</div>
-        <?php endif; ?>
-
-        <div class="row g-3 mb-3">
-            <?php foreach ($tiles as [$label, $n, $tone]): ?>
-                <div class="col-6 col-lg-3">
-                    <div class="stat-tile stat-<?= $tone ?>">
-                        <div class="stat-label"><?= esc($label) ?></div>
-                        <div class="stat-num"><?= (int) $n ?></div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="card audit-card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between small mb-2">
-                    <span class="fw-semibold">Progres keseluruhan</span>
-                    <span class="text-secondary"><?= (int) round($pctOk) ?>% unit lengkap</span>
-                </div>
-                <div class="progress-stack">
-                    <div class="progress-bar bg-success" style="width: <?= $totals['total'] ? $totals['ok'] / $totals['total'] * 100 : 0 ?>%"></div>
-                    <div class="progress-bar bg-danger" style="width: <?= $totals['total'] ? $totals['bad'] / $totals['total'] * 100 : 0 ?>%"></div>
-                    <div class="progress-bar bg-warning" style="width: <?= $totals['total'] ? $totals['partial'] / $totals['total'] * 100 : 0 ?>%"></div>
-                </div>
-            </div>
-        </div>
-
         <?php if (empty($lines)): ?>
             <div class="alert alert-info">Belum ada area yang ditugaskan.</div>
         <?php else: ?>
             <div class="row g-3">
                 <?php foreach ($lines as $l): ?>
-                    <?php
-                    if ($l['bad'] > 0) {
-                        $tone = 'bad';       $label = 'Perlu perhatian'; $badge = 'danger';
-                    } elseif ($l['total'] > 0 && $l['ok'] === $l['total']) {
-                        $tone = 'ok';        $label = 'Lengkap';         $badge = 'success';
-                    } elseif ($l['ok'] + $l['partial'] > 0) {
-                        $tone = 'partial';   $label = 'Sebagian';        $badge = 'warning';
-                    } else {
-                        $tone = 'empty';     $label = 'Belum diisi';     $badge = 'secondary';
-                    }
-                    $pOk  = $l['total'] > 0 ? $l['ok'] / $l['total'] * 100 : 0;
-                    $pBad = $l['total'] > 0 ? $l['bad'] / $l['total'] * 100 : 0;
-                    $pPar = $l['total'] > 0 ? $l['partial'] / $l['total'] * 100 : 0;
-                    ?>
                     <div class="col-6 col-md-4 col-lg-3 col-xl-2">
                         <a href="<?= base_url($base . '/line/' . $l['line']) ?>" class="text-decoration-none">
-                            <div class="card line-tile tone-<?= $tone ?> shadow-sm h-100">
+                            <div class="card line-tile shadow-sm h-100">
                                 <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
-                                        <div class="line-title">LINE <?= $l['line'] ?></div>
-                                        <span class="badge text-bg-<?= $badge ?>"><?= $label ?></span>
+                                    <div class="line-title mb-3">LINE <?= (int) $l['line'] ?></div>
+                                    <div class="d-flex justify-content-between align-items-center small mb-2">
+                                        <span class="text-secondary">Jumlah Button</span>
+                                        <strong class="text-dark"><?= (int) $l['total'] ?></strong>
                                     </div>
-                                    <div class="small text-secondary mb-2">
-                                        <?= $l['ok'] ?> lengkap dari <?= $l['total'] ?> unit
-                                    </div>
-                                    <div class="progress-stack">
-                                        <div class="progress-bar bg-success" style="width: <?= $pOk ?>%"></div>
-                                        <div class="progress-bar bg-danger" style="width: <?= $pBad ?>%"></div>
-                                        <div class="progress-bar bg-warning" style="width: <?= $pPar ?>%"></div>
+                                    <div class="d-flex justify-content-between align-items-center small">
+                                        <span class="text-secondary">Sudah Diaudit</span>
+                                        <strong class="text-success"><?= (int) $l['audited'] ?></strong>
                                     </div>
                                 </div>
                             </div>
                         </a>
                     </div>
                 <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (!$editable): ?>
-            <div class="alert alert-secondary mt-3 shadow-sm">
-                Sesi ini terkunci. Data hanya bisa dilihat.
             </div>
         <?php endif; ?>
 
