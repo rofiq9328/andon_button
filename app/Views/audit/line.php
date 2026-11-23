@@ -578,6 +578,22 @@
 
     }
 
+
+    /* ===== Striping baris agar pembacaan unit lebih mudah ===== */
+    .audit-table tbody tr:nth-child(even) td {
+        background-image: linear-gradient(
+            rgba(71, 85, 105, 0.055),
+            rgba(71, 85, 105, 0.055)
+        ) !important;
+    }
+
+    .audit-table tbody tr:hover td {
+        background-image: linear-gradient(
+            rgba(13, 110, 253, 0.075),
+            rgba(13, 110, 253, 0.075)
+        ) !important;
+    }
+
 </style>
 <?= $this->endSection() ?>
 
