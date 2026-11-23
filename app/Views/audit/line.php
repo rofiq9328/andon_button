@@ -415,6 +415,208 @@
         background: rgba(220, 53, 69, 0.07);
     }
 
+
+    /* ===== Mode ringkas PC: tabel mengikuti area layar ===== */
+    @media (min-width: 1200px) {
+        .app-content-header {
+            padding-top: 0.35rem;
+            padding-bottom: 0.2rem;
+        }
+
+        .app-content-header .container-fluid,
+        .app-content > .container-fluid {
+            padding-left: 0.55rem;
+            padding-right: 0.55rem;
+        }
+
+        .app-content-header h1 {
+            font-size: 1.2rem !important;
+            line-height: 1.15;
+        }
+
+        .app-content-header .text-secondary.small {
+            font-size: 0.68rem;
+        }
+
+        .app-content {
+            padding-top: 0.2rem;
+            padding-bottom: 0.35rem;
+        }
+
+        .audit-card {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 205px);
+            min-height: 360px;
+            border-radius: 8px;
+        }
+
+        .audit-card > .card-body {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        .audit-wrap {
+            height: 100%;
+            max-height: none;
+            overflow: auto;
+        }
+
+        .audit-table {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 0.62rem;
+        }
+
+        .audit-table th,
+        .audit-table td {
+            padding: 0.08rem 0.08rem;
+        }
+
+        .audit-table th:first-child,
+        .audit-table td:first-child {
+            width: 46px;
+            min-width: 46px;
+        }
+
+        .audit-table th:last-child,
+        .audit-table td:last-child {
+            width: 116px;
+        }
+
+        .audit-table thead tr:first-child th {
+            height: 24px;
+            font-size: 0.57rem;
+        }
+
+        .audit-table thead tr:nth-child(2) th {
+            top: 24px;
+            height: 40px;
+            font-size: 0.53rem;
+        }
+
+        .audit-table thead th.grp-head {
+            font-size: 0.58rem;
+            letter-spacing: 0.025em;
+        }
+
+        .audit-table thead th.col-label {
+            font-size: 0.52rem;
+            letter-spacing: 0.015em;
+        }
+
+        .audit-table .audit-column-header {
+            min-width: 0 !important;
+            padding: 0.12rem 0.06rem !important;
+        }
+
+        .audit-column-title {
+            margin-bottom: 0.1rem;
+            font-size: 0.54rem;
+            line-height: 1.05;
+        }
+
+        .audit-column-actions {
+            gap: 1px;
+        }
+
+        .audit-column-actions .btn {
+            min-width: 0;
+            min-height: 21px;
+            padding: 0.08rem 0.04rem;
+            font-size: 0.47rem;
+            line-height: 1.05;
+            letter-spacing: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            border-radius: 4px !important;
+        }
+
+        .audit-table td[data-field] {
+            padding: 0.1rem 0.06rem;
+            border-width: 1px !important;
+            border-radius: 4px;
+        }
+
+        .audit-table td[data-field] .btn-group {
+            display: flex;
+            width: 100%;
+            gap: 1px;
+            padding: 1px;
+            border-radius: 4px;
+        }
+
+        .audit-table td[data-field] .btn-group .btn {
+            flex: 1 1 50%;
+            min-width: 0;
+            padding: 0.08rem 0.02rem;
+            font-size: 0.49rem;
+            line-height: 1.05;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            border-radius: 3px;
+        }
+
+        .audit-table td[data-field] .btn-group .btn i {
+            display: none;
+        }
+
+        .audit-table .sticky-col {
+            min-width: 46px;
+        }
+
+        .unit-no {
+            font-size: 0.66rem;
+        }
+
+        .note-input {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .note-input .form-control,
+        .note-input .input-group-text {
+            min-width: 0;
+            padding: 0.08rem 0.15rem;
+            font-size: 0.55rem;
+        }
+
+        .note-input .input-group-text {
+            display: none;
+        }
+
+        .audit-card > .card-footer {
+            flex: 0 0 auto;
+            padding: 0.18rem 0.45rem;
+            font-size: 0.56rem;
+            line-height: 1.2;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .audit-table {
+            font-size: 0.68rem;
+        }
+
+        .audit-table thead tr:nth-child(2) th {
+            height: 42px;
+        }
+
+        .audit-column-title {
+            font-size: 0.58rem;
+        }
+
+        .audit-column-actions .btn,
+        .audit-table td[data-field] .btn-group .btn {
+            font-size: 0.53rem;
+        }
+
+        .audit-table th:last-child,
+        .audit-table td:last-child {
+            width: 140px;
+        }
+    }
+
 </style>
 <?= $this->endSection() ?>
 
