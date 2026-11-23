@@ -184,6 +184,70 @@ class TransaksiController extends BaseController
         ]);
     }
 
+
+    /**
+     * Menghapus hanya transaksi dari alur lama yang belum pernah memperbarui saldo.
+     * Transaksi DIPOSTING tidak boleh dihapus agar saldo dan riwayat tetap konsisten.
+     */
+    public function deleteLegacy(int $id)
+    {
+        if (!Roles::has('admin')) {
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Hanya Administrator yang dapat menghapus transaksi alur lama.');
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+
+        $transaksi = $db->query(
+            'SELECT id_transaksi, nomor_transaksi, alur_persetujuan, status_transaksi
+             FROM transaksi_barang
+             WHERE id_transaksi = ?
+             FOR UPDATE',
+            [$id]
+        )->getRowArray();
+
+        if (!$transaksi) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        if ($transaksi['alur_persetujuan'] !== 'APPROVAL'
+            || $transaksi['status_transaksi'] === 'DIPOSTING') {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Hanya transaksi alur lama yang belum memperbarui saldo yang dapat dihapus.');
+        }
+
+        $detailDeleted = $db->table('detail_transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->delete();
+
+        if (!$detailDeleted || !$db->transStatus()) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Rincian transaksi gagal dihapus. Tidak ada data yang diubah.');
+        }
+
+        $headerDeleted = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->where('alur_persetujuan', 'APPROVAL')
+            ->where('status_transaksi !=', 'DIPOSTING')
+            ->delete();
+
+        if (!$headerDeleted || $db->affectedRows() !== 1 || !$db->transStatus()) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Transaksi gagal dihapus. Tidak ada data yang diubah.');
+        }
+
+        $db->transCommit();
+
+        return redirect()->to('pendataan/transaksi')
+            ->with('success', 'Transaksi alur lama ' . $transaksi['nomor_transaksi'] . ' berhasil dihapus. Saldo barang tidak berubah.');
+    }
+
     public function create()
     {
         if ($response = $this->createOnly()) {
