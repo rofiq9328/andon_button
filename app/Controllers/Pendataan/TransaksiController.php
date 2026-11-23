@@ -186,6 +186,9 @@ class TransaksiController extends BaseController
         $canVerify = !$isDirectStockType
             && $transaksi['status_transaksi'] === 'DIAJUKAN'
             && Roles::has('verifikator');
+        $canPost = in_array($transaksi['jenis_transaksi'], ['PENERIMAAN', 'PENGELUARAN'], true)
+            && $transaksi['status_transaksi'] === 'DISETUJUI'
+            && Roles::has('admin');
 
         return view('pendataan/transaksi/detail', [
             'title'     => 'Detail Transaksi',
@@ -193,6 +196,7 @@ class TransaksiController extends BaseController
             'detail'    => $detail,
             'canSubmit' => $canSubmit,
             'canVerify' => $canVerify,
+            'canPost'   => $canPost,
         ]);
     }
 
@@ -277,6 +281,177 @@ class TransaksiController extends BaseController
 
         return redirect()->to('pendataan/transaksi/detail/' . $id)
             ->with('success', 'Transaksi berhasil ditolak dan alasan penolakan tersimpan. Saldo barang belum berubah.');
+    }
+
+    public function post(int $id)
+    {
+        if (!Roles::has('admin')) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Posting transaksi hanya dapat dilakukan oleh Administrator.');
+        }
+
+        $userId = (int) (session()->get('user_id') ?? 0);
+        if ($userId < 1) {
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Sesi pengguna tidak valid. Silakan login kembali.');
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+
+        // Kunci header transaksi agar transaksi yang sama tidak diposting dua kali.
+        $transaction = $db->query(
+            'SELECT * FROM transaksi_barang WHERE id_transaksi = ? FOR UPDATE',
+            [$id]
+        )->getRowArray();
+
+        if (!$transaction) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi')
+                ->with('error', 'Data transaksi tidak ditemukan.');
+        }
+
+        if ($transaction['status_transaksi'] !== 'DISETUJUI') {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Hanya transaksi berstatus Disetujui yang dapat diposting.');
+        }
+
+        if (!in_array($transaction['jenis_transaksi'], ['PENERIMAAN', 'PENGELUARAN'], true)) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Jenis transaksi ini tidak menggunakan proses posting.');
+        }
+
+        $details = $db->table('detail_transaksi_barang d')
+            ->select([
+                'd.id_barang',
+                'd.id_area_asal',
+                'd.id_area_tujuan',
+                'd.kondisi_asal',
+                'd.kondisi_tujuan',
+                'd.jumlah',
+                'b.kode_barang',
+                'b.nama_barang',
+            ])
+            ->join('barang b', 'b.id_barang = d.id_barang')
+            ->where('d.id_transaksi', $id)
+            ->orderBy('d.id_detail', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (!$details) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Transaksi tidak memiliki rincian barang dan tidak dapat diposting.');
+        }
+
+        $isIncoming = $transaction['jenis_transaksi'] === 'PENERIMAAN';
+        $areaId = 0;
+        $needs = [];
+
+        foreach ($details as $row) {
+            $itemId = (int) $row['id_barang'];
+            $quantity = (float) $row['jumlah'];
+            $condition = $isIncoming ? $row['kondisi_tujuan'] : $row['kondisi_asal'];
+            $rowAreaId = (int) ($isIncoming ? $row['id_area_tujuan'] : $row['id_area_asal']);
+
+            if ($itemId < 1 || $rowAreaId < 1 || !in_array($condition, self::KONDISI_BARANG, true) || $quantity <= 0) {
+                $db->transRollback();
+                return redirect()->to('pendataan/transaksi/detail/' . $id)
+                    ->with('error', 'Rincian barang tidak lengkap atau tidak valid. Saldo tidak diubah.');
+            }
+
+            if ($areaId === 0) {
+                $areaId = $rowAreaId;
+            } elseif ($areaId !== $rowAreaId) {
+                $db->transRollback();
+                return redirect()->to('pendataan/transaksi/detail/' . $id)
+                    ->with('error', 'Satu transaksi harus menggunakan satu Area. Saldo tidak diubah.');
+            }
+
+            $key = $itemId . ':' . $condition;
+            if (!isset($needs[$key])) {
+                $needs[$key] = [
+                    'id_barang' => $itemId,
+                    'kondisi' => $condition,
+                    'jumlah' => 0.0,
+                    'kode_barang' => $row['kode_barang'],
+                    'nama_barang' => $row['nama_barang'],
+                ];
+            }
+            $needs[$key]['jumlah'] += $quantity;
+        }
+
+        ksort($needs, SORT_STRING);
+
+        // Barang Keluar harus memiliki saldo cukup untuk seluruh rincian,
+        // termasuk jika barang yang sama ditulis pada beberapa baris.
+        if (!$isIncoming) {
+            foreach ($needs as $need) {
+                $balance = $db->query(
+                    'SELECT jumlah FROM saldo_barang_area
+                     WHERE id_area = ? AND id_barang = ? AND kondisi = ? FOR UPDATE',
+                    [$areaId, $need['id_barang'], $need['kondisi']]
+                )->getRowArray();
+
+                $available = $balance ? (float) $balance['jumlah'] : 0.0;
+                if ($available + 0.00001 < $need['jumlah']) {
+                    $db->transRollback();
+                    return redirect()->to('pendataan/transaksi/detail/' . $id)
+                        ->with('error',
+                            'Saldo ' . $need['nama_barang'] . ' (' . $need['kondisi'] . ') tidak mencukupi. Tersedia '
+                            . number_format($available, 2, ',', '.') . ', dibutuhkan '
+                            . number_format($need['jumlah'], 2, ',', '.') . '. Tidak ada saldo yang diubah.');
+                }
+            }
+        }
+
+        foreach ($needs as $need) {
+            if ($isIncoming) {
+                $db->query(
+                    'INSERT INTO saldo_barang_area (id_area, id_barang, kondisi, jumlah, updated_at)
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                     ON DUPLICATE KEY UPDATE jumlah = jumlah + VALUES(jumlah), updated_at = CURRENT_TIMESTAMP',
+                    [$areaId, $need['id_barang'], $need['kondisi'], $need['jumlah']]
+                );
+            } else {
+                $updated = $db->query(
+                    'UPDATE saldo_barang_area
+                     SET jumlah = jumlah - ?, updated_at = CURRENT_TIMESTAMP
+                     WHERE id_area = ? AND id_barang = ? AND kondisi = ? AND jumlah >= ?',
+                    [$need['jumlah'], $areaId, $need['id_barang'], $need['kondisi'], $need['jumlah']]
+                );
+
+                if (!$updated || $db->affectedRows() !== 1) {
+                    $db->transRollback();
+                    return redirect()->to('pendataan/transaksi/detail/' . $id)
+                        ->with('error', 'Saldo berubah saat posting berlangsung. Posting dibatalkan, silakan periksa kembali saldo.');
+                }
+            }
+        }
+
+        $updatedHeader = $db->table('transaksi_barang')
+            ->where('id_transaksi', $id)
+            ->where('status_transaksi', 'DISETUJUI')
+            ->update([
+                'status_transaksi' => 'DIPOSTING',
+                'diproses_oleh' => $userId,
+                'diposting_oleh' => $userId,
+            ]);
+
+        if (!$updatedHeader || $db->affectedRows() !== 1 || !$db->transStatus()) {
+            $db->transRollback();
+            return redirect()->to('pendataan/transaksi/detail/' . $id)
+                ->with('error', 'Posting gagal. Seluruh perubahan saldo dibatalkan.');
+        }
+
+        $db->transCommit();
+
+        return redirect()->to('pendataan/transaksi/detail/' . $id)
+            ->with('success', $isIncoming
+                ? 'Barang Masuk berhasil diposting. Saldo Area tujuan sudah bertambah.'
+                : 'Barang Keluar berhasil diposting. Saldo Area asal sudah berkurang.');
     }
 
     public function submit(int $id)
