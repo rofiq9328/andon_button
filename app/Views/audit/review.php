@@ -139,8 +139,7 @@ $tiles = [
                 <?php if ($editable): ?>
                     <div class="alert alert-success mb-0">
                         <i class="fa-solid fa-cloud-arrow-up me-2"></i>
-                        Setiap perubahan yang berhasil disimpan otomatis mengubah status sesi menjadi
-                        <strong>SUBMITTED</strong>. Data tetap bisa diperbarui selama periode berjalan.
+                        Setiap perubahan berhasil tersimpan otomatis. Sesi tetap <strong>AKTIF</strong> selama masih dapat diedit.
                     </div>
                 <?php else: ?>
                     <div class="alert alert-secondary mb-0">
