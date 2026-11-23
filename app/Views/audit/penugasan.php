@@ -285,7 +285,7 @@
                                             <td class="text-end">
                                                 <form method="post"
                                                       action="<?= base_url('audit-andon/penugasan/hapus/' . (int) $r['id']) ?>"
-                                                      onsubmit="return confirm('Hapus penugasan ini?')"
+                                                      onsubmit="return confirm('Hapus penugasan line ini sekaligus hasil audit line tersebut pada seluruh sesi milik PIC ini? Tindakan tidak dapat dibatalkan.')"
                                                       class="d-inline">
                                                     <?= csrf_field() ?>
                                                     <button type="submit" class="btn btn-outline-danger btn-sm fw-bold shadow-sm">
