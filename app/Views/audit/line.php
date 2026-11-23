@@ -658,7 +658,8 @@ $lineTotal  = count($units);
 
             inFlight--;
             if (inFlight === 0) {
-                setStatus('saved', 'Berhasil');
+                // Status toolbar kembali netral; notifikasi sukses hanya melalui SweetAlert2.
+                setStatus('idle', 'Siap');
 
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
@@ -667,7 +668,7 @@ $lineTotal  = count($units);
                         icon: 'success',
                         title: 'Berhasil',
                         showConfirmButton: false,
-                        timer: 1400,
+                        timer: 1800,
                         timerProgressBar: true
                     });
                 }
