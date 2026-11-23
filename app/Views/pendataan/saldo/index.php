@@ -104,7 +104,7 @@ $formatQty = static function ($value) {
 
         <div class="saldo-note mb-3">
             <i class="fa-solid fa-circle-info me-1"></i>
-            Perbandingan kebutuhan saat ini menggunakan jumlah berkondisi <strong>Baik</strong>. Stok Rusak, Dalam Perbaikan, dan Tidak Layak tetap ditampilkan sebagai bagian dari jumlah fisik, tetapi tidak dihitung untuk memenuhi standar Area. Area tanpa standar tetap menampilkan saldo aktualnya.
+            Perbandingan kebutuhan pada Area Pengguna/Keduanya menggunakan jumlah berkondisi <strong>Baik</strong>. Area Penyimpanan murni tidak dibandingkan dengan standar dan hanya menampilkan saldo aktual. Angka kekurangan bukan saldo fisik minus. Isi <strong>Saldo Awal</strong> oleh Administrator untuk mencatat stok awal yang sudah tersedia.
         </div>
 
         <div class="card saldo-card">
@@ -206,7 +206,11 @@ $formatQty = static function ($value) {
                                 $standardText = $item['jumlah_standar'] === null ? '-' : $formatQty($item['jumlah_standar']);
                                 $selisihText = $item['selisih'] === null
                                     ? '-'
-                                    : (($item['selisih'] > 0 ? '+' : '') . $formatQty($item['selisih']));
+                                    : ($item['selisih'] < -0.00001
+                                        ? 'Kurang ' . $formatQty(abs($item['selisih']))
+                                        : ($item['selisih'] > 0.00001
+                                            ? 'Lebih ' . $formatQty($item['selisih'])
+                                            : 'Sesuai'));
                                 ?>
                                 <tr>
                                     <td class="text-center text-secondary"><?= $i + 1 ?></td>
@@ -244,7 +248,7 @@ $formatQty = static function ($value) {
             </div>
             <div class="card-footer bg-white small text-secondary">
                 <i class="fa-solid fa-circle-info me-1"></i>
-                Total Fisik merupakan penjumlahan semua kondisi. Selisih = Stok Baik dikurangi Standar. Tanda minus berarti kekurangan, tanda plus berarti kelebihan.
+                Total Fisik merupakan penjumlahan semua kondisi. Kolom Selisih menampilkan jumlah kekurangan atau kelebihan terhadap standar, bukan saldo fisik negatif.
             </div>
         </div>
     </div>
