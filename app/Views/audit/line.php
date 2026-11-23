@@ -436,10 +436,12 @@ $lineTotal  = count($units);
                 document.addEventListener('DOMContentLoaded', function () {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
+                            toast: true,
+                            position: 'top-end',
                             icon: 'success',
                             title: 'Berhasil',
                             showConfirmButton: false,
-                            timer: 1300,
+                            timer: 1800,
                             timerProgressBar: true
                         });
                     }
@@ -675,12 +677,14 @@ $lineTotal  = count($units);
 
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        showConfirmButton: false,
-                        timer: 1300,
-                        timerProgressBar: true
-                    });
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Berhasil',
+                            showConfirmButton: false,
+                            timer: 1800,
+                            timerProgressBar: true
+                        });
                 }
             }
         } catch (e) {
