@@ -212,12 +212,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                     <tr data-search="<?= esc($searchText, 'attr') ?>">
                                         <td class="text-center text-secondary"><?= $index + 1 ?></td>
                                         <td><span class="category-code"><?= esc($category['kode_kategori']) ?></span></td>
-                                        <td>
-                                            <div class="fw-semibold"><?= esc($category['nama_kategori']) ?></div>
-                                            <?php if ((int) $category['jumlah_barang'] > 0): ?>
-                                                <div class="small text-secondary"><?= number_format((int) $category['jumlah_barang']) ?> barang menggunakan kategori ini</div>
-                                            <?php endif; ?>
-                                        </td>
+                                        <td class="fw-semibold"><?= esc($category['nama_kategori']) ?></td>
                                         <td class="text-secondary"><?= esc($category['deskripsi'] ?: '-') ?></td>
                                         <td class="text-center">
                                             <?php if ((int) $category['status'] === 1): ?>
