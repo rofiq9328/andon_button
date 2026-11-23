@@ -55,27 +55,7 @@ $kondisiLabel = [
                 <h1 class="mb-1 fs-3">DETAIL TRANSAKSI</h1>
                 <div class="trx-intro">Informasi transaksi dan rincian barang yang tercatat.</div>
             </div>
-            <div class="col-md-4 d-flex justify-content-md-end flex-wrap gap-2">
-                <?php if (!empty($canPost)): ?>
-                    <form method="post" action="<?= base_url('pendataan/transaksi/posting/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Posting transaksi ini dan perbarui saldo barang? Tindakan ini tidak dapat diulang.');">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa-solid fa-boxes-stacked me-1"></i> POSTING TRANSAKSI</button>
-                    </form>
-                <?php endif; ?>
-                <?php if (!empty($canVerify)): ?>
-                    <form method="post" action="<?= base_url('pendataan/transaksi/setujui/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Setujui transaksi ini? Saldo barang belum akan berubah.');">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn-success btn-sm fw-bold"><i class="fa-solid fa-check me-1"></i> SETUJUI</button>
-                    </form>
-                <?php endif; ?>
-                <?php if (!empty($canSubmit)): ?>
-                    <form method="post" action="<?= base_url('pendataan/transaksi/ajukan/' . (int) $transaksi['id_transaksi']) ?>" onsubmit="return confirm('Ajukan transaksi ini untuk diverifikasi?');">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn-success btn-sm fw-bold">
-                            <i class="fa-solid fa-paper-plane me-1"></i> AJUKAN TRANSAKSI
-                        </button>
-                    </form>
-                <?php endif; ?>
+            <div class="col-md-4 d-flex justify-content-md-end">
                 <a href="<?= base_url('pendataan/transaksi') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
                     <i class="fa-solid fa-arrow-left me-1"></i> KEMBALI KE TRANSAKSI
                 </a>
@@ -193,14 +173,6 @@ $kondisiLabel = [
                         <div class="trx-label">Diposting Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pemosting'] ?: '-') ?></div>
                     </div></div>
                 </div>
-                <?php if (!empty($canVerify)): ?>
-                    <form method="post" action="<?= base_url('pendataan/transaksi/tolak/' . (int) $transaksi['id_transaksi']) ?>" class="mt-3" onsubmit="return confirm('Tolak transaksi ini dengan alasan tersebut?');">
-                        <?= csrf_field() ?>
-                        <label for="alasan_penolakan" class="form-label fw-semibold">Alasan Penolakan <span class="text-danger">*</span></label>
-                        <textarea name="alasan_penolakan" id="alasan_penolakan" class="form-control mb-2" rows="3" maxlength="5000" required placeholder="Jelaskan alasan transaksi ditolak..."></textarea>
-                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-xmark me-1"></i> TOLAK TRANSAKSI</button>
-                    </form>
-                <?php endif; ?>
                 <?php if (!empty($transaksi['alasan_penolakan'])): ?>
                     <div class="alert alert-danger mt-3 mb-0">
                         <div class="fw-bold mb-1">Alasan Penolakan</div>
@@ -210,15 +182,14 @@ $kondisiLabel = [
             </div>
         </div>
 
-        <?php if (!empty($canPost)): ?>
+        <?php if ($transaksi['status_transaksi'] === 'DIPOSTING'): ?>
             <div class="trx-info">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                Transaksi sudah disetujui dan menunggu posting Administrator. Saldo belum berubah sampai transaksi diposting.
+                <i class="fa-solid fa-circle-check me-1"></i>
+                Saldo barang sudah diperbarui secara langsung saat transaksi ini disimpan.
             </div>
-        <?php elseif ($transaksi['status_transaksi'] !== 'DIPOSTING'): ?>
-            <div class="trx-info">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                Transaksi ini belum berstatus Diposting. Tampilan detail ini tidak mengubah saldo barang.
+        <?php else: ?>
+            <div class="alert alert-warning small mb-0">
+                Transaksi ini berasal dari alur lama sebelum pembaruan. Data historisnya tetap disimpan, tetapi saldo tidak otomatis diubah.
             </div>
         <?php endif; ?>
     </div>
