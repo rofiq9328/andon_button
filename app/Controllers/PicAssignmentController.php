@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Models\AuditAndonDetailModel;
+use App\Models\AuditAndonModel;
+use App\Models\AuditAndonUnitModel;
 use App\Models\PicAreaModel;
 
 class PicAssignmentController extends BaseController
@@ -178,6 +181,64 @@ class PicAssignmentController extends BaseController
 
         if ($alreadyAssigned > 0) {
             $message .= " {$alreadyAssigned} line sudah menjadi penugasan PIC ini.";
+        }
+
+        // Jika sesi audit periode berjalan sudah pernah dibuat, tambahkan unit
+        // baru langsung ke sesi tersebut. Tidak perlu menunggu sesi dibuat ulang.
+        if ($added > 0) {
+            $periode = AuditAndonModel::currentPeriode();
+            $currentSession = $db->table('audit_andon')
+                ->where('user_id', $userId)
+                ->where('periode', $periode)
+                ->get()
+                ->getRowArray();
+
+            if ($currentSession) {
+                $unitModel = new AuditAndonUnitModel();
+                $detailModel = new AuditAndonDetailModel();
+                $syncFailed = false;
+
+                foreach ($selectedLines as $line) {
+                    // Sinkronkan line yang baru saja dimasukkan saja.
+                    $isNewAssignment = $db->table('pic_area')
+                        ->where('user_id', $userId)
+                        ->where('line_from', $line)
+                        ->where('line_to', $line)
+                        ->countAllResults() > 0;
+
+                    if (!$isNewAssignment) {
+                        continue;
+                    }
+
+                    $units = $unitModel->getUnitsInRange($line, $line);
+                    if (empty($units)) {
+                        $syncFailed = true;
+                        continue;
+                    }
+
+                    $detailModel->createForSession(
+                        (int) $currentSession['id'],
+                        $periode,
+                        $units
+                    );
+
+                    $expected = count($units);
+                    $actual = $db->table('audit_andon_detail')
+                        ->where('audit_id', (int) $currentSession['id'])
+                        ->where('line', $line)
+                        ->countAllResults();
+
+                    if ($actual < $expected) {
+                        $syncFailed = true;
+                    }
+                }
+
+                if ($syncFailed) {
+                    $message .= ' Penugasan tersimpan, tetapi sesi audit belum lengkap tersinkron. Jalankan php spark migrate dan buka ulang form PIC.';
+                } else {
+                    $message .= ' Sesi audit PIC juga sudah diperbarui.';
+                }
+            }
         }
 
         return redirect()->to('/audit-andon/penugasan')
