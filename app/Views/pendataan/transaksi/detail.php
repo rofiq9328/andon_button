@@ -160,22 +160,16 @@ $kondisiLabel = [
             <div class="card-header"><h2 class="trx-section-title">Riwayat Proses</h2></div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-6 col-lg-3"><div class="trx-meta">
-                        <div class="trx-label">Dibuat Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pembuat'] ?: '-') ?></div>
+                    <div class="col-6 col-lg-6"><div class="trx-meta">
+                        <div class="trx-label">Dicatat Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pembuat'] ?: '-') ?></div>
                     </div></div>
-                    <div class="col-6 col-lg-3"><div class="trx-meta">
-                        <div class="trx-label">Disetujui Oleh</div><div class="trx-value"><?= esc($transaksi['nama_penyetuju'] ?: '-') ?></div>
-                    </div></div>
-                    <div class="col-6 col-lg-3"><div class="trx-meta">
-                        <div class="trx-label">Diproses Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pemroses'] ?: '-') ?></div>
-                    </div></div>
-                    <div class="col-6 col-lg-3"><div class="trx-meta">
-                        <div class="trx-label">Diposting Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pemosting'] ?: '-') ?></div>
+                    <div class="col-6 col-lg-6"><div class="trx-meta">
+                        <div class="trx-label">Saldo Diperbarui Oleh</div><div class="trx-value"><?= esc($transaksi['nama_pemosting'] ?: '-') ?></div>
                     </div></div>
                 </div>
                 <?php if (!empty($transaksi['alasan_penolakan'])): ?>
-                    <div class="alert alert-danger mt-3 mb-0">
-                        <div class="fw-bold mb-1">Alasan Penolakan</div>
+                    <div class="alert alert-secondary mt-3 mb-0">
+                        <div class="fw-bold mb-1">Catatan Historis</div>
                         <?= nl2br(esc($transaksi['alasan_penolakan'])) ?>
                     </div>
                 <?php endif; ?>
