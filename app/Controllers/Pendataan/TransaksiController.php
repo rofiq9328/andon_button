@@ -111,7 +111,7 @@ class TransaksiController extends BaseController
             }
         }
 
-        $totalTransaksi = array_sum($ringkasanJenis);
+        $totalTransaksi = $db->table('transaksi_barang')->countAllResults();
 
         return view('pendataan/transaksi/index', [
             'title'          => 'Transaksi Barang',
@@ -352,11 +352,15 @@ class TransaksiController extends BaseController
 
         if ($activeBarangIds !== []) {
             $foundBarang = $db->table('barang')
-                ->select('id_barang')
+                ->select('id_barang, nama_barang')
                 ->whereIn('id_barang', array_values(array_unique($activeBarangIds)))
                 ->where('status', 1)
                 ->get()->getResultArray();
             $foundBarangIds = array_map('intval', array_column($foundBarang, 'id_barang'));
+            $barangNames = [];
+            foreach ($foundBarang as $foundItem) {
+                $barangNames[(int) $foundItem['id_barang']] = $foundItem['nama_barang'];
+            }
             foreach (array_unique($activeBarangIds) as $barangId) {
                 if (!in_array($barangId, $foundBarangIds, true)) {
                     $errors[] = 'Salah satu barang tidak ditemukan atau sudah nonaktif.';
@@ -379,7 +383,6 @@ class TransaksiController extends BaseController
         // Pindah Area mengurangi sumber dan menambah tujuan.
         $mengurangiSumber = in_array($jenis, ['PENGELUARAN', 'TRANSFER'], true);
         $menambahTujuan = in_array($jenis, ['SALDO_AWAL', 'PENERIMAAN', 'TRANSFER'], true);
-        $areaSaldo = $mengurangiSumber ? $areaAsal : $areaTujuan;
         $nomor = $this->generateTransactionNumber($db, $tanggal->format('YmdHis'));
 
         // Gabungkan barang yang sama agar pengecekan stok tidak terlewati
@@ -393,6 +396,7 @@ class TransaksiController extends BaseController
                     'id_barang' => (int) $row['id_barang'],
                     'kondisi' => $condition,
                     'jumlah' => 0.0,
+                    'nama_barang' => $barangNames[(int) $row['id_barang']] ?? ('Barang ID ' . (int) $row['id_barang']),
                 ];
             }
             $movement[$key]['jumlah'] += (float) $row['jumlah'];
@@ -414,7 +418,7 @@ class TransaksiController extends BaseController
                 if ($available + 0.00001 < $item['jumlah']) {
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('errors', [
-                        'Saldo barang ID ' . $item['id_barang'] . ' (' . $item['kondisi'] . ') di Area asal tidak mencukupi. Tersedia '
+                        'Saldo ' . $item['nama_barang'] . ' (' . $item['kondisi'] . ') di Area asal tidak mencukupi. Tersedia '
                         . number_format($available, 2, ',', '.') . ', dibutuhkan '
                         . number_format($item['jumlah'], 2, ',', '.') . '. Transaksi dibatalkan dan saldo tidak berubah.',
                     ]);
