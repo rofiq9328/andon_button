@@ -129,6 +129,9 @@ class SaldoBarangController extends BaseController
             ->join('satuan u', 'u.id_satuan = b.id_satuan', 'left')
             ->join('factory f', 'f.id_factory = a.id_factory', 'left')
             ->where('s.status', 1)
+            // Area Penyimpanan murni tidak memakai standar kebutuhan.
+            // Stok aktualnya tetap ditampilkan melalui data saldo_barang_area.
+            ->where('a.fungsi_stok !=', 'PENYIMPANAN')
             ->where('s.berlaku_mulai <=', $today)
             ->groupStart()
                 ->where('s.berlaku_sampai', null)
