@@ -38,7 +38,7 @@ $oldAreaTujuan = (string) (old('id_area_tujuan') ?? '');
             <div class="col-md-8">
                 <div class="text-secondary small text-uppercase fw-semibold">Pendataan Barang / Transaksi</div>
                 <h1 class="mb-1 fs-3">BUAT TRANSAKSI</h1>
-                <div class="trx-intro">Isi data transaksi barang. Data akan disimpan sebagai Draft terlebih dahulu.</div>
+                <div class="trx-intro">Isi data transaksi barang sesuai jenis transaksi yang dipilih.</div>
             </div>
             <div class="col-md-4 d-flex justify-content-md-end">
                 <a href="<?= base_url('pendataan/transaksi') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
@@ -180,15 +180,21 @@ $oldAreaTujuan = (string) (old('id_area_tujuan') ?? '');
                 </div>
             </div>
 
-            <div class="trx-note mb-3">
-                <i class="fa-solid fa-shield-halved me-1"></i>
-                <strong>Penyimpanan Draft:</strong> transaksi ini belum mengubah saldo barang. Untuk Saldo Awal, data stok yang sudah ada akan dicatat sebagai Draft terlebih dahulu dan belum masuk ke saldo aktual sampai proses posting ditetapkan.
+            <div class="trx-note mb-3" id="draftNote">
+                <i class="fa-solid fa-file-lines me-1"></i>
+                <strong>Simpan Draft:</strong> Barang Masuk dan Barang Keluar disimpan sebagai Draft dan belum mengubah saldo aktual.
+            </div>
+            <div class="trx-note mb-3 d-none" id="directStockNote">
+                <i class="fa-solid fa-circle-check me-1"></i>
+                <strong id="directStockTitle">Pencatatan langsung:</strong>
+                <span id="directStockDescription">Saldo Awal dan Pindah Area hanya dilakukan Administrator dan langsung memperbarui saldo barang, tanpa persetujuan.</span>
+                Untuk Pindah Area, saldo asal harus mencukupi.
             </div>
 
             <div class="d-flex justify-content-end gap-2 flex-wrap trx-actions">
                 <a href="<?= base_url('pendataan/transaksi') ?>" class="btn btn-light border">BATAL</a>
                 <button type="submit" class="btn btn-success fw-bold" id="saveDraft" <?= empty($barang) || empty($areas) ? 'disabled' : '' ?>>
-                    <i class="fa-solid fa-floppy-disk me-1"></i> SIMPAN DRAFT
+                    <i class="fa-solid fa-floppy-disk me-1"></i> <span id="saveButtonLabel">SIMPAN DRAFT</span>
                 </button>
             </div>
         </form>
@@ -237,6 +243,18 @@ document.addEventListener('DOMContentLoaded', function () {
         source.required = needSource;
         target.required = needTarget;
         document.getElementById('areaTujuanLabel').innerHTML = value === 'SALDO_AWAL' ? 'Area Pencatatan Stok <span class="text-danger">*</span>' : 'Area Tujuan <span class="text-danger">*</span>';
+
+        const directType = value === 'SALDO_AWAL' || value === 'TRANSFER';
+        document.getElementById('draftNote').classList.toggle('d-none', directType);
+        document.getElementById('directStockNote').classList.toggle('d-none', !directType);
+        document.getElementById('directStockTitle').textContent = value === 'TRANSFER' ? 'Pindah Area langsung:' : 'Saldo Awal langsung:';
+        document.getElementById('directStockDescription').textContent = value === 'TRANSFER'
+            ? 'Barang dipindahkan dari Area asal ke Area tujuan. Saldo keduanya langsung diperbarui tanpa persetujuan.'
+            : 'Jumlah barang dicatat sebagai stok awal Area dan langsung masuk ke saldo aktual, tanpa persetujuan.';
+        document.getElementById('saveButtonLabel').textContent = value === 'TRANSFER'
+            ? 'PINDAHKAN BARANG'
+            : (value === 'SALDO_AWAL' ? 'CATAT SALDO AWAL' : 'SIMPAN DRAFT');
+
         if (!needSource) source.value = '';
         if (!needTarget) target.value = '';
     }
