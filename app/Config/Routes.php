@@ -140,6 +140,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('transaksi/simpan', 'Pendataan\TransaksiController::store', ['filter' => 'role:admin,petugas_area']);
 
         // Saldo Barang: hanya menampilkan saldo aktual dan perbandingan kebutuhan.
+        $routes->get('laporan', 'Pendataan\LaporanBarangController::index', $rolesPendataan);
+        $routes->get('laporan/export', 'Pendataan\LaporanBarangController::export', $rolesPendataan);
+
         $routes->get('saldo', 'Pendataan\SaldoBarangController::index', $rolesPendataan);
     });
 });
