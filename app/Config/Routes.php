@@ -91,7 +91,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // Pendataan barang: memakai login andon (satu login)
     $routes->group('pendataan', ['filter' => 'auth'], function ($routes) {
-        $rolesPendataan = ['filter' => 'role:admin,petugas_area,verifikator,viewer'];
+        $rolesPendataan = ['filter' => 'role:admin,petugas_area,viewer'];
 
         $routes->get('/', 'Pendataan\HomeController::index', $rolesPendataan);
 
