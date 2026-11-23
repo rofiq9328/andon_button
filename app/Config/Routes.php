@@ -77,6 +77,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('buka/(:num)', 'AuditController::reopen/$1');
     });
 
+    // Master jumlah button per line untuk Audit Andon: hanya admin
+    $routes->group('audit-andon/master-button', ['filter' => 'role:admin'], function ($routes) {
+        $routes->get('/', 'AuditUnitController::index');
+        $routes->post('simpan', 'AuditUnitController::save');
+    });
+
     // Penugasan PIC audit: hanya admin
     $routes->group('audit-andon/penugasan', ['filter' => 'role:admin'], function ($routes) {
         $routes->get('/', 'PicAssignmentController::index');
