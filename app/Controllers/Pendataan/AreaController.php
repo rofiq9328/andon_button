@@ -50,15 +50,10 @@ class AreaController extends BaseController
             ->orderBy('kode_factory', 'ASC')
             ->findAll();
 
-        $parentAreas = (new AreaModel())
-            ->orderBy('kode_area', 'ASC')
-            ->findAll();
-
         return view('pendataan/master/area', [
             'title'       => 'Master Area',
             'areas'       => $areas,
             'factories'   => $factories,
-            'parentAreas' => $parentAreas,
         ]);
     }
 
@@ -66,9 +61,7 @@ class AreaController extends BaseController
     {
         $model = new AreaModel();
 
-        $scope      = strtoupper(trim((string) $this->request->getPost('cakupan_area')));
         $factoryRaw = trim((string) $this->request->getPost('id_factory'));
-        $parentRaw  = trim((string) $this->request->getPost('parent_area_id'));
         $kode       = strtoupper(trim((string) $this->request->getPost('kode_area')));
         $nama       = trim((string) $this->request->getPost('nama_area'));
         $jenis      = strtoupper(trim((string) $this->request->getPost('jenis_area')));
@@ -78,63 +71,18 @@ class AreaController extends BaseController
 
         $errors = [];
         $idFactory = null;
-        $parentId = null;
+        $existingArea = $exceptId !== null ? $model->find($exceptId) : null;
 
-        if (!in_array($scope, ['PUSAT', 'FACTORY'], true)) {
-            $errors[] = 'Cakupan Area tidak valid.';
-        }
-
-        if ($scope === 'FACTORY') {
-            if ($factoryRaw === '' || !ctype_digit($factoryRaw) || (int) $factoryRaw < 1) {
-                $errors[] = 'Factory wajib dipilih untuk Area dengan cakupan Factory.';
+        // Factory bersifat opsional. Area tanpa Factory otomatis menjadi Area Pusat.
+        if ($factoryRaw !== '') {
+            if (!ctype_digit($factoryRaw) || (int) $factoryRaw < 1) {
+                $errors[] = 'Factory yang dipilih tidak valid.';
             } else {
                 $factory = (new FactoryModel())->find((int) $factoryRaw);
                 if (!$factory) {
                     $errors[] = 'Factory yang dipilih tidak ditemukan.';
                 } else {
                     $idFactory = (int) $factoryRaw;
-                }
-            }
-        }
-
-        if ($parentRaw !== '') {
-            if (!ctype_digit($parentRaw) || (int) $parentRaw < 1) {
-                $errors[] = 'Induk Area tidak valid.';
-            } else {
-                $parentId = (int) $parentRaw;
-                $parent = $model->find($parentId);
-
-                if (!$parent) {
-                    $errors[] = 'Induk Area yang dipilih tidak ditemukan.';
-                } else {
-                    if ($parent['cakupan_area'] !== $scope) {
-                        $errors[] = 'Induk Area harus memiliki cakupan yang sama.';
-                    } elseif (
-                        $scope === 'FACTORY'
-                        && (int) $parent['id_factory'] !== (int) $idFactory
-                    ) {
-                        $errors[] = 'Induk Area harus berasal dari Factory yang sama.';
-                    }
-                }
-
-                if ($exceptId !== null && $parentId === $exceptId) {
-                    $errors[] = 'Area tidak dapat menjadi induk bagi dirinya sendiri.';
-                } elseif ($exceptId !== null && $parent) {
-                    // Cegah relasi melingkar: induk yang dipilih tidak boleh berada
-                    // di bawah Area yang sedang diedit.
-                    $cursor = $parentId;
-                    $visited = [];
-
-                    while ($cursor > 0 && !isset($visited[$cursor])) {
-                        if ($cursor === $exceptId) {
-                            $errors[] = 'Induk Area tidak valid karena akan membentuk relasi melingkar.';
-                            break;
-                        }
-
-                        $visited[$cursor] = true;
-                        $ancestor = $model->find($cursor);
-                        $cursor = $ancestor ? (int) ($ancestor['parent_area_id'] ?? 0) : 0;
-                    }
                 }
             }
         }
@@ -176,6 +124,11 @@ class AreaController extends BaseController
                 $errors[] = 'Kode Area sudah digunakan.';
             }
         }
+
+        // Cakupan ditentukan otomatis dari pilihan Factory.
+        // Relasi Induk Area lama dipertahankan ketika data yang ada diedit.
+        $scope = $idFactory === null ? 'PUSAT' : 'FACTORY';
+        $parentId = $existingArea ? ($existingArea['parent_area_id'] ?? null) : null;
 
         return [[
             'id_factory'     => $idFactory,
