@@ -145,36 +145,6 @@ class AuditController extends BaseController
     }
 
     /**
-     * Deteksi sesi lama yang sudah memiliki isian tetapi masih berstatus draft.
-     * Sesi seperti ini otomatis diselaraskan menjadi submitted.
-     */
-    private function ensureSubmittedStatus(array $session): array
-    {
-        if (($session['status'] ?? '') === 'submitted') {
-            return $session;
-        }
-
-        $details = (new AuditAndonDetailModel())
-            ->where('audit_id', (int) $session['id'])
-            ->findAll();
-
-        foreach ($details as $detail) {
-            foreach (self::EDIT_FIELDS as $field) {
-                if (isset($detail[$field]) && trim((string) $detail[$field]) !== '') {
-                    $auditModel = new AuditAndonModel();
-                    if ($auditModel->markSubmitted((int) $session['id'])) {
-                        return $auditModel->find((int) $session['id']) ?? $session;
-                    }
-
-                    return $session;
-                }
-            }
-        }
-
-        return $session;
-    }
-
-    /**
      * Sesi yang boleh dilihat user ini.
      */
     private function resolveSession(?int $sessionId): ?array
@@ -184,9 +154,7 @@ class AuditController extends BaseController
         if ($sessionId !== null) {
             $session = $auditModel->find($sessionId);
 
-            return ($session && $this->canAccess($session))
-                ? $this->ensureSubmittedStatus($session)
-                : null;
+            return ($session && $this->canAccess($session)) ? $session : null;
         }
 
         if ($this->isAdmin()) {
@@ -194,15 +162,24 @@ class AuditController extends BaseController
         }
 
         $periode = AuditAndonModel::currentPeriode();
-        $session = $auditModel->getOrCreateSession($periode, $this->userId())['session'];
+        $sessionResult = $auditModel->getOrCreateSession($periode, $this->userId());
+        $session = $sessionResult['session'] ?? null;
 
-        (new AuditAndonDetailModel())->createForSession(
-            (int) $session['id'],
-            $periode,
-            $this->unitsForUser($this->userId())
-        );
+        if (!$session) {
+            return null;
+        }
 
-        return $this->ensureSubmittedStatus($session);
+        // Sinkronisasi seluruh unit hanya saat sesi baru dibuat.
+        // Penugasan line berikutnya sudah disinkronkan oleh PicAssignmentController.
+        if (!empty($sessionResult['created'])) {
+            (new AuditAndonDetailModel())->createForSession(
+                (int) $session['id'],
+                $periode,
+                $this->unitsForUser($this->userId())
+            );
+        }
+
+        return $session;
     }
 
     /**
@@ -227,7 +204,6 @@ class AuditController extends BaseController
             ->getResultArray();
 
         foreach ($sessions as &$s) {
-            $s = $this->ensureSubmittedStatus($s);
             $units = $detailModel->where('audit_id', $s['id'])->findAll();
             $ok = 0;
             foreach ($units as $u) {
@@ -257,18 +233,14 @@ class AuditController extends BaseController
             return redirect()->to('audit-andon')->with('error', 'Sesi tidak ditemukan.');
         }
 
-        $grouped = (new AuditAndonDetailModel())->getForSessionGrouped((int) $session['id']);
+        $lines = (new AuditAndonDetailModel())->getProgressByLine((int) $session['id']);
 
-        $lines = [];
-        foreach ($grouped as $line => $units) {
-            $row = ['line' => (int) $line, 'total' => count($units), 'audited' => 0];
-            foreach ($units as $u) {
-                if ($this->isUnitAudited($u)) {
-                    $row['audited']++;
-                }
-            }
-            $lines[] = $row;
+        foreach ($lines as &$row) {
+            $row['line'] = (int) $row['line'];
+            $row['total'] = (int) $row['total'];
+            $row['audited'] = (int) $row['audited'];
         }
+        unset($row);
 
         return view('audit/form', [
             'session'  => $session,
@@ -301,14 +273,16 @@ class AuditController extends BaseController
 
     private function renderLine(array $session, int $line)
     {
-        $base    = $this->baseFor($session);
-        $grouped = (new AuditAndonDetailModel())->getForSessionGrouped((int) $session['id']);
+        $base = $this->baseFor($session);
+        $detailModel = new AuditAndonDetailModel();
+        $lineNumbers = $detailModel->getLinesForSession((int) $session['id']);
 
-        if (!isset($grouped[$line])) {
+        if (!in_array($line, $lineNumbers, true)) {
             return redirect()->to($base)->with('error', "Line {$line} tidak ada di sesi ini.");
         }
 
-        $lineNumbers = array_keys($grouped);
+        // Hanya ambil unit dari line yang sedang dibuka, bukan seluruh sesi.
+        $units = $detailModel->getForSessionLine((int) $session['id'], $line);
         $idx  = array_search($line, $lineNumbers, true);
         $prev = $idx > 0 ? $lineNumbers[$idx - 1] : null;
         $next = ($idx !== false && $idx < count($lineNumbers) - 1) ? $lineNumbers[$idx + 1] : null;
@@ -318,7 +292,7 @@ class AuditController extends BaseController
             'owner'    => $this->ownerOf($session),
             'editable' => (new AuditAndonModel())->isEditable($session),
             'line'     => $line,
-            'units'    => $grouped[$line],
+            'units'    => $units,
             'prev'     => $prev,
             'next'     => $next,
             'base'     => $base,
@@ -349,21 +323,33 @@ class AuditController extends BaseController
             return $this->jsonError('Kolom tidak valid.', 422);
         }
 
-        $detailModel = new AuditAndonDetailModel();
-        $detail      = $detailModel->where(['id' => $unitId, 'audit_id' => $sessionId])->first();
-        if (!$detail) {
-            return $this->jsonError('Unit tidak ditemukan.', 404);
+        // Validasi nilai di endpoint agar update langsung tetap membatasi pilihan input.
+        if ($field !== 'catatan' && $value !== '' &&
+            (!isset(self::OPTIONS[$field]) || !in_array($value, self::OPTIONS[$field], true))) {
+            return $this->jsonError('Nilai tidak valid untuk kolom tersebut.', 422);
         }
 
-        $ok = $detailModel->update($unitId, [
-            $field       => $value === '' ? null : $value,
-            'updated_by' => $this->userId(),
-        ]);
+        $db = db_connect();
+        $db->table('audit_andon_detail')
+            ->where('id', $unitId)
+            ->where('audit_id', $sessionId)
+            ->update([
+                $field       => $value === '' ? null : $value,
+                'updated_by' => $this->userId(),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        if (!$ok) {
-            $errors = $detailModel->errors();
+        // Periksa keberadaan hanya jika tidak ada baris yang berubah
+        // (misalnya nilai yang dikirim ternyata sama dengan nilai lama).
+        if ($db->affectedRows() < 1) {
+            $exists = $db->table('audit_andon_detail')
+                ->where('id', $unitId)
+                ->where('audit_id', $sessionId)
+                ->countAllResults();
 
-            return $this->jsonError($errors ? implode(' ', $errors) : 'Nilai tidak valid.', 422);
+            if ($exists < 1) {
+                return $this->jsonError('Unit tidak ditemukan.', 404);
+            }
         }
 
         if (!$auditModel->markSubmitted($sessionId)) {
