@@ -53,7 +53,10 @@ $formatQty = static function ($value) {
                 <h1 class="mb-1 fs-3">SALDO BARANG</h1>
                 <div class="saldo-intro">Pantau jumlah barang aktual pada setiap Area, termasuk rincian kondisi dan pemenuhan kebutuhan standar.</div>
             </div>
-            <div class="col-md-4 d-flex justify-content-md-end">
+            <div class="col-md-4 d-flex justify-content-md-end gap-2 flex-wrap">
+                <a href="<?= base_url('pendataan/saldo?fungsi=PENYIMPANAN') ?>" class="btn btn-success btn-sm fw-bold">
+                    <i class="fa-solid fa-warehouse me-1"></i> LIHAT PENYIMPANAN
+                </a>
                 <a href="<?= base_url('pendataan') ?>" class="btn btn-outline-secondary btn-sm fw-bold">
                     <i class="fa-solid fa-arrow-left me-1"></i> DASHBOARD
                 </a>
