@@ -109,6 +109,7 @@ class PicAssignmentController extends BaseController
         $db = db_connect();
         $picAreaModel = new PicAreaModel();
         $added = 0;
+        $addedLines = [];
         $alreadyAssigned = 0;
 
         $db->transBegin();
@@ -161,6 +162,7 @@ class PicAssignmentController extends BaseController
             }
 
             $added++;
+            $addedLines[] = $line;
         }
 
         if (!$db->transStatus()) {
@@ -198,18 +200,8 @@ class PicAssignmentController extends BaseController
                 $detailModel = new AuditAndonDetailModel();
                 $syncFailed = false;
 
-                foreach ($selectedLines as $line) {
-                    // Sinkronkan line yang baru saja dimasukkan saja.
-                    $isNewAssignment = $db->table('pic_area')
-                        ->where('user_id', $userId)
-                        ->where('line_from', $line)
-                        ->where('line_to', $line)
-                        ->countAllResults() > 0;
-
-                    if (!$isNewAssignment) {
-                        continue;
-                    }
-
+                foreach ($addedLines as $line) {
+                    // Sinkronkan hanya line yang benar-benar baru ditugaskan.
                     $units = $unitModel->getUnitsInRange($line, $line);
                     if (empty($units)) {
                         $syncFailed = true;
