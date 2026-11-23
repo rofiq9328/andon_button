@@ -185,50 +185,69 @@ class PicAssignmentController extends BaseController
             $message .= " {$alreadyAssigned} line sudah menjadi penugasan PIC ini.";
         }
 
-        // Jika sesi audit periode berjalan sudah pernah dibuat, tambahkan unit
-        // baru langsung ke sesi tersebut. Tidak perlu menunggu sesi dibuat ulang.
+        // Pastikan sesi periode berjalan selalu tersedia setelah penugasan baru.
+        // Ini juga membuat sesi baru jika sesi sebelumnya telah dihapus admin.
         if ($added > 0) {
             $periode = AuditAndonModel::currentPeriode();
-            $currentSession = $db->table('audit_andon')
-                ->where('user_id', $userId)
-                ->where('periode', $periode)
-                ->get()
-                ->getRowArray();
+            $auditModel = new AuditAndonModel();
+            $sessionResult = $auditModel->getOrCreateSession($periode, $userId);
+            $currentSession = $sessionResult['session'] ?? null;
 
-            if ($currentSession) {
+            if (!$currentSession) {
+                $message .= ' Penugasan tersimpan, tetapi sesi audit gagal dibuat.';
+            } else {
                 $unitModel = new AuditAndonUnitModel();
                 $detailModel = new AuditAndonDetailModel();
-                $syncFailed = false;
 
-                foreach ($addedLines as $line) {
-                    // Sinkronkan hanya line yang benar-benar baru ditugaskan.
-                    $units = $unitModel->getUnitsInRange($line, $line);
-                    if (empty($units)) {
-                        $syncFailed = true;
-                        continue;
-                    }
-
-                    $detailModel->createForSession(
-                        (int) $currentSession['id'],
-                        $periode,
-                        $units
+                // Ambil seluruh unit dari semua penugasan PIC, bukan hanya line
+                // yang baru dipilih. Kunci line + line_no mencegah duplikasi.
+                $unitMap = [];
+                foreach ($picAreaModel->getRangesForUser($userId) as $range) {
+                    $assignedUnits = $unitModel->getUnitsInRange(
+                        (int) $range['line_from'],
+                        (int) $range['line_to']
                     );
 
-                    $expected = count($units);
+                    foreach ($assignedUnits as $unit) {
+                        $key = (int) $unit['line'] . ':' . (int) $unit['line_no'];
+                        $unitMap[$key] = [
+                            'line'    => (int) $unit['line'],
+                            'line_no' => (int) $unit['line_no'],
+                        ];
+                    }
+                }
+
+                $allAssignedUnits = array_values($unitMap);
+                $detailModel->createForSession(
+                    (int) $currentSession['id'],
+                    $periode,
+                    $allAssignedUnits
+                );
+
+                // Periksa setiap line agar kegagalan sinkronisasi tidak dianggap berhasil.
+                $expectedByLine = [];
+                foreach ($allAssignedUnits as $unit) {
+                    $line = (int) $unit['line'];
+                    $expectedByLine[$line] = ($expectedByLine[$line] ?? 0) + 1;
+                }
+
+                $syncFailed = empty($allAssignedUnits);
+                foreach ($expectedByLine as $line => $expected) {
                     $actual = $db->table('audit_andon_detail')
                         ->where('audit_id', (int) $currentSession['id'])
-                        ->where('line', $line)
+                        ->where('line', (int) $line)
                         ->countAllResults();
 
                     if ($actual < $expected) {
                         $syncFailed = true;
+                        break;
                     }
                 }
 
                 if ($syncFailed) {
-                    $message .= ' Penugasan tersimpan, tetapi sesi audit belum lengkap tersinkron. Jalankan php spark migrate dan buka ulang form PIC.';
+                    $message .= ' Penugasan tersimpan, tetapi data unit belum lengkap masuk ke sesi. Pastikan php spark migrate sudah dijalankan.';
                 } else {
-                    $message .= ' Sesi audit PIC juga sudah diperbarui.';
+                    $message .= ' Sesi audit periode ' . $periode . ' berhasil dibuat/diperbarui dan seluruh unit penugasan PIC sudah disinkronkan.';
                 }
             }
         }
