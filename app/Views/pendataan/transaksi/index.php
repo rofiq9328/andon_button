@@ -27,12 +27,12 @@ $jenisLabel = [
     'TRANSFER' => 'Pindah Area',
 ];
 $statusLabel = [
-    'DRAFT' => 'Draft',
-    'DIAJUKAN' => 'Diajukan',
-    'DISETUJUI' => 'Disetujui',
-    'DITOLAK' => 'Ditolak',
-    'DIPOSTING' => 'Diposting',
-    'DIBATALKAN' => 'Dibatalkan',
+    'DRAFT' => 'Draft (Alur Lama)',
+    'DIAJUKAN' => 'Diajukan (Alur Lama)',
+    'DISETUJUI' => 'Disetujui (Alur Lama)',
+    'DITOLAK' => 'Ditolak (Alur Lama)',
+    'DIPOSTING' => 'Saldo Diperbarui',
+    'DIBATALKAN' => 'Dibatalkan (Alur Lama)',
 ];
 $statusClass = [
     'DRAFT' => 'text-bg-secondary',
