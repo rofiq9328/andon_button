@@ -115,7 +115,7 @@ class TransaksiController extends BaseController
             'title'          => 'Transaksi Barang',
             'transaksi'      => $transaksi,
             'ringkasan'      => $ringkasan,
-            'jenisTransaksi' => $availableTypes,
+            'jenisTransaksi' => self::JENIS_TRANSAKSI,
             'statusTransaksi'=> self::STATUS_TRANSAKSI,
             'canCreate'      => $this->canCreate(),
             'filter'         => [
