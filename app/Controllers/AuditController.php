@@ -372,7 +372,7 @@ class AuditController extends BaseController
 
         return $this->response->setJSON([
             'ok'     => true,
-            'status' => 'submitted',
+            'status' => 'active',
             'time'   => date('H:i:s'),
             'csrf'   => csrf_hash(),
         ]);
@@ -469,7 +469,7 @@ class AuditController extends BaseController
         }
 
         return redirect()->to($target)
-            ->with('success', "{$total} kotak kosong diisi dengan nilai normal. Sesi otomatis berstatus SUBMITTED.");
+            ->with('success', "{$total} kotak kosong diisi dengan nilai normal.");
     }
 
     /**
@@ -587,11 +587,11 @@ class AuditController extends BaseController
 
         if ($this->request->getPost('action') === 'serahkan') {
             return redirect()->to($base)
-                ->with('success', 'Data tersimpan dan otomatis berstatus SUBMITTED. Anda masih bisa mengubah sampai akhir bulan.');
+                ->with('success', 'Data berhasil disimpan. Sesi tetap dapat diperbarui sampai akhir bulan.');
         }
 
         return redirect()->to($target)
-            ->with('success', 'Data tersimpan dan sesi otomatis berstatus SUBMITTED.');
+            ->with('success', 'Data berhasil disimpan otomatis.');
     }
 
     /**
