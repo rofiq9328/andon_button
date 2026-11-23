@@ -145,10 +145,6 @@
         margin-top: 0;
     }
 
-    .note-input {
-        min-width: 150px;
-    }
-
     /* Area tabel dan toolbar lebih ringkas */
     .audit-wrap {
         max-height: 64vh;
@@ -240,16 +236,6 @@
     .audit-table .led-dot {
         width: 8px;
         height: 8px;
-    }
-
-    .note-input {
-        min-width: 110px;
-    }
-
-    .note-input .form-control,
-    .note-input .input-group-text {
-        font-size: 0.66rem;
-        padding: 0.05rem 0.3rem;
     }
 
     .audit-card > .card-footer {
@@ -479,11 +465,6 @@
             min-width: 46px;
         }
 
-        .audit-table th:last-child,
-        .audit-table td:last-child {
-            width: 116px;
-        }
-
         .audit-table thead tr:first-child th {
             height: 24px;
             font-size: 0.57rem;
@@ -569,22 +550,6 @@
             font-size: 0.66rem;
         }
 
-        .note-input {
-            min-width: 0;
-            width: 100%;
-        }
-
-        .note-input .form-control,
-        .note-input .input-group-text {
-            min-width: 0;
-            padding: 0.08rem 0.15rem;
-            font-size: 0.55rem;
-        }
-
-        .note-input .input-group-text {
-            display: none;
-        }
-
         .audit-card > .card-footer {
             flex: 0 0 auto;
             padding: 0.18rem 0.45rem;
@@ -611,10 +576,6 @@
             font-size: 0.53rem;
         }
 
-        .audit-table th:last-child,
-        .audit-table td:last-child {
-            width: 140px;
-        }
     }
 
 </style>
@@ -753,7 +714,6 @@ $lineTotal  = count($units);
                                     </th>
                                     <?php $gIdx++; ?>
                                 <?php endforeach; ?>
-                                <th rowspan="2" class="col-label text-start grp-start">Catatan</th>
                             </tr>
                             <tr>
                                 <?php foreach ($flat as $key => $def): ?>
@@ -809,16 +769,6 @@ $lineTotal  = count($units);
                                         </td>
                                     <?php endforeach; ?>
 
-                                    <td class="grp-start">
-                                        <div class="input-group input-group-sm note-input">
-                                            <span class="input-group-text text-secondary"><i class="fa-solid fa-comment-dots"></i></span>
-                                            <input type="text" class="form-control"
-                                                   data-unit="<?= (int) $u['id'] ?>" data-field="catatan"
-                                                   value="<?= esc($u['catatan'] ?? '') ?>"
-                                                   placeholder="Tulis catatan"
-                                                   <?= $editable ? '' : 'disabled' ?>>
-                                        </div>
-                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -991,13 +941,6 @@ $lineTotal  = count($units);
                 return;
             }
 
-            if (target.matches('input[data-field="catatan"]') && CFG.editable) {
-                autosave({
-                    unit_id: target.dataset.unit,
-                    field: 'catatan',
-                    value: target.value
-                });
-            }
         });
     }
 
