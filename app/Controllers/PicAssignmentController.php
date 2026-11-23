@@ -242,12 +242,56 @@ class PicAssignmentController extends BaseController
      */
     public function delete(int $id)
     {
-        // Hanya hapus hubungan PIC dengan line.
-        // Hasil audit di audit_andon_detail adalah riwayat dan tidak ikut dihapus.
-        (new PicAreaModel())->delete($id);
+        $assignmentModel = new PicAreaModel();
+        $assignment = $assignmentModel->find($id);
+
+        if (!$assignment) {
+            return redirect()->to('/audit-andon/penugasan')
+                ->with('error', 'Penugasan tidak ditemukan.');
+        }
+
+        $db = db_connect();
+        $userId = (int) $assignment['user_id'];
+        $lineFrom = (int) $assignment['line_from'];
+        $lineTo = (int) $assignment['line_to'];
+
+        // Hapus hasil untuk rentang line ini hanya dari sesi milik PIC terkait.
+        // Sesi PIC lain yang mengaudit line sama tidak akan disentuh.
+        $sessions = $db->table('audit_andon')
+            ->select('id')
+            ->where('user_id', $userId)
+            ->get()
+            ->getResultArray();
+
+        $sessionIds = array_map('intval', array_column($sessions, 'id'));
+
+        $db->transBegin();
+
+        if (!empty($sessionIds)) {
+            $db->table('audit_andon_detail')
+                ->whereIn('audit_id', $sessionIds)
+                ->where('line >=', $lineFrom)
+                ->where('line <=', $lineTo)
+                ->delete();
+        }
+
+        $deleted = $assignmentModel->delete($id);
+
+        if (!$deleted || !$db->transStatus()) {
+            $db->transRollback();
+
+            return redirect()->to('/audit-andon/penugasan')
+                ->with('error', 'Penugasan gagal dihapus. Tidak ada data yang diubah.');
+        }
+
+        $db->transCommit();
+
+        $lineLabel = $lineFrom === $lineTo
+            ? "LINE {$lineFrom}"
+            : "LINE {$lineFrom}–{$lineTo}";
 
         return redirect()->to('/audit-andon/penugasan')
-            ->with('success', 'Penugasan dihapus. Hasil audit yang sudah tersimpan tetap dipertahankan.');
+            ->with('success', "Penugasan {$lineLabel} dan hasil audit pada sesi PIC terkait berhasil dihapus.");
     }
 
 }
