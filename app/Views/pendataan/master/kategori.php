@@ -212,7 +212,12 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                     <tr data-search="<?= esc($searchText, 'attr') ?>">
                                         <td class="text-center text-secondary"><?= $index + 1 ?></td>
                                         <td><span class="category-code"><?= esc($category['kode_kategori']) ?></span></td>
-                                        <td class="fw-semibold"><?= esc($category['nama_kategori']) ?></td>
+                                        <td>
+                                            <div class="fw-semibold"><?= esc($category['nama_kategori']) ?></div>
+                                            <?php if ((int) $category['jumlah_barang'] > 0): ?>
+                                                <div class="small text-secondary"><?= number_format((int) $category['jumlah_barang']) ?> barang menggunakan kategori ini</div>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-secondary"><?= esc($category['deskripsi'] ?: '-') ?></td>
                                         <td class="text-center">
                                             <?php if ((int) $category['status'] === 1): ?>
@@ -242,6 +247,16 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                                             <i class="fa-solid <?= (int) $category['status'] === 1 ? 'fa-ban' : 'fa-check' ?>"></i>
                                                         </button>
                                                     </form>
+                                                    <form method="post" action="<?= base_url('pendataan/master/kategori/hapus/' . (int) $category['id_kategori']) ?>"
+                                                          onsubmit="return confirm('Hapus kategori ini secara permanen? Tindakan ini tidak dapat dibatalkan.');">
+                                                        <?= csrf_field() ?>
+                                                        <button type="submit"
+                                                                class="btn btn-sm <?= (int) $category['jumlah_barang'] > 0 ? 'btn-outline-secondary' : 'btn-outline-danger' ?>"
+                                                                title="<?= (int) $category['jumlah_barang'] > 0 ? 'Tidak dapat dihapus: dipakai ' . (int) $category['jumlah_barang'] . ' barang' : 'Hapus kategori' ?>"
+                                                                <?= (int) $category['jumlah_barang'] > 0 ? 'disabled' : '' ?>>
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         <?php endif; ?>
@@ -261,7 +276,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
 
             <div class="card-footer bg-white small text-secondary">
                 <i class="fa-solid fa-circle-info me-1"></i>
-                Kategori yang sudah dipakai oleh data barang tidak dihapus permanen. Gunakan status Nonaktif bila tidak digunakan lagi.
+                Kategori hanya dapat dihapus jika belum digunakan oleh data barang. Jika masih digunakan, ubah kategori pada data barang atau nonaktifkan kategori.
             </div>
         </div>
     </div>
