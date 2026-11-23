@@ -215,7 +215,7 @@
                                                     class="form-check-input pic-line-checkbox"
                                                     name="lines[]"
                                                     value="<?= (int) $line ?>"
-                                                    <?= in_array((int) $line, $oldSelectedLines, true) ? 'checked' : '' ?>
+                                                    <?= $assignedUserId === null && in_array((int) $line, $oldSelectedLines, true) ? 'checked' : '' ?>
                                                     <?= $assignedUserId !== null ? 'disabled' : '' ?>>
                                                 <span class="line-name">LINE <?= (int) $line ?></span>
                                                 <?php if ($assignedUserId !== null): ?>
@@ -328,7 +328,7 @@
 
     function updateCount() {
         const selected = checkboxes.filter(function (checkbox) {
-            return checkbox.checked;
+            return checkbox.checked && !checkbox.disabled;
         }).length;
 
         countEl.textContent = selected + ' LINE DIPILIH';
