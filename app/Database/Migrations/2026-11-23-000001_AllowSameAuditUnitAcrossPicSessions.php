@@ -19,18 +19,14 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
      */
     public function up()
     {
-        $indexes = $this->getUniqueIndexes();
-
-        foreach ($indexes as $name => $columns) {
+        foreach ($this->getUniqueIndexes() as $name => $columns) {
             if ($columns === self::OLD_COLUMNS) {
-                $this->forge->dropKey(self::TABLE, $name, false);
+                $this->dropIndex($name);
             }
         }
 
-        $indexes = $this->getUniqueIndexes();
         $hasNewIndex = false;
-
-        foreach ($indexes as $columns) {
+        foreach ($this->getUniqueIndexes() as $columns) {
             if ($columns === self::NEW_COLUMNS) {
                 $hasNewIndex = true;
                 break;
@@ -38,8 +34,7 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
         }
 
         if (!$hasNewIndex) {
-            $this->forge->addUniqueKey(self::NEW_COLUMNS, self::NEW_INDEX);
-            $this->forge->processIndexes(self::TABLE);
+            $this->createUniqueIndex(self::NEW_INDEX, self::NEW_COLUMNS);
         }
     }
 
@@ -51,7 +46,7 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
     {
         $duplicate = $this->db->query(
             'SELECT 1
-             FROM audit_andon_detail
+             FROM ' . $this->tableIdentifier() . '
              GROUP BY periode, line, line_no
              HAVING COUNT(*) > 1
              LIMIT 1'
@@ -65,32 +60,63 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
 
         foreach ($this->getUniqueIndexes() as $name => $columns) {
             if ($columns === self::NEW_COLUMNS) {
-                $this->forge->dropKey(self::TABLE, $name, false);
+                $this->dropIndex($name);
             }
         }
 
-        $this->forge->addUniqueKey(self::OLD_COLUMNS, self::OLD_INDEX);
-        $this->forge->processIndexes(self::TABLE);
+        $this->createUniqueIndex(self::OLD_INDEX, self::OLD_COLUMNS);
     }
 
     /**
-     * Ambil seluruh indeks unik selain PRIMARY KEY beserta urutan kolomnya.
+     * Ambil indeks unik selain PRIMARY KEY beserta urutan kolomnya.
      */
     private function getUniqueIndexes(): array
     {
-        $rows = $this->db->query('SHOW INDEX FROM audit_andon_detail')->getResultArray();
         $indexes = [];
 
+        if ($this->isSQLite()) {
+            $tableName = $this->tableName();
+            $rows = $this->db->query(
+                'PRAGMA index_list(' . $this->db->escape($tableName) . ')'
+            )->getResultArray();
+
+            foreach ($rows as $row) {
+                $name = $row['name'] ?? '';
+                $isUnique = (int) ($row['unique'] ?? 0);
+
+                if ($name === '' || $isUnique !== 1) {
+                    continue;
+                }
+
+                $columnsRows = $this->db->query(
+                    'PRAGMA index_info(' . $this->db->escape($name) . ')'
+                )->getResultArray();
+
+                $columns = [];
+                foreach ($columnsRows as $columnRow) {
+                    $columns[(int) $columnRow['seqno']] = $columnRow['name'];
+                }
+                ksort($columns);
+                $indexes[$name] = array_values($columns);
+            }
+
+            return $indexes;
+        }
+
+        $rows = $this->db->query(
+            'SHOW INDEX FROM ' . $this->tableIdentifier()
+        )->getResultArray();
+
         foreach ($rows as $row) {
-            $keyName = $row['Key_name'] ?? $row['key_name'] ?? '';
-            $nonUnique = (int) ($row['Non_unique'] ?? $row['non_unique'] ?? 1);
+            $keyName = $row['Key_name'] ?? '';
+            $nonUnique = (int) ($row['Non_unique'] ?? 1);
 
             if ($keyName === '' || strtoupper($keyName) === 'PRIMARY' || $nonUnique !== 0) {
                 continue;
             }
 
-            $sequence = (int) ($row['Seq_in_index'] ?? $row['seq_in_index'] ?? 0);
-            $column = $row['Column_name'] ?? $row['column_name'] ?? null;
+            $sequence = (int) ($row['Seq_in_index'] ?? 0);
+            $column = $row['Column_name'] ?? null;
 
             if ($sequence > 0 && $column !== null) {
                 $indexes[$keyName][$sequence] = $column;
@@ -103,5 +129,50 @@ class AllowSameAuditUnitAcrossPicSessions extends Migration
         }
 
         return $indexes;
+    }
+
+    private function isSQLite(): bool
+    {
+        return stripos($this->db->DBDriver, 'SQLite3') !== false;
+    }
+
+    private function tableName(): string
+    {
+        return ($this->db->DBPrefix ?? '') . self::TABLE;
+    }
+
+    private function tableIdentifier(): string
+    {
+        return $this->db->protectIdentifiers(self::TABLE);
+    }
+
+    private function dropIndex(string $name): void
+    {
+        $index = $this->db->escapeIdentifiers($name);
+
+        if ($this->isSQLite()) {
+            $this->db->query('DROP INDEX ' . $index);
+            return;
+        }
+
+        $this->db->query(
+            'ALTER TABLE ' . $this->tableIdentifier() . ' DROP INDEX ' . $index
+        );
+    }
+
+    private function createUniqueIndex(string $name, array $columns): void
+    {
+        $quotedColumns = array_map(
+            function ($column) {
+                return $this->db->escapeIdentifiers($column);
+            },
+            $columns
+        );
+
+        $this->db->query(
+            'CREATE UNIQUE INDEX ' . $this->db->escapeIdentifiers($name)
+            . ' ON ' . $this->tableIdentifier()
+            . ' (' . implode(', ', $quotedColumns) . ')'
+        );
     }
 }
