@@ -135,6 +135,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('transaksi', 'Pendataan\TransaksiController::index', $rolesPendataan);
         $routes->get('transaksi/detail/(:num)', 'Pendataan\TransaksiController::detail/$1', $rolesPendataan);
         $routes->post('transaksi/ajukan/(:num)', 'Pendataan\\TransaksiController::submit/$1', ['filter' => 'role:admin,petugas_area']);
+        $routes->get('transaksi/verifikasi', 'Pendataan\\TransaksiController::verifikasi', ['filter' => 'role:verifikator']);
+        $routes->post('transaksi/setujui/(:num)', 'Pendataan\\TransaksiController::setujui/$1', ['filter' => 'role:verifikator']);
+        $routes->post('transaksi/tolak/(:num)', 'Pendataan\\TransaksiController::tolak/$1', ['filter' => 'role:verifikator']);
 
         // Pembuatan transaksi Draft: Admin dan Petugas Area.
         $routes->get('transaksi/tambah', 'Pendataan\TransaksiController::create', ['filter' => 'role:admin,petugas_area']);
