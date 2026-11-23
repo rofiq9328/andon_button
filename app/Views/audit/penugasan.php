@@ -118,7 +118,7 @@
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-sm-6">
-                <h1 class="mb-0 fs-3">PENUGASAN PIC AUDIT</h1>
+                <h1 class="mb-0 fs-3">PENUGASAN IE LINE</h1>
             </div>
             <div class="col-sm-6 text-sm-end mt-2 mt-sm-0">
                 <a href="<?= base_url('audit-andon') ?>" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm">
@@ -148,7 +148,7 @@
             <div class="card-body">
                 <?php if (empty($pics)): ?>
                     <div class="alert alert-info mb-0">
-                        Belum ada user dengan role PIC Audit. Buat dulu lewat menu User Management.
+                        Belum ada user dengan role IE LINE. Buat dulu lewat menu User Management.
                     </div>
                 <?php else: ?>
                     <?php
@@ -162,9 +162,9 @@
                         <?= csrf_field() ?>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small">PIC</label>
+                            <label class="form-label fw-bold small">IE LINE</label>
                             <select name="user_id" class="form-select" required>
-                                <option value="">Pilih PIC</option>
+                                <option value="">Pilih IE LINE</option>
                                 <?php foreach ($pics as $p): ?>
                                     <option value="<?= (int) $p['id'] ?>" <?= (int) old('user_id') === (int) $p['id'] ? 'selected' : '' ?>>
                                         <?= esc($p['full_name'] ?: $p['username']) ?>
@@ -247,7 +247,7 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>PIC</th>
+                                <th>IE LINE</th>
                                 <th>Line yang Ditugaskan</th>
                                 <th class="text-end">Aksi</th>
                             </tr>
@@ -255,7 +255,7 @@
                         <tbody>
                             <?php if (empty($pics)): ?>
                                 <tr>
-                                    <td colspan="3" class="text-center text-secondary py-4">Belum ada PIC Audit.</td>
+                                    <td colspan="3" class="text-center text-secondary py-4">Belum ada IE LINE.</td>
                                 </tr>
                             <?php endif; ?>
 
