@@ -53,7 +53,7 @@
                                         <th>IE LINE</th>
                                         <th>Status</th>
                                         <th style="min-width: 180px;">Progres</th>
-                                        <th>Diserahkan</th>
+                                        <th>Terakhir Disimpan</th>
                                         <th class="text-end">Aksi</th>
                                     </tr>
                                 </thead>
@@ -71,12 +71,9 @@
                                         <tr>
                                             <td class="fw-bold text-dark"><?= esc($s['full_name'] ?? $s['username'] ?? '-') ?></td>
                                             <td>
-                                                <span class="badge text-bg-<?= $s['status'] === 'submitted' ? 'success' : 'secondary' ?>">
-                                                    <?= strtoupper(esc($s['status'])) ?>
+                                                <span class="badge text-bg-<?= $s['editable'] ? 'success' : 'secondary' ?>">
+                                                    <?= $s['editable'] ? 'AKTIF' : 'TERKUNCI' ?>
                                                 </span>
-                                                <?php if (!$s['editable']): ?>
-                                                    <span class="badge text-bg-dark">TERKUNCI</span>
-                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
@@ -89,7 +86,7 @@
                                                 </div>
                                             </td>
                                             <td class="small text-secondary">
-                                                <?= $s['submitted_at'] ? esc($s['submitted_at']) : '-' ?>
+                                                <?= !empty($s['submitted_at']) ? esc($s['updated_at'] ?? $s['submitted_at']) : '-' ?>
                                             </td>
                                             <td class="text-end">
                                                 <div class="d-flex gap-2 justify-content-end flex-wrap">
