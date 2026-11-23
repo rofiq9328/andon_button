@@ -145,6 +145,36 @@ class AuditController extends BaseController
     }
 
     /**
+     * Deteksi sesi lama yang sudah memiliki isian tetapi masih berstatus draft.
+     * Sesi seperti ini otomatis diselaraskan menjadi submitted.
+     */
+    private function ensureSubmittedStatus(array $session): array
+    {
+        if (($session['status'] ?? '') === 'submitted') {
+            return $session;
+        }
+
+        $details = (new AuditAndonDetailModel())
+            ->where('audit_id', (int) $session['id'])
+            ->findAll();
+
+        foreach ($details as $detail) {
+            foreach (self::EDIT_FIELDS as $field) {
+                if (isset($detail[$field]) && trim((string) $detail[$field]) !== '') {
+                    $auditModel = new AuditAndonModel();
+                    if ($auditModel->markSubmitted((int) $session['id'])) {
+                        return $auditModel->find((int) $session['id']) ?? $session;
+                    }
+
+                    return $session;
+                }
+            }
+        }
+
+        return $session;
+    }
+
+    /**
      * Sesi yang boleh dilihat user ini.
      */
     private function resolveSession(?int $sessionId): ?array
@@ -154,7 +184,9 @@ class AuditController extends BaseController
         if ($sessionId !== null) {
             $session = $auditModel->find($sessionId);
 
-            return ($session && $this->canAccess($session)) ? $session : null;
+            return ($session && $this->canAccess($session))
+                ? $this->ensureSubmittedStatus($session)
+                : null;
         }
 
         if ($this->isAdmin()) {
@@ -170,7 +202,7 @@ class AuditController extends BaseController
             $this->unitsForUser($this->userId())
         );
 
-        return $session;
+        return $this->ensureSubmittedStatus($session);
     }
 
     /**
@@ -195,6 +227,7 @@ class AuditController extends BaseController
             ->getResultArray();
 
         foreach ($sessions as &$s) {
+            $s = $this->ensureSubmittedStatus($s);
             $units = $detailModel->where('audit_id', $s['id'])->findAll();
             $ok = 0;
             foreach ($units as $u) {
@@ -333,10 +366,15 @@ class AuditController extends BaseController
             return $this->jsonError($errors ? implode(' ', $errors) : 'Nilai tidak valid.', 422);
         }
 
+        if (!$auditModel->markSubmitted($sessionId)) {
+            return $this->jsonError('Data tersimpan, tetapi status sesi gagal diperbarui.', 500);
+        }
+
         return $this->response->setJSON([
-            'ok'   => true,
-            'time' => date('H:i:s'),
-            'csrf' => csrf_hash(),
+            'ok'     => true,
+            'status' => 'submitted',
+            'time'   => date('H:i:s'),
+            'csrf'   => csrf_hash(),
         ]);
     }
 
@@ -396,6 +434,10 @@ class AuditController extends BaseController
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
 
+            if (!$auditModel->markSubmitted($sessionId)) {
+                return redirect()->to($target)->with('error', 'Data tersimpan, tetapi status sesi gagal diperbarui.');
+            }
+
             return redirect()->to($target)
                 ->with('success', "{$field}: {$value} diterapkan ke {$total} unit.");
         }
@@ -422,8 +464,12 @@ class AuditController extends BaseController
             $total += $db->affectedRows();
         }
 
+        if ($total > 0 && !$auditModel->markSubmitted($sessionId)) {
+            return redirect()->to($target)->with('error', 'Data tersimpan, tetapi status sesi gagal diperbarui.');
+        }
+
         return redirect()->to($target)
-            ->with('success', "{$total} kotak kosong diisi dengan nilai normal.");
+            ->with('success', "{$total} kotak kosong diisi dengan nilai normal. Sesi otomatis berstatus SUBMITTED.");
     }
 
     /**
@@ -534,14 +580,18 @@ class AuditController extends BaseController
                 ->with('error', "{$gagal} baris gagal disimpan. Periksa nilai isiannya.");
         }
 
-        if ($this->request->getPost('action') === 'serahkan') {
-            $auditModel->markSubmitted($sessionId);
-
-            return redirect()->to($base)
-                ->with('success', 'Data diserahkan. Anda masih bisa mengubah sampai akhir bulan.');
+        if (!$auditModel->markSubmitted($sessionId)) {
+            return redirect()->to($target)
+                ->with('error', 'Data tersimpan, tetapi status sesi gagal diperbarui.');
         }
 
-        return redirect()->to($target)->with('success', 'Data tersimpan.');
+        if ($this->request->getPost('action') === 'serahkan') {
+            return redirect()->to($base)
+                ->with('success', 'Data tersimpan dan otomatis berstatus SUBMITTED. Anda masih bisa mengubah sampai akhir bulan.');
+        }
+
+        return redirect()->to($target)
+            ->with('success', 'Data tersimpan dan sesi otomatis berstatus SUBMITTED.');
     }
 
     /**
