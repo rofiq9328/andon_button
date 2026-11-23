@@ -139,13 +139,9 @@ class TransaksiController extends BaseController
             ->select([
                 't.*',
                 'p.full_name AS nama_pembuat',
-                'a.full_name AS nama_penyetuju',
-                'pr.full_name AS nama_pemroses',
                 'po.full_name AS nama_pemosting',
             ])
             ->join('users p', 'p.id = t.dibuat_oleh', 'left')
-            ->join('users a', 'a.id = t.disetujui_oleh', 'left')
-            ->join('users pr', 'pr.id = t.diproses_oleh', 'left')
             ->join('users po', 'po.id = t.diposting_oleh', 'left')
             ->where('t.id_transaksi', $id)
             ->get()
