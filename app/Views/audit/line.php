@@ -663,12 +663,10 @@ $lineTotal  = count($units);
 
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        toast: true,
-                        position: 'top-end',
                         icon: 'success',
                         title: 'Berhasil',
                         showConfirmButton: false,
-                        timer: 1800,
+                        timer: 1300,
                         timerProgressBar: true
                     });
                 }
