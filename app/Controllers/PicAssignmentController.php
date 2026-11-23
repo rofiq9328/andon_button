@@ -185,7 +185,7 @@ class PicAssignmentController extends BaseController
     }
 
     /**
-     * Hapus satu rentang penugasan.
+     * Hapus satu penugasan line (atau rentang dari data lama).
      */
     public function delete(int $id)
     {
