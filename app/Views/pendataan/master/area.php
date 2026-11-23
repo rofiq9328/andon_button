@@ -290,9 +290,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                                     <button type="button" class="btn btn-sm btn-outline-success btn-edit-area"
                                                             title="Edit Area"
                                                             data-id="<?= (int) $area['id_area'] ?>"
-                                                            data-scope="<?= esc($area['cakupan_area'], 'attr') ?>"
                                                             data-factory="<?= esc((string) ($area['id_factory'] ?? ''), 'attr') ?>"
-                                                            data-parent="<?= esc((string) ($area['parent_area_id'] ?? ''), 'attr') ?>"
                                                             data-kode="<?= esc($area['kode_area'], 'attr') ?>"
                                                             data-nama="<?= esc($area['nama_area'], 'attr') ?>"
                                                             data-jenis="<?= esc($area['jenis_area'], 'attr') ?>"
@@ -353,18 +351,10 @@ $isAdmin = \App\Libraries\Roles::has('admin');
 
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="areaScope" class="form-label">Cakupan Area <span class="text-danger">*</span></label>
-                            <select class="form-select" id="areaScope" name="cakupan_area" required>
-                                <option value="FACTORY">Factory</option>
-                                <option value="PUSAT">Pusat</option>
-                            </select>
-                        </div>
-
                         <div class="col-md-6" id="factoryField">
-                            <label for="areaFactory" class="form-label">Factory <span class="text-danger">*</span></label>
+                            <label for="areaFactory" class="form-label">Factory</label>
                             <select class="form-select" id="areaFactory" name="id_factory">
-                                <option value="">Pilih Factory</option>
+                                <option value="">Tanpa Factory (Area Pusat)</option>
                                 <?php foreach ($factories as $factory): ?>
                                     <option value="<?= (int) $factory['id_factory'] ?>">
                                         <?= esc($factory['kode_factory'] . ' - ' . $factory['nama_factory']) ?>
@@ -372,22 +362,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="areaParent" class="form-label">Induk Area</label>
-                            <select class="form-select" id="areaParent" name="parent_area_id">
-                                <option value="">Tanpa Induk (Area Utama)</option>
-                                <?php foreach ($parentAreas as $parentArea): ?>
-                                    <option value="<?= (int) $parentArea['id_area'] ?>"
-                                            data-scope="<?= esc($parentArea['cakupan_area'], 'attr') ?>"
-                                            data-factory="<?= esc((string) ($parentArea['id_factory'] ?? ''), 'attr') ?>">
-                                        <?= esc($parentArea['kode_area'] . ' - ' . $parentArea['nama_area']) ?>
-                                        <?= (int) $parentArea['status'] === 1 ? '' : ' (Nonaktif)' ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="form-text">Opsional. Pilih jika Area ini merupakan bagian dari Area lain.</div>
+                            <div class="form-text">Pilih Factory untuk Area di lingkungan Factory. Kosongkan untuk Area Pusat.</div>
                         </div>
 
                         <div class="col-md-6">
@@ -442,8 +417,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
                         <div class="col-12">
                             <div class="scope-info">
                                 <i class="fa-solid fa-circle-info me-1"></i>
-                                Area Pusat tidak terikat pada Factory. Area Factory wajib memilih Factory.
-                                Induk Area harus memiliki cakupan dan Factory yang sama.
+                                Cakupan Area ditentukan otomatis: pilih Factory untuk Area Factory, atau kosongkan untuk Area Pusat.
                             </div>
                         </div>
                     </div>
@@ -474,22 +448,14 @@ $isAdmin = \App\Libraries\Roles::has('admin');
     const hasErrors = <?= json_encode(!empty($errors)) ?>;
     const errorEditId = <?= json_encode((int) $editAreaId) ?>;
 
-    const scopeSelect = document.getElementById('areaScope');
     const factorySelect = document.getElementById('areaFactory');
-    const parentSelect = document.getElementById('areaParent');
-    const factoryField = document.getElementById('factoryField');
     const title = document.getElementById('areaModalTitleText');
     const submit = document.getElementById('areaSubmitButton');
     const icon = document.querySelector('#areaModalTitle .modal-title-icon i');
 
-    const parentOptions = Array.from(parentSelect.options).filter(option => option.value !== '');
-    let editingId = '';
-
     const oldValues = {
         id: <?= json_encode((string) old('id_area', $editAreaId ?? '')) ?>,
-        scope: <?= json_encode((string) old('cakupan_area', 'FACTORY')) ?>,
         factory: <?= json_encode((string) old('id_factory', '')) ?>,
-        parent: <?= json_encode((string) old('parent_area_id', '')) ?>,
         kode: <?= json_encode((string) old('kode_area', '')) ?>,
         nama: <?= json_encode((string) old('nama_area', '')) ?>,
         jenis: <?= json_encode((string) old('jenis_area', 'OTHER')) ?>,
@@ -498,45 +464,11 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         status: <?= json_encode((string) old('status', '1')) ?>
     };
 
-    function filterParents() {
-        const scope = scopeSelect.value;
-        const factoryId = factorySelect.value;
-        let selectedStillAllowed = false;
-
-        parentOptions.forEach(option => {
-            const sameScope = option.dataset.scope === scope;
-            const sameFactory = scope === 'PUSAT' || option.dataset.factory === factoryId;
-            const notSelf = option.value !== editingId;
-            const allowed = sameScope && sameFactory && notSelf;
-
-            option.hidden = !allowed;
-            option.disabled = !allowed;
-
-            if (option.selected && allowed) selectedStillAllowed = true;
-        });
-
-        if (!selectedStillAllowed) parentSelect.value = '';
-    }
-
-    function updateScopeFields() {
-        const isFactory = scopeSelect.value === 'FACTORY';
-        factoryField.classList.toggle('d-none', !isFactory);
-        factorySelect.required = isFactory;
-        factorySelect.disabled = !isFactory;
-
-        if (!isFactory) factorySelect.value = '';
-
-        filterParents();
-    }
-
     function prepareAdd() {
         form.reset();
         form.action = storeUrl;
-        editingId = '';
         document.getElementById('areaId').value = '';
-        scopeSelect.value = 'FACTORY';
         factorySelect.value = '';
-        parentSelect.value = '';
         document.getElementById('areaType').value = 'OTHER';
         document.getElementById('areaStockFunction').value = 'PENGGUNA';
         document.getElementById('areaStatus').value = '1';
@@ -544,16 +476,12 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         title.textContent = 'Tambah Area';
         submit.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> SIMPAN';
         icon.className = 'fa-solid fa-map-location-dot';
-        updateScopeFields();
     }
 
     function prepareEdit(data) {
         form.action = updateUrl + '/' + data.id;
         document.getElementById('areaId').value = data.id;
-        editingId = String(data.id);
-        scopeSelect.value = data.scope;
         factorySelect.value = data.factory || '';
-        parentSelect.value = data.parent || '';
         document.getElementById('areaCode').value = data.kode || '';
         document.getElementById('areaName').value = data.nama || '';
         document.getElementById('areaType').value = data.jenis || 'OTHER';
@@ -563,7 +491,6 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         title.textContent = 'Edit Area';
         submit.innerHTML = '<i class="fa-solid fa-check me-1"></i> SIMPAN PERUBAHAN';
         icon.className = 'fa-solid fa-pen';
-        updateScopeFields();
     }
 
     document.getElementById('btnAddArea')?.addEventListener('click', prepareAdd);
@@ -572,9 +499,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         button.addEventListener('click', function () {
             prepareEdit({
                 id: this.dataset.id,
-                scope: this.dataset.scope,
                 factory: this.dataset.factory,
-                parent: this.dataset.parent,
                 kode: this.dataset.kode,
                 nama: this.dataset.nama,
                 jenis: this.dataset.jenis,
@@ -587,9 +512,6 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         });
     });
 
-    scopeSelect.addEventListener('change', updateScopeFields);
-    factorySelect.addEventListener('change', filterParents);
-
     document.getElementById('areaCode').addEventListener('input', function () {
         this.value = this.value.toUpperCase();
     });
@@ -598,9 +520,7 @@ $isAdmin = \App\Libraries\Roles::has('admin');
         if (errorEditId || oldValues.id) {
             prepareEdit({
                 id: errorEditId || oldValues.id,
-                scope: oldValues.scope,
                 factory: oldValues.factory,
-                parent: oldValues.parent,
                 kode: oldValues.kode,
                 nama: oldValues.nama,
                 jenis: oldValues.jenis,
@@ -610,16 +530,13 @@ $isAdmin = \App\Libraries\Roles::has('admin');
             });
         } else {
             prepareAdd();
-            scopeSelect.value = oldValues.scope;
             factorySelect.value = oldValues.factory;
-            parentSelect.value = oldValues.parent;
             document.getElementById('areaCode').value = oldValues.kode;
             document.getElementById('areaName').value = oldValues.nama;
             document.getElementById('areaType').value = oldValues.jenis;
             document.getElementById('areaStockFunction').value = oldValues.fungsi;
             document.getElementById('areaDescription').value = oldValues.deskripsi;
             document.getElementById('areaStatus').value = oldValues.status;
-            updateScopeFields();
         }
 
         bootstrap.Modal.getOrCreateInstance(modalElement).show();
