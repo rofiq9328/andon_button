@@ -15,7 +15,7 @@
                     <i class="fa-solid fa-file-excel me-1"></i> EXPORT EXCEL
                 </a>
                 <a href="<?= base_url('audit-andon/penugasan') ?>" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm">
-                    <i class="fa-solid fa-users me-1"></i> PENUGASAN PIC
+                    <i class="fa-solid fa-users me-1"></i> PENUGASAN IE LINE
                 </a>
                 <form method="get" action="<?= base_url('audit-andon') ?>" class="d-flex gap-2">
                     <input type="month" name="periode" value="<?= esc($periode) ?>" class="form-control form-control-sm">
@@ -42,7 +42,7 @@
             <div class="col-12">
                 <div class="card card-outline card-success shadow-sm">
                     <div class="card-header">
-                        <h3 class="card-title fw-bold text-dark mb-0">Sesi PIC</h3>
+                        <h3 class="card-title fw-bold text-dark mb-0">Sesi IE LINE</h3>
                     </div>
 
                     <div class="card-body p-0">
@@ -50,7 +50,7 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>PIC</th>
+                                        <th>IE LINE</th>
                                         <th>Status</th>
                                         <th style="min-width: 180px;">Progres</th>
                                         <th>Diserahkan</th>
@@ -152,7 +152,7 @@ document.addEventListener('submit', function (event) {
     Swal.fire({
         icon: 'warning',
         title: 'Hapus Sesi Audit?',
-        text: 'Seluruh hasil pemeriksaan dalam sesi ini akan dihapus permanen. Penugasan PIC dan master button tidak ikut dihapus.',
+        text: 'Seluruh hasil pemeriksaan dalam sesi ini akan dihapus permanen. Penugasan IE LINE dan master button tidak ikut dihapus.',
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
         cancelButtonColor: '#6c757d',
