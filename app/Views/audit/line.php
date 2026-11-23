@@ -432,7 +432,19 @@ $lineTotal  = count($units);
     <div class="container-fluid">
 
         <?php if (session()->getFlashdata('success')): ?>
-            <div class="alert alert-success shadow-sm"><?= esc(session()->getFlashdata('success')) ?></div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            showConfirmButton: false,
+                            timer: 1300,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            </script>
         <?php endif; ?>
         <?php if (session()->getFlashdata('error')): ?>
             <div class="alert alert-danger shadow-sm"><?= esc(session()->getFlashdata('error')) ?></div>
