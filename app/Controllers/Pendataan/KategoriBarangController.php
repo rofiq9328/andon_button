@@ -24,6 +24,22 @@ class KategoriBarangController extends BaseController
             ->orderBy('kode_kategori', 'ASC')
             ->findAll();
 
+        $usageRows = db_connect()->table('barang')
+            ->select('id_kategori, COUNT(*) AS total', false)
+            ->groupBy('id_kategori')
+            ->get()
+            ->getResultArray();
+
+        $usageCounts = [];
+        foreach ($usageRows as $usageRow) {
+            $usageCounts[(int) $usageRow['id_kategori']] = (int) $usageRow['total'];
+        }
+
+        foreach ($categories as &$category) {
+            $category['jumlah_barang'] = $usageCounts[(int) $category['id_kategori']] ?? 0;
+        }
+        unset($category);
+
         return view('pendataan/master/kategori', [
             'title'      => 'Master Kategori Barang',
             'categories' => $categories,
@@ -127,6 +143,58 @@ class KategoriBarangController extends BaseController
 
         return redirect()->to('pendataan/master/kategori')
             ->with('success', 'Kategori Barang berhasil diperbarui.');
+    }
+
+    public function delete(int $id)
+    {
+        if ($response = $this->adminOnly()) {
+            return $response;
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+
+        // Lock category row while checking references to avoid a concurrent
+        // item insert between the usage check and category deletion.
+        $category = $db->query(
+            'SELECT id_kategori, nama_kategori
+             FROM kategori_barang
+             WHERE id_kategori = ?
+             FOR UPDATE',
+            [$id]
+        )->getRowArray();
+
+        if (!$category) {
+            $db->transRollback();
+            return redirect()->to('pendataan/master/kategori')
+                ->with('error', 'Kategori Barang tidak ditemukan.');
+        }
+
+        $usedCount = $db->table('barang')
+            ->where('id_kategori', $id)
+            ->countAllResults();
+
+        if ($usedCount > 0) {
+            $db->transRollback();
+            return redirect()->to('pendataan/master/kategori')
+                ->with('error', 'Kategori "' . $category['nama_kategori'] . '" tidak dapat dihapus karena masih digunakan oleh '
+                    . $usedCount . ' data barang. Ubah kategori barang terkait atau nonaktifkan kategori ini.');
+        }
+
+        $deleted = $db->table('kategori_barang')
+            ->where('id_kategori', $id)
+            ->delete();
+
+        if (!$deleted || $db->affectedRows() !== 1 || !$db->transStatus()) {
+            $db->transRollback();
+            return redirect()->to('pendataan/master/kategori')
+                ->with('error', 'Kategori Barang gagal dihapus. Data tidak berubah.');
+        }
+
+        $db->transCommit();
+
+        return redirect()->to('pendataan/master/kategori')
+            ->with('success', 'Kategori "' . $category['nama_kategori'] . '" berhasil dihapus.');
     }
 
     public function toggleStatus(int $id)
