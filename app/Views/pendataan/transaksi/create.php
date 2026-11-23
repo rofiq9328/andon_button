@@ -187,7 +187,7 @@ $oldAreaTujuan = (string) (old('id_area_tujuan') ?? '');
 
             <div class="d-flex justify-content-end gap-2 flex-wrap trx-actions">
                 <a href="<?= base_url('pendataan/transaksi') ?>" class="btn btn-light border">BATAL</a>
-                <button type="submit" class="btn btn-success fw-bold" id="saveDraft" <?= empty($barang) || empty($areas) ? 'disabled' : '' ?>>
+                <button type="submit" class="btn btn-success fw-bold" id="saveTransaction" <?= empty($barang) || empty($areas) ? 'disabled' : '' ?>>
                     <i class="fa-solid fa-floppy-disk me-1"></i> <span id="saveButtonLabel">SIMPAN TRANSAKSI</span>
                 </button>
             </div>
@@ -239,10 +239,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('areaTujuanLabel').innerHTML = value === 'SALDO_AWAL' ? 'Area Pencatatan Stok <span class="text-danger">*</span>' : 'Area Tujuan <span class="text-danger">*</span>';
 
         const descriptions = {
-            SALDO_AWAL: 'Saldo awal akan langsung ditambahkan ke Area yang dipilih.',
+            SALDO_AWAL: 'Administrator mencatat saldo awal dan langsung menambah saldo Area yang dipilih.',
             PENERIMAAN: 'Barang Masuk akan langsung menambah saldo Area tujuan.',
             PENGELUARAN: 'Barang Keluar akan langsung mengurangi saldo Area asal. Stok harus mencukupi.',
-            TRANSFER: 'Barang akan langsung dipindahkan. Saldo Area asal harus mencukupi.',
+            TRANSFER: 'Administrator memindahkan barang secara langsung. Saldo Area asal harus mencukupi.',
         };
         const labels = {
             SALDO_AWAL: 'CATAT SALDO AWAL',
@@ -281,6 +281,13 @@ document.addEventListener('DOMContentLoaded', function () {
     type.addEventListener('change', updateTypeFields);
     updateTypeFields();
     updateRows();
+
+    // Mencegah pengiriman ganda karena tombol ditekan berulang kali.
+    document.getElementById('formTransaksi').addEventListener('submit', function () {
+        const button = document.getElementById('saveTransaction');
+        button.disabled = true;
+        document.getElementById('saveButtonLabel').textContent = 'MENYIMPAN...';
+    });
 });
 </script>
 <?= $this->endSection() ?>
