@@ -92,7 +92,7 @@
                                                 <?= $s['submitted_at'] ? esc($s['submitted_at']) : '-' ?>
                                             </td>
                                             <td class="text-end">
-                                                <div class="d-flex gap-2 justify-content-end">
+                                                <div class="d-flex gap-2 justify-content-end flex-wrap">
                                                     <a href="<?= base_url('audit-andon/sesi/' . (int) $s['id']) ?>"
                                                        class="btn btn-success btn-sm fw-bold shadow-sm">LIHAT</a>
 
@@ -102,6 +102,15 @@
                                                             <button type="submit" class="btn btn-warning btn-sm fw-bold shadow-sm">BUKA KEMBALI</button>
                                                         </form>
                                                     <?php endif; ?>
+
+                                                    <form method="post"
+                                                          action="<?= base_url('audit-andon/hapus-sesi/' . (int) $s['id']) ?>"
+                                                          class="audit-session-delete-form">
+                                                        <?= csrf_field() ?>
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold shadow-sm">
+                                                            <i class="fa-solid fa-trash-can me-1"></i> HAPUS
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>
@@ -118,4 +127,40 @@
 </div>
 <!--end::App Content-->
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener('submit', function (event) {
+    const form = event.target.closest('.audit-session-delete-form');
+    if (!form) return;
+
+    event.preventDefault();
+
+    const submitAfterConfirm = function () {
+        form.dataset.confirmed = '1';
+        form.submit();
+    };
+
+    if (typeof Swal === 'undefined') {
+        if (window.confirm('Hapus sesi audit ini beserta seluruh hasil pemeriksaannya? Tindakan ini tidak dapat dibatalkan.')) {
+            submitAfterConfirm();
+        }
+        return;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Hapus Sesi Audit?',
+        text: 'Seluruh hasil pemeriksaan dalam sesi ini akan dihapus permanen. Penugasan PIC dan master button tidak ikut dihapus.',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus Sesi',
+        cancelButtonText: 'Batal'
+    }).then(function (result) {
+        if (result.isConfirmed) submitAfterConfirm();
+    });
+});
+</script>
 <?= $this->endSection() ?>
