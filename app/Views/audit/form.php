@@ -123,7 +123,7 @@
                 <h1 class="mb-0 fs-3">DAFTAR LINE</h1>
                 <div class="text-secondary small">
                     PIC: <?= esc($owner['full_name'] ?? $owner['username'] ?? '-') ?> ·
-                    Status: <span class="fw-semibold"><?= esc($session['status']) ?></span>
+                    Status: <span id="audit-session-status" class="fw-semibold"><?= strtoupper(esc($session['status'])) ?></span>
                 </div>
             </div>
             <div class="col-sm-5 text-sm-end mt-2 mt-sm-0 d-flex gap-2 justify-content-sm-end flex-wrap">
