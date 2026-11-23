@@ -22,7 +22,8 @@
           <!--begin::End Navbar Links-->
           <?php
               $fullName = session()->get('full_name') ?? session()->get('username') ?? 'User';
-              $role     = session()->get('role') ?? '-';
+              $roleRaw  = session()->get('role') ?? '-';
+              $role     = strtolower(trim((string) $roleRaw)) === 'pic_audit' ? 'IE LINE' : $roleRaw;
               $initial  = strtoupper(substr($fullName, 0, 1));
           ?>
           <ul class="navbar-nav ms-auto">
