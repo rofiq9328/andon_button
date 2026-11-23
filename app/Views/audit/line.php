@@ -77,7 +77,8 @@
     }
 
     .audit-table td.cell-empty {
-        background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(128, 128, 128, 0.18) 6px 12px);
+        background-image: none;
+        background-color: var(--bs-tertiary-bg);
     }
 
     .audit-table .sticky-col {
@@ -478,13 +479,13 @@ $lineTotal  = count($units);
         csrfHash:   <?= json_encode(csrf_hash()) ?>,
     };
 
-    const rows = Array.from(document.querySelectorAll('tr[data-unit]'));
+    const tableBody = document.querySelector('.audit-table tbody');
+    const rows = tableBody ? Array.from(tableBody.querySelectorAll('tr[data-unit]')) : [];
     const statusEl = document.getElementById('save-status');
-    const LED  = { bad: 'text-danger', ok: 'text-success', partial: 'text-warning', empty: 'text-secondary' };
     const PILL = { idle: 'is-idle', saving: 'is-saving', saved: 'is-saved', error: 'is-error' };
     const ICON = {
         idle:   'fa-solid fa-circle-check',
-        saving: 'fa-solid fa-rotate fa-spin',
+        saving: 'fa-solid fa-circle-notch',
         saved:  'fa-solid fa-circle-check',
         error:  'fa-solid fa-triangle-exclamation',
     };
@@ -492,46 +493,54 @@ $lineTotal  = count($units);
     let inFlight = 0;
 
     function setStatus(kind, text) {
+        if (!statusEl) return;
         statusEl.className = 'status-pill ' + PILL[kind];
         statusEl.querySelector('i').className = ICON[kind];
         statusEl.querySelector('span').textContent = text;
     }
 
-    function refreshRow(tr) {
-        let filled = 0;
-        let bad = false;
+    function setCellState(td, selected) {
+        const filled = !!selected;
+        const bad = filled && selected.dataset.bad === '1';
 
-        tr.querySelectorAll('td[data-field]').forEach(td => {
-            td.classList.remove('cell-ok', 'cell-bad', 'cell-empty');
+        td.classList.toggle('cell-ok', filled && !bad);
+        td.classList.toggle('cell-bad', bad);
+        td.classList.toggle('cell-empty', !filled);
+        td.dataset.auditFilled = filled ? '1' : '0';
+        td.dataset.auditBad = bad ? '1' : '0';
 
-            const checked = td.querySelector('input.audit-radio:checked');
-            if (!checked) {
-                td.classList.add('cell-empty');
-                return;
-            }
+        return { filled: filled, bad: bad };
+    }
 
-            filled++;
-            if (checked.dataset.bad === '1') {
-                td.classList.add('cell-bad');
-                bad = true;
-            } else {
-                td.classList.add('cell-ok');
-            }
-        });
-
-        let state;
-        if (bad) {
+    function setRowState(tr, filled, badCount) {
+        let state = 'empty';
+        if (badCount > 0) {
             state = 'bad';
         } else if (filled === CFG.fieldCount) {
             state = 'ok';
         } else if (filled > 0) {
             state = 'partial';
-        } else {
-            state = 'empty';
         }
 
+        tr.dataset.auditFilled = String(filled);
+        tr.dataset.auditBad = String(badCount);
         tr.dataset.state = state;
     }
+
+    // Hitung sekali saat halaman dibuka; selanjutnya hanya sel yang berubah yang diperbarui.
+    rows.forEach(function (tr) {
+        let filled = 0;
+        let badCount = 0;
+
+        tr.querySelectorAll('td[data-field]').forEach(function (td) {
+            const selected = td.querySelector('input.audit-radio:checked');
+            const state = setCellState(td, selected);
+            if (state.filled) filled++;
+            if (state.bad) badCount++;
+        });
+
+        setRowState(tr, filled, badCount);
+    });
 
     async function autosave(payload) {
         inFlight++;
@@ -547,12 +556,11 @@ $lineTotal  = count($units);
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
             });
             const data = await res.json();
-            if (data.csrf) {
-                CFG.csrfHash = data.csrf;
-            }
+            if (data.csrf) CFG.csrfHash = data.csrf;
             if (!res.ok || !data.ok) {
                 throw new Error(data.message || 'Gagal menyimpan');
             }
+
             inFlight--;
             if (inFlight === 0) {
                 setStatus('saved', 'Tersimpan ' + data.time);
@@ -563,28 +571,52 @@ $lineTotal  = count($units);
         }
     }
 
-    rows.forEach(tr => {
-        tr.querySelectorAll('input.audit-radio').forEach(r => {
-            r.addEventListener('change', () => {
-                refreshRow(tr);
+    // Satu listener untuk seluruh pilihan audit dan kolom catatan.
+    if (tableBody) {
+        tableBody.addEventListener('change', function (event) {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+
+            if (target.matches('input.audit-radio')) {
+                const tr = target.closest('tr[data-unit]');
+                const td = target.closest('td[data-field]');
+                if (!tr || !td) return;
+
+                const wasFilled = td.dataset.auditFilled === '1';
+                const wasBad = td.dataset.auditBad === '1';
+                const isBad = target.dataset.bad === '1';
+
+                let filled = Number(tr.dataset.auditFilled || 0);
+                let badCount = Number(tr.dataset.auditBad || 0);
+
+                if (!wasFilled) filled++;
+                if (wasBad) badCount--;
+                if (isBad) badCount++;
+
+                setCellState(td, target);
+                setRowState(tr, filled, badCount);
+
                 if (CFG.editable) {
-                    autosave({ unit_id: r.dataset.unit, field: r.dataset.field, value: r.value });
+                    autosave({
+                        unit_id: target.dataset.unit,
+                        field: target.dataset.field,
+                        value: target.value
+                    });
                 }
-            });
+                return;
+            }
+
+            if (target.matches('input[data-field="catatan"]') && CFG.editable) {
+                autosave({
+                    unit_id: target.dataset.unit,
+                    field: 'catatan',
+                    value: target.value
+                });
+            }
         });
+    }
 
-        tr.querySelectorAll('input[data-field="catatan"]').forEach(inp => {
-            inp.addEventListener('change', () => {
-                if (CFG.editable) {
-                    autosave({ unit_id: inp.dataset.unit, field: 'catatan', value: inp.value });
-                }
-            });
-        });
-
-        refreshRow(tr);
-    });
-
-    // Isi cepat: hitung kotak kosong dulu, lalu minta konfirmasi
+    // Isi cepat: periksa cache status sel, tanpa mencari radio checked berulang kali.
     const quickForm = document.getElementById('quick-form');
     if (quickForm) {
         quickForm.addEventListener('submit', function (e) {
@@ -596,12 +628,11 @@ $lineTotal  = count($units);
 
             const field = quickForm.elements['field'].value;
             let kosong = 0;
-            rows.forEach(tr => {
-                tr.querySelectorAll('td[data-field]').forEach(td => {
+
+            rows.forEach(function (tr) {
+                tr.querySelectorAll('td[data-field]').forEach(function (td) {
                     const cocok = field === 'all' || td.dataset.field === field;
-                    if (cocok && !td.querySelector('input.audit-radio:checked')) {
-                        kosong++;
-                    }
+                    if (cocok && td.dataset.auditFilled !== '1') kosong++;
                 });
             });
 
@@ -615,9 +646,7 @@ $lineTotal  = count($units);
                 'Isi ' + kosong + ' kotak kosong dengan nilai normal?\n\n' +
                 'Kotak yang sudah diisi tidak akan berubah.'
             );
-            if (!ok) {
-                e.preventDefault();
-            }
+            if (!ok) e.preventDefault();
         });
     }
 
