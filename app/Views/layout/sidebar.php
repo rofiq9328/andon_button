@@ -209,7 +209,7 @@ $isSettingsActive         = $isMasterButtonActive || $isUserManagementActive;
                         <p>Transaksi</p>
                       </a>
                     </li>
-                    <?php if (\\App\\Libraries\\Roles::has('verifikator')): ?>
+                    <?php if (\App\Libraries\Roles::has('verifikator')): ?>
                     <li class="nav-item">
                       <a href="<?= base_url('pendataan/transaksi/verifikasi') ?>"
                          class="nav-link<?= $current_path === 'pendataan/transaksi/verifikasi' ? ' active' : '' ?>"
