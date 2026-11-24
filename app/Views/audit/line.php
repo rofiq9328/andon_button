@@ -672,6 +672,50 @@
         transition: none !important;
     }
 
+    /* Kontrol audit satu tombol per sel: lebih sedikit elemen untuk dirender. */
+    .audit-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-width: 46px;
+        min-height: 27px;
+        padding: 0.12rem 0.2rem;
+        border: 1px solid #d5dbe1;
+        border-radius: 4px;
+        background: #f1f3f5;
+        color: #667085;
+        font: inherit;
+        font-size: 0.62rem;
+        font-weight: 800;
+        line-height: 1.1;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: none;
+        transition: none;
+    }
+
+    .audit-toggle.audit-toggle-ok {
+        border-color: rgba(25, 135, 84, 0.35);
+        background: rgba(25, 135, 84, 0.12);
+        color: #146c43;
+    }
+
+    .audit-toggle.audit-toggle-bad {
+        border-color: rgba(220, 53, 69, 0.38);
+        background: rgba(220, 53, 69, 0.12);
+        color: #b02a37;
+    }
+
+    .audit-toggle:disabled {
+        cursor: default;
+        opacity: 0.8;
+    }
+
+    .audit-toggle:not(:disabled):active {
+        filter: brightness(0.96);
+    }
+
     @media (min-width: 1200px) {
         .audit-table {
             table-layout: fixed;
@@ -680,6 +724,14 @@
         .audit-table td[data-field] {
             border-radius: 0 !important;
             box-shadow: none !important;
+        }
+
+        .audit-toggle {
+            min-width: 0;
+            min-height: 21px;
+            padding: 0.06rem 0.02rem;
+            font-size: 0.48rem;
+            border-radius: 3px;
         }
     }
 
@@ -851,27 +903,36 @@ $lineTotal  = count($units);
                                     </td>
 
                                     <?php foreach ($flat as $key => $def): ?>
+                                        <?php
+                                            $optionalAction = in_array($key, ['perbaikan_rusak', 'ganti_baterai'], true);
+                                            $goodValue = $def['opts'][0][0] ?? '';
+                                            $badValue = $def['opts'][1][0] ?? '';
+                                            $currentValue = isset($u[$key]) ? (string) $u[$key] : '';
+
+                                            // Nilai NO dari data lama diperlakukan sebagai kondisi netral.
+                                            if ($optionalAction && $currentValue !== 'YES') {
+                                                $currentValue = '';
+                                            }
+
+                                            $isBadValue = $optionalAction
+                                                ? $currentValue === 'YES'
+                                                : ($badValue !== '' && $currentValue === $badValue);
+                                            $toggleState = $currentValue === '' ? 'empty' : ($isBadValue ? 'bad' : 'ok');
+                                        ?>
                                         <td class="text-center<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>"
-                                            data-field="<?= $key ?>">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <?php foreach ($def['opts'] as $i => [$value, $good]): ?>
-                                                    <?php $rid = 'u' . (int) $u['id'] . '_' . $key . '_' . $i; ?>
-                                                    <input type="radio" class="btn-check audit-radio"
-                                                           name="u<?= (int) $u['id'] ?>_<?= $key ?>"
-                                                           id="<?= $rid ?>"
-                                                           value="<?= esc($value) ?>"
-                                                           data-unit="<?= (int) $u['id'] ?>"
-                                                           data-field="<?= $key ?>"
-                                                           data-bad="<?= $good ? '0' : '1' ?>"
-                                                           autocomplete="off"
-                                                           <?= ($u[$key] === $value) ? 'checked' : '' ?>
-                                                           <?= $editable ? '' : 'disabled' ?>>
-                                                    <label class="btn btn-outline-<?= $good ? 'success' : 'danger' ?>"
-                                                           for="<?= $rid ?>">
-                                                        <i class="fa-solid <?= $good ? 'fa-check' : 'fa-xmark' ?>"></i><?= esc($value) ?>
-                                                    </label>
-                                                <?php endforeach; ?>
-                                            </div>
+                                            data-field="<?= esc($key) ?>">
+                                            <button type="button"
+                                                    class="audit-toggle audit-toggle-<?= $toggleState ?>"
+                                                    data-unit="<?= (int) $u['id'] ?>"
+                                                    data-field="<?= esc($key) ?>"
+                                                    data-value="<?= esc($currentValue) ?>"
+                                                    data-good-value="<?= esc($goodValue) ?>"
+                                                    data-bad-value="<?= esc($badValue) ?>"
+                                                    data-optional="<?= $optionalAction ? '1' : '0' ?>"
+                                                    aria-label="<?= esc($def['label'] . ' unit ' . $u['line_no']) ?>"
+                                                    <?= $editable ? '' : 'disabled' ?>>
+                                                <?= $currentValue !== '' ? esc($currentValue) : '-' ?>
+                                            </button>
                                         </td>
                                     <?php endforeach; ?>
 
@@ -939,17 +1000,25 @@ $lineTotal  = count($units);
         return saving || pendingChanges.size > 0;
     }
 
-    function setCellState(td, selected) {
-        const filled = !!selected;
-        const bad = filled && selected.dataset.bad === '1';
+    function setCellState(td, value, bad) {
+        const filled = value !== '';
 
         td.classList.toggle('cell-ok', filled && !bad);
-        td.classList.toggle('cell-bad', bad);
+        td.classList.toggle('cell-bad', filled && bad);
         td.classList.toggle('cell-empty', !filled);
         td.dataset.auditFilled = filled ? '1' : '0';
         td.dataset.auditBad = bad ? '1' : '0';
 
-        return { filled: filled, bad: bad };
+        return { filled: filled, bad: filled && bad };
+    }
+
+    function setToggleValue(button, value, bad) {
+        const td = button.closest('td[data-field]');
+        button.dataset.value = value;
+        button.className = 'audit-toggle audit-toggle-' + (value === '' ? 'empty' : (bad ? 'bad' : 'ok'));
+        button.textContent = value === '' ? '-' : value;
+
+        return setCellState(td, value, bad);
     }
 
     function setRowState(tr, filled, badCount) {
@@ -973,8 +1042,14 @@ $lineTotal  = count($units);
         let badCount = 0;
 
         tr.querySelectorAll('td[data-field]').forEach(function (td) {
-            const selected = td.querySelector('input.audit-radio:checked');
-            const state = setCellState(td, selected);
+            const button = td.querySelector('button.audit-toggle');
+            const value = button ? button.dataset.value : '';
+            const bad = button && value !== '' && (
+                button.dataset.optional === '1'
+                    ? value === 'YES'
+                    : value === button.dataset.badValue
+            );
+            const state = setCellState(td, value, bad);
 
             if (!CFG.optionalFields.includes(td.dataset.field) && state.filled) {
                 filled++;
@@ -1072,56 +1147,60 @@ $lineTotal  = count($units);
     }
 
     if (tableBody) {
-        tableBody.addEventListener('change', function (event) {
-            const target = event.target;
-            if (!(target instanceof HTMLInputElement) || !target.matches('input.audit-radio')) return;
+        tableBody.addEventListener('click', function (event) {
+            const button = event.target.closest('button.audit-toggle');
+            if (!button || !CFG.editable) return;
 
-            const tr = target.closest('tr[data-unit]');
-            const td = target.closest('td[data-field]');
+            const tr = button.closest('tr[data-unit]');
+            const td = button.closest('td[data-field]');
             if (!tr || !td) return;
+
+            const current = button.dataset.value || '';
+            const goodValue = button.dataset.goodValue || '';
+            const badValue = button.dataset.badValue || '';
+            const optional = button.dataset.optional === '1';
+
+            let nextValue;
+            let isBad;
+
+            if (optional) {
+                // Kolom tindakan: netral (-) <-> YES.
+                nextValue = current === 'YES' ? '' : 'YES';
+                isBad = nextValue === 'YES';
+            } else if (current === '') {
+                // Pemeriksaan utama: netral -> normal -> bermasalah -> netral.
+                nextValue = goodValue;
+                isBad = false;
+            } else if (current === goodValue) {
+                nextValue = badValue;
+                isBad = true;
+            } else {
+                nextValue = '';
+                isBad = false;
+            }
 
             const wasFilled = td.dataset.auditFilled === '1';
             const wasBad = td.dataset.auditBad === '1';
-            const selected = target.checked ? target : null;
-            const isBad = target.checked && target.dataset.bad === '1';
-            const isRequired = !CFG.optionalFields.includes(target.dataset.field);
+            const isRequired = !optional;
 
             let filled = Number(tr.dataset.auditFilled || 0);
             let badCount = Number(tr.dataset.auditBad || 0);
 
-            if (isRequired && !wasFilled && selected) filled++;
+            if (isRequired) {
+                if (!wasFilled && nextValue !== '') filled++;
+                if (wasFilled && nextValue === '') filled--;
+            }
             if (wasBad) badCount--;
-            if (isBad) badCount++;
+            if (isBad && nextValue !== '') badCount++;
 
-            setCellState(td, selected);
+            setToggleValue(button, nextValue, isBad);
             setRowState(tr, filled, badCount);
 
-            if (CFG.editable) {
-                queueAutosave({
-                    unit_id: target.dataset.unit,
-                    field: target.dataset.field,
-                    value: target.checked ? target.value : ''
-                });
-            }
-        });
-    }
-
-    // Kolom tindakan hanya memiliki tombol YES. Klik ulang YES untuk
-    // mengembalikan ke kondisi netral (dianggap NO/tidak perlu tindakan).
-    if (tableBody) {
-        tableBody.addEventListener('click', function (event) {
-            const label = event.target.closest('label');
-            if (!label) return;
-
-            const input = document.getElementById(label.htmlFor);
-            if (!input || !input.matches('input.audit-radio') ||
-                !CFG.optionalFields.includes(input.dataset.field) || !input.checked) {
-                return;
-            }
-
-            event.preventDefault();
-            input.checked = false;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
+            queueAutosave({
+                unit_id: button.dataset.unit,
+                field: button.dataset.field,
+                value: nextValue
+            });
         });
     }
 
