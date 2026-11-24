@@ -56,8 +56,8 @@ class AuditExportController extends BaseController
         'K' => 'MUNCUL,TIDAK',
         'L' => 'ON,OFF',
         'M' => 'MUNCUL,TIDAK',
-        'N' => 'YES,NO',
-        'O' => 'YES,NO',
+        'N' => 'YES,-',
+        'O' => 'YES,-',
     ];
 
     public function excel()
@@ -163,9 +163,9 @@ class AuditExportController extends BaseController
             $row = [(int) $u['line'], (int) $u['line_no']];
 
             foreach ($fields as $field) {
-                // Kolom tindakan: kosong di form berarti tidak perlu tindakan (NO).
+                // Kolom kondisi hanya menampilkan YES atau tanda strip.
                 if (in_array($field, ['perbaikan_rusak', 'ganti_baterai'], true)) {
-                    $row[] = $d[$field] ?? 'NO';
+                    $row[] = !empty($d[$field]) && strtoupper(trim((string) $d[$field])) === 'YES' ? 'YES' : '-';
                 } else {
                     $row[] = $d[$field] ?? null;
                 }
