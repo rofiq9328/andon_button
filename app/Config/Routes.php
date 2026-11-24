@@ -74,6 +74,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('sesi/(:num)/line/(:num)', 'AuditController::lineAdmin/$1/$2');
         $routes->post('simpan', 'AuditController::save');
         $routes->post('autosave', 'AuditController::autosave');
+        $routes->post('autosave-batch', 'AuditController::autosaveBatch');
         $routes->post('isi-cepat', 'AuditController::quickFill');
         $routes->post('buka/(:num)', 'AuditController::reopen/$1');
     });
