@@ -163,7 +163,12 @@ class AuditExportController extends BaseController
             $row = [(int) $u['line'], (int) $u['line_no']];
 
             foreach ($fields as $field) {
-                $row[] = $d[$field] ?? null;
+                // Kolom tindakan: kosong di form berarti tidak perlu tindakan (NO).
+                if (in_array($field, ['perbaikan_rusak', 'ganti_baterai'], true)) {
+                    $row[] = $d[$field] ?? 'NO';
+                } else {
+                    $row[] = $d[$field] ?? null;
+                }
             }
 
             $rows[] = $row;
