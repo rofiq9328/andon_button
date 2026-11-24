@@ -33,8 +33,6 @@ class AuditController extends BaseController
         'qc_layar'        => 'MUNCUL',
         'spv_lampu'       => 'ON',
         'spv_layar'       => 'MUNCUL',
-        'perbaikan_rusak' => 'NO',
-        'ganti_baterai'   => 'NO',
     ];
 
     /** Pilihan yang sah untuk pengisian massal per kolom. */
@@ -69,6 +67,15 @@ class AuditController extends BaseController
         'spv_layar'       => 'TIDAK',
         'perbaikan_rusak' => 'YES',
         'ganti_baterai'   => 'YES',
+    ];
+
+    /** Kolom wajib diperiksa untuk menentukan unit sudah diaudit. */
+    private const REQUIRED_FIELDS = [
+        'tersedia', 'kondisi_remote', 'visual_nomor',
+        'material_lampu', 'material_layar',
+        'mekanik_lampu', 'mekanik_layar',
+        'qc_lampu', 'qc_layar',
+        'spv_lampu', 'spv_layar',
     ];
 
     private function isAdmin(): bool
@@ -111,18 +118,21 @@ class AuditController extends BaseController
         $bad    = false;
 
         foreach (self::BAD as $field => $badValue) {
-            if ($u[$field] !== null) {
+            if (isset($u[$field]) && $u[$field] === $badValue) {
+                $bad = true;
+            }
+        }
+
+        foreach (self::REQUIRED_FIELDS as $field) {
+            if (array_key_exists($field, $u) && $u[$field] !== null) {
                 $filled++;
-                if ($u[$field] === $badValue) {
-                    $bad = true;
-                }
             }
         }
 
         if ($bad) {
             return 'bad';
         }
-        if ($filled === count(self::BAD)) {
+        if ($filled === count(self::REQUIRED_FIELDS)) {
             return 'ok';
         }
 
@@ -135,7 +145,7 @@ class AuditController extends BaseController
      */
     private function isUnitAudited(array $unit): bool
     {
-        foreach (array_keys(self::BAD) as $field) {
+        foreach (self::REQUIRED_FIELDS as $field) {
             if ($unit[$field] === null) {
                 return false;
             }
@@ -361,6 +371,123 @@ class AuditController extends BaseController
             'status' => 'active',
             'time'   => date('H:i:s'),
             'csrf'   => csrf_hash(),
+        ]);
+    }
+
+    /**
+     * Autosave batch: menyimpan beberapa perubahan dari satu form dalam satu request
+     * dan satu query UPDATE. Mengurangi request HTTP saat PIC mengisi cepat.
+     */
+    public function autosaveBatch()
+    {
+        $sessionId = (int) $this->request->getPost('session_id');
+        $rawChanges = (string) $this->request->getPost('changes');
+        $changes = json_decode($rawChanges, true);
+
+        if (!is_array($changes) || empty($changes)) {
+            return $this->jsonError('Tidak ada perubahan untuk disimpan.', 422);
+        }
+        if (count($changes) > 500) {
+            return $this->jsonError('Jumlah perubahan terlalu banyak dalam satu proses.', 422);
+        }
+
+        $auditModel = new AuditAndonModel();
+        $session = $auditModel->find($sessionId);
+
+        if (!$session || !$this->canAccess($session)) {
+            return $this->jsonError('Sesi tidak ditemukan.', 404);
+        }
+        if (!$auditModel->isEditable($session)) {
+            return $this->jsonError('Sesi sudah terkunci.', 403);
+        }
+
+        // Simpan nilai terakhir untuk kombinasi unit + kolom yang sama.
+        $normalised = [];
+        foreach ($changes as $change) {
+            if (!is_array($change)) {
+                return $this->jsonError('Format perubahan tidak valid.', 422);
+            }
+
+            $unitId = isset($change['unit_id']) ? (int) $change['unit_id'] : 0;
+            $field = isset($change['field']) ? (string) $change['field'] : '';
+            $value = isset($change['value']) ? trim((string) $change['value']) : '';
+
+            if ($unitId < 1 || !in_array($field, self::EDIT_FIELDS, true)) {
+                return $this->jsonError('Unit atau kolom tidak valid.', 422);
+            }
+            if ($field !== 'catatan' && $value !== '' &&
+                (!isset(self::OPTIONS[$field]) || !in_array($value, self::OPTIONS[$field], true))) {
+                return $this->jsonError('Nilai tidak valid untuk kolom ' . $field . '.', 422);
+            }
+
+            $normalised[$unitId . ':' . $field] = [
+                'unit_id' => $unitId,
+                'field'   => $field,
+                'value'   => $value,
+            ];
+        }
+
+        $normalised = array_values($normalised);
+        $unitIds = array_values(array_unique(array_column($normalised, 'unit_id')));
+        $db = db_connect();
+
+        // Pastikan semua unit yang dikirim memang milik sesi ini.
+        $validIds = $db->table('audit_andon_detail')
+            ->select('id')
+            ->where('audit_id', $sessionId)
+            ->whereIn('id', $unitIds)
+            ->get()
+            ->getResultArray();
+
+        if (count($validIds) !== count($unitIds)) {
+            return $this->jsonError('Ada unit yang tidak ditemukan dalam sesi ini.', 404);
+        }
+
+        // Buat satu UPDATE dengan CASE per kolom. Semua nilai telah divalidasi
+        // dan nama kolom berasal dari daftar whitelist di atas.
+        $byField = [];
+        foreach ($normalised as $change) {
+            $byField[$change['field']][] = $change;
+        }
+
+        $set = [];
+        foreach ($byField as $field => $fieldChanges) {
+            $case = 'CASE id ';
+            foreach ($fieldChanges as $change) {
+                $sqlValue = $change['value'] === '' ? 'NULL' : $db->escape($change['value']);
+                $case .= 'WHEN ' . (int) $change['unit_id'] . ' THEN ' . $sqlValue . ' ';
+            }
+            $case .= 'ELSE ' . $db->protectIdentifiers($field) . ' END';
+            $set[] = $db->protectIdentifiers($field) . ' = ' . $case;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $set[] = $db->protectIdentifiers('updated_by') . ' = ' . (int) $this->userId();
+        $set[] = $db->protectIdentifiers('updated_at') . ' = ' . $db->escape($now);
+        $idList = implode(',', array_map('intval', $unitIds));
+
+        $sql = 'UPDATE ' . $db->protectIdentifiers('audit_andon_detail')
+            . ' SET ' . implode(', ', $set)
+            . ' WHERE ' . $db->protectIdentifiers('audit_id') . ' = ' . $sessionId
+            . ' AND ' . $db->protectIdentifiers('id') . ' IN (' . $idList . ')';
+
+        $db->transBegin();
+        $db->query($sql);
+        $db->table('audit_andon')
+            ->where('id', $sessionId)
+            ->update(['updated_at' => $now]);
+
+        if (!$db->transStatus()) {
+            $db->transRollback();
+            return $this->jsonError('Gagal menyimpan perubahan audit.', 500);
+        }
+
+        $db->transCommit();
+
+        return $this->response->setJSON([
+            'ok'    => true,
+            'saved' => count($normalised),
+            'csrf'  => csrf_hash(),
         ]);
     }
 
