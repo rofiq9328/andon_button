@@ -897,7 +897,10 @@ $lineTotal  = count($units);
     });
 
     function scheduleFlush(delay) {
-        if (saveTimer !== null || saving || pendingChanges.size === 0 || retryBlocked) return;
+        if (saving || pendingChanges.size === 0 || retryBlocked) return;
+
+        // Reset timer on each click so a short burst of input is sent as one batch.
+        if (saveTimer !== null) window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(function () {
             saveTimer = null;
             flushAutosave();
@@ -909,7 +912,7 @@ $lineTotal  = count($units);
         pendingChanges.set(key, payload);
         retryBlocked = false;
         setStatus('saving', 'Menunggu simpan…');
-        scheduleFlush(180);
+        scheduleFlush(260);
     }
 
     async function flushAutosave() {
