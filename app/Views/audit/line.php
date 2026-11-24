@@ -796,7 +796,7 @@ $lineTotal  = count($units);
                 <div class="card-footer small text-secondary d-flex justify-content-between flex-wrap gap-2">
                     <span><i class="fa-solid fa-cloud-arrow-up me-1"></i> Perubahan tersimpan otomatis.</span>
                     <span>Tiap garis kecil mewakili kolom pemeriksaan: hijau normal, merah perlu perhatian, abu-abu belum diisi.</span>
-                    <span>RUSAK / GANTI BATERAI: kosong = NO (tidak perlu tindakan); pilih YES bila diperlukan.</span>
+                    <span>RUSAK / GANTI BATERAI: kondisi awal = -; pilih YES bila ada kondisi yang perlu dicatat.</span>
                 </div>
             <?php endif; ?>
         </div>
