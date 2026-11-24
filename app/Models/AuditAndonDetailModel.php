@@ -103,13 +103,14 @@ class AuditAndonDetailModel extends Model
      */
     public function getProgressByLine(int $auditId): array
     {
+        // Kolom RUSAK dan GANTI BATERAI adalah kolom tindakan:
+        // kosong berarti tidak ada tindakan, YES hanya dipilih bila diperlukan.
         $requiredFields = [
             'tersedia', 'kondisi_remote', 'visual_nomor',
             'material_lampu', 'material_layar',
             'mekanik_lampu', 'mekanik_layar',
             'qc_lampu', 'qc_layar',
             'spv_lampu', 'spv_layar',
-            'perbaikan_rusak', 'ganti_baterai',
         ];
 
         $conditions = array_map(
