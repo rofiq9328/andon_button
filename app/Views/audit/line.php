@@ -736,7 +736,7 @@ $lineTotal  = count($units);
                                 <?php foreach ($flat as $key => $def): ?>
                                     <th class="text-center col-label audit-column-header<?= $def['start'] ? ' grp-start' : '' ?><?= $def['grp'] % 2 ? ' grp-alt' : '' ?>">
                                         <div class="audit-column-title"><?= esc($def['label']) ?></div>
-                                        <?php if ($editable): ?>
+                                        <?php if ($editable && !in_array($key, ['perbaikan_rusak', 'ganti_baterai'], true)): ?>
                                             <div class="audit-column-actions">
                                                 <?php foreach ($def['opts'] as [$optionValue, $optionGood]): ?>
                                                     <button type="button"
