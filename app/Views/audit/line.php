@@ -594,6 +594,95 @@
         ) !important;
     }
 
+
+    /* ===== Optimasi rendering saat scroll =====
+       Kurangi efek yang memaksa browser mengecat ulang ribuan cell.
+       Struktur tabel, ukuran kolom, sticky header, dan sticky Unit tetap. */
+    .audit-wrap {
+        overflow: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .audit-table,
+    .audit-table th,
+    .audit-table td,
+    .audit-table tr {
+        transition: none !important;
+    }
+
+    .audit-table tbody tr:nth-child(even) td,
+    .audit-table tbody tr:hover td {
+        background-image: none !important;
+    }
+
+    .audit-table tbody tr:hover .sticky-col {
+        background-color: var(--bs-body-bg) !important;
+    }
+
+    .audit-table td[data-field] {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background-clip: border-box !important;
+    }
+
+    .audit-table td[data-field].cell-empty {
+        background-image: none !important;
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+
+    .audit-table td[data-field].cell-ok {
+        background-image: none !important;
+        background-color: rgba(25, 135, 84, 0.10) !important;
+    }
+
+    .audit-table td[data-field].cell-bad {
+        background-image: none !important;
+        background-color: rgba(220, 53, 69, 0.11) !important;
+    }
+
+    .audit-table tr[data-state="ok"] .sticky-col {
+        box-shadow: none !important;
+        border-left: 4px solid var(--bs-success) !important;
+    }
+
+    .audit-table tr[data-state="bad"] .sticky-col {
+        box-shadow: none !important;
+        border-left: 4px solid var(--bs-danger) !important;
+    }
+
+    .audit-table tr[data-state="partial"] .sticky-col {
+        box-shadow: none !important;
+        border-left: 4px solid var(--bs-warning) !important;
+    }
+
+    .audit-table tr[data-state="empty"] .sticky-col {
+        box-shadow: none !important;
+        border-left: 4px solid var(--bs-secondary) !important;
+    }
+
+    .audit-table thead tr:nth-child(2) th {
+        box-shadow: none !important;
+        border-bottom: 2px solid var(--bs-border-color) !important;
+    }
+
+    .audit-table td[data-field] .btn-group,
+    .audit-table td[data-field] .btn-group .btn {
+        box-shadow: none !important;
+        transition: none !important;
+    }
+
+    @media (min-width: 1200px) {
+        .audit-table {
+            table-layout: fixed;
+        }
+
+        .audit-table td[data-field] {
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+    }
+
 </style>
 <?= $this->endSection() ?>
 
