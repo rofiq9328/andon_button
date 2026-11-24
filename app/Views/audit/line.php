@@ -990,26 +990,46 @@ $lineTotal  = count($units);
 
             const wasFilled = td.dataset.auditFilled === '1';
             const wasBad = td.dataset.auditBad === '1';
-            const isBad = target.dataset.bad === '1';
+            const selected = target.checked ? target : null;
+            const isBad = target.checked && target.dataset.bad === '1';
             const isRequired = !CFG.optionalFields.includes(target.dataset.field);
 
             let filled = Number(tr.dataset.auditFilled || 0);
             let badCount = Number(tr.dataset.auditBad || 0);
 
-            if (isRequired && !wasFilled) filled++;
+            if (isRequired && !wasFilled && selected) filled++;
             if (wasBad) badCount--;
             if (isBad) badCount++;
 
-            setCellState(td, target);
+            setCellState(td, selected);
             setRowState(tr, filled, badCount);
 
             if (CFG.editable) {
                 queueAutosave({
                     unit_id: target.dataset.unit,
                     field: target.dataset.field,
-                    value: target.value
+                    value: target.checked ? target.value : ''
                 });
             }
+        });
+    }
+
+    // Kolom tindakan hanya memiliki tombol YES. Klik ulang YES untuk
+    // mengembalikan ke kondisi netral (dianggap NO/tidak perlu tindakan).
+    if (tableBody) {
+        tableBody.addEventListener('click', function (event) {
+            const label = event.target.closest('label');
+            if (!label) return;
+
+            const input = document.getElementById(label.htmlFor);
+            if (!input || !input.matches('input.audit-radio') ||
+                !CFG.optionalFields.includes(input.dataset.field) || !input.checked) {
+                return;
+            }
+
+            event.preventDefault();
+            input.checked = false;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
         });
     }
 
