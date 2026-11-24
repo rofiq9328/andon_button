@@ -624,8 +624,8 @@ $groups = [
         'spv_layar' => ['label' => 'Layar', 'opts' => [['MUNCUL', true], ['TIDAK', false]]],
     ],
     'Perbaikan' => [
-        'perbaikan_rusak' => ['label' => 'Rusak',   'opts' => [['NO', true], ['YES', false]]],
-        'ganti_baterai'   => ['label' => 'Baterai', 'opts' => [['NO', true], ['YES', false]]],
+        'perbaikan_rusak' => ['label' => 'Rusak',   'opts' => [['YES', false]]],
+        'ganti_baterai'   => ['label' => 'Baterai', 'opts' => [['YES', false]]],
     ],
 ];
 
@@ -656,6 +656,7 @@ foreach ($groups as $gName => $fields) {
     $gi++;
 }
 $fieldCount = count($flat);
+$requiredFieldCount = $fieldCount - 2; // RUSAK dan GANTI BATERAI bukan kolom wajib.
 $lineTotal  = count($units);
 ?>
 
@@ -794,7 +795,8 @@ $lineTotal  = count($units);
             <?php if ($editable): ?>
                 <div class="card-footer small text-secondary d-flex justify-content-between flex-wrap gap-2">
                     <span><i class="fa-solid fa-cloud-arrow-up me-1"></i> Perubahan tersimpan otomatis.</span>
-                    <span>Tiap garis kecil di bawah nomor unit mewakili satu kolom: hijau normal, merah perlu perhatian, abu-abu belum diisi.</span>
+                    <span>Tiap garis kecil mewakili kolom pemeriksaan: hijau normal, merah perlu perhatian, abu-abu belum diisi.</span>
+                    <span>RUSAK / GANTI BATERAI: kosong = NO (tidak perlu tindakan); pilih YES bila diperlukan.</span>
                 </div>
             <?php endif; ?>
         </div>
@@ -809,9 +811,10 @@ $lineTotal  = count($units);
 <script>
 (function () {
     const CFG = {
-        url:        <?= json_encode(base_url('audit-andon/autosave')) ?>,
+        url:        <?= json_encode(base_url('audit-andon/autosave-batch')) ?>,
         sessionId:  <?= (int) $session['id'] ?>,
-        fieldCount: <?= (int) $fieldCount ?>,
+        fieldCount: <?= (int) $requiredFieldCount ?>,
+        optionalFields: ['perbaikan_rusak', 'ganti_baterai'],
         editable:   <?= $editable ? 'true' : 'false' ?>,
         csrfName:   <?= json_encode(csrf_token()) ?>,
         csrfHash:   <?= json_encode(csrf_hash()) ?>,
@@ -828,13 +831,23 @@ $lineTotal  = count($units);
         error:  'fa-solid fa-triangle-exclamation',
     };
 
-    let inFlight = 0;
+    // Perubahan yang terjadi berdekatan digabung menjadi satu request.
+    const pendingChanges = new Map();
+    let saving = false;
+    let saveTimer = null;
+    let retryBlocked = false;
 
     function setStatus(kind, text) {
         if (!statusEl) return;
         statusEl.className = 'status-pill ' + PILL[kind];
-        statusEl.querySelector('i').className = ICON[kind];
-        statusEl.querySelector('span').textContent = text;
+        const icon = statusEl.querySelector('i');
+        const label = statusEl.querySelector('span');
+        if (icon) icon.className = ICON[kind];
+        if (label) label.textContent = text;
+    }
+
+    function hasPendingSave() {
+        return saving || pendingChanges.size > 0;
     }
 
     function setCellState(td, selected) {
@@ -865,7 +878,7 @@ $lineTotal  = count($units);
         tr.dataset.state = state;
     }
 
-    // Hitung sekali saat halaman dibuka; selanjutnya hanya sel yang berubah yang diperbarui.
+    // Hitung hanya kolom pemeriksaan wajib. Kolom tindakan bersifat opsional.
     rows.forEach(function (tr) {
         let filled = 0;
         let badCount = 0;
@@ -873,18 +886,48 @@ $lineTotal  = count($units);
         tr.querySelectorAll('td[data-field]').forEach(function (td) {
             const selected = td.querySelector('input.audit-radio:checked');
             const state = setCellState(td, selected);
-            if (state.filled) filled++;
+
+            if (!CFG.optionalFields.includes(td.dataset.field) && state.filled) {
+                filled++;
+            }
             if (state.bad) badCount++;
         });
 
         setRowState(tr, filled, badCount);
     });
 
-    async function autosave(payload) {
-        inFlight++;
+    function scheduleFlush(delay) {
+        if (saveTimer !== null || saving || pendingChanges.size === 0 || retryBlocked) return;
+        saveTimer = window.setTimeout(function () {
+            saveTimer = null;
+            flushAutosave();
+        }, delay);
+    }
+
+    function queueAutosave(payload) {
+        const key = payload.unit_id + ':' + payload.field;
+        pendingChanges.set(key, payload);
+        retryBlocked = false;
+        setStatus('saving', 'Menunggu simpan…');
+        scheduleFlush(180);
+    }
+
+    async function flushAutosave() {
+        if (saving || pendingChanges.size === 0) return;
+
+        if (saveTimer !== null) {
+            window.clearTimeout(saveTimer);
+            saveTimer = null;
+        }
+
+        const batch = Array.from(pendingChanges.values());
+        pendingChanges.clear();
+        saving = true;
         setStatus('saving', 'Menyimpan…');
 
-        const body = new URLSearchParams({ session_id: CFG.sessionId, ...payload });
+        const body = new URLSearchParams();
+        body.set('session_id', CFG.sessionId);
+        body.set('changes', JSON.stringify(batch));
         body.append(CFG.csrfName, CFG.csrfHash);
 
         try {
@@ -893,74 +936,83 @@ $lineTotal  = count($units);
                 body: body,
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
             });
-            const data = await res.json();
+            const data = await res.json().catch(function () { return {}; });
+
             if (data.csrf) CFG.csrfHash = data.csrf;
             if (!res.ok || !data.ok) {
                 throw new Error(data.message || 'Gagal menyimpan');
             }
 
-            inFlight--;
-            if (inFlight === 0) {
-                // Status toolbar kembali netral; notifikasi sukses hanya melalui SweetAlert2.
-                setStatus('idle', 'Siap');
+            retryBlocked = false;
 
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Berhasil disimpan',
-                            showConfirmButton: false,
-                            timer: 1800,
-                            timerProgressBar: true
-                        });
-                }
+            if (pendingChanges.size === 0) {
+                setStatus('saved', 'Tersimpan');
+            } else {
+                setStatus('saving', 'Menunggu simpan…');
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Berhasil disimpan',
+                    showConfirmButton: false,
+                    timer: 1300,
+                    timerProgressBar: true
+                });
             }
         } catch (e) {
-            inFlight--;
+            // Jangan hilangkan isian yang gagal dikirim. Perubahan berikutnya
+            // akan mencoba mengirim ulang bersama perubahan terbaru.
+            batch.forEach(function (item) {
+                const key = item.unit_id + ':' + item.field;
+                if (!pendingChanges.has(key)) pendingChanges.set(key, item);
+            });
+            retryBlocked = true;
             setStatus('error', 'Gagal menyimpan: ' + e.message);
+        } finally {
+            saving = false;
+            if (pendingChanges.size > 0 && !retryBlocked) {
+                scheduleFlush(60);
+            }
         }
     }
 
-    // Satu listener untuk seluruh pilihan audit dan kolom catatan.
     if (tableBody) {
         tableBody.addEventListener('change', function (event) {
             const target = event.target;
-            if (!(target instanceof HTMLInputElement)) return;
+            if (!(target instanceof HTMLInputElement) || !target.matches('input.audit-radio')) return;
 
-            if (target.matches('input.audit-radio')) {
-                const tr = target.closest('tr[data-unit]');
-                const td = target.closest('td[data-field]');
-                if (!tr || !td) return;
+            const tr = target.closest('tr[data-unit]');
+            const td = target.closest('td[data-field]');
+            if (!tr || !td) return;
 
-                const wasFilled = td.dataset.auditFilled === '1';
-                const wasBad = td.dataset.auditBad === '1';
-                const isBad = target.dataset.bad === '1';
+            const wasFilled = td.dataset.auditFilled === '1';
+            const wasBad = td.dataset.auditBad === '1';
+            const isBad = target.dataset.bad === '1';
+            const isRequired = !CFG.optionalFields.includes(target.dataset.field);
 
-                let filled = Number(tr.dataset.auditFilled || 0);
-                let badCount = Number(tr.dataset.auditBad || 0);
+            let filled = Number(tr.dataset.auditFilled || 0);
+            let badCount = Number(tr.dataset.auditBad || 0);
 
-                if (!wasFilled) filled++;
-                if (wasBad) badCount--;
-                if (isBad) badCount++;
+            if (isRequired && !wasFilled) filled++;
+            if (wasBad) badCount--;
+            if (isBad) badCount++;
 
-                setCellState(td, target);
-                setRowState(tr, filled, badCount);
+            setCellState(td, target);
+            setRowState(tr, filled, badCount);
 
-                if (CFG.editable) {
-                    autosave({
-                        unit_id: target.dataset.unit,
-                        field: target.dataset.field,
-                        value: target.value
-                    });
-                }
-                return;
+            if (CFG.editable) {
+                queueAutosave({
+                    unit_id: target.dataset.unit,
+                    field: target.dataset.field,
+                    value: target.value
+                });
             }
-
         });
     }
 
-    // Pilihan di header menerapkan satu nilai ke seluruh unit pada kolom terkait.
     const columnFillForm = document.getElementById('column-fill-form');
     const auditTable = document.querySelector('.audit-table');
 
@@ -969,7 +1021,7 @@ $lineTotal  = count($units);
             const button = event.target.closest('button.audit-column-fill');
             if (!button || !CFG.editable) return;
 
-            if (inFlight > 0) {
+            if (hasPendingSave()) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Penyimpanan berlangsung',
@@ -1013,7 +1065,7 @@ $lineTotal  = count($units);
     }
 
     window.addEventListener('beforeunload', function (e) {
-        if (inFlight > 0) {
+        if (hasPendingSave()) {
             e.preventDefault();
             e.returnValue = '';
         }
