@@ -147,8 +147,8 @@ class AuditExportController extends BaseController
         $sheet->setCellValue('H1', 'DATA REKAN ANDON ' . $year);
         $sheet->setCellValue('N4', date('d/m/Y'));
 
-        // Kosongkan data lama dari template, format tetap dipertahankan
-        $oldLast = max($sheet->getHighestRow(), self::FIRST_ROW);
+        // Kosongkan hanya sampai baris terakhir yang berisi data; baris yang hanya berformat tidak perlu diproses.
+        $oldLast = max($sheet->getHighestDataRow(), self::FIRST_ROW);
         for ($r = self::FIRST_ROW; $r <= $oldLast; $r++) {
             foreach (range('A', 'O') as $col) {
                 $sheet->getCell($col . $r)->setValueExplicit(null, DataType::TYPE_NULL);
@@ -182,7 +182,7 @@ class AuditExportController extends BaseController
 
         // Hapus warna merah tetap dari template (sisa data lama)
         for ($r = self::FIRST_ROW; $r <= $lastRow; $r++) {
-            foreach (range('A', 'O') as $col) {
+            foreach (range('C', 'O') as $col) {
                 $fill = $sheet->getCell($col . $r)->getStyle()->getFill();
                 if ($fill->getFillType() !== Fill::FILL_NONE && $fill->getStartColor()->getARGB() === 'FFFFC7CE') {
                     $fill->setFillType(Fill::FILL_NONE);
@@ -217,18 +217,29 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Dropdown ditulis ulang per sel, supaya susunan yang benar berlaku di semua baris
+        // Gunakan satu aturan validasi untuk satu rentang kolom, bukan clone untuk setiap baris.
+        // Ini memangkas jumlah objek DataValidation dari ribuan menjadi 13 aturan.
         $last = self::FIRST_ROW + max(count($units), 1) - 1;
+
+        // Hapus aturan lama yang berada di area input C:O agar tidak ada validasi bertumpuk.
+        foreach ($sheet->getDataValidationCollection() as $coordinate => $existingValidation) {
+            if (preg_match('/^([C-O])(\\d+)$/', (string) $coordinate, $match)
+                && (int) $match[2] >= self::FIRST_ROW
+                && (int) $match[2] <= $last) {
+                $sheet->setDataValidation((string) $coordinate, null);
+            }
+        }
+
         foreach (self::DROPDOWNS as $col => $list) {
             $dv = new DataValidation();
             $dv->setType(DataValidation::TYPE_LIST);
             $dv->setErrorStyle(DataValidation::STYLE_STOP);
             $dv->setAllowBlank(true);
             $dv->setFormula1('"' . $list . '"');
+            $dv->setSqref($col . self::FIRST_ROW . ':' . $col . $last);
 
-            for ($r = self::FIRST_ROW; $r <= $last; $r++) {
-                $sheet->getCell($col . $r)->setDataValidation(clone $dv);
-            }
+            // Aturan disimpan pada sel pertama, sedangkan sqref mencakup seluruh rentang kolom.
+            $sheet->getCell($col . self::FIRST_ROW)->setDataValidation($dv);
         }
 
         $sheet->freezePane('C' . self::FIRST_ROW);
