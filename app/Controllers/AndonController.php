@@ -28,8 +28,9 @@ class AndonController extends BaseController
             curl_setopt_array($handles[$index], [
                 CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 1,
-                CURLOPT_CONNECTTIMEOUT => 1,
+                CURLOPT_TIMEOUT_MS => 900,
+                CURLOPT_CONNECTTIMEOUT_MS => 500,
+                CURLOPT_NOSIGNAL => true,
             ]);
             curl_multi_add_handle($multiHandle, $handles[$index]);
         }
@@ -37,7 +38,11 @@ class AndonController extends BaseController
         $running = null;
         do {
             curl_multi_exec($multiHandle, $running);
-            curl_multi_select($multiHandle);
+            $selected = curl_multi_select($multiHandle, 0.2);
+            // Hindari busy-loop pada kondisi tertentu ketika tidak ada socket yang siap.
+            if ($selected === -1) {
+                usleep(10000);
+            }
         } while ($running > 0);
 
         $results = [];
