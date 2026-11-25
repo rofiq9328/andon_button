@@ -11,8 +11,19 @@ const LED_COLOR = { spv: 'primary', mk: 'warning', qc: 'success', mt: 'danger' }
 const HEADER_COLOR = 'text-bg-success opacity-30 pe-none';
 
 let currentData = [];
+let statusRequestInProgress = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('line-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5" role="status" aria-live="polite">
+                <div class="spinner-border text-success mb-3" role="status" aria-hidden="true"></div>
+                <h5 class="text-success fw-bold">MEMUAT STATUS ANDON</h5>
+                <p class="text-muted mb-0">Menghubungkan perangkat line...</p>
+            </div>`;
+    }
+
     fetchLineStatus();
 
     // Auto Refresh setiap 10 detik
@@ -22,15 +33,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function fetchLineStatus() {
+    // Jangan menumpuk request jika pemeriksaan 77 perangkat sebelumnya belum selesai.
+    if (statusRequestInProgress) return;
+    statusRequestInProgress = true;
+
     try {
-        const response = await fetch(CONFIG.API.STATUS);
+        const response = await fetch(CONFIG.API.STATUS, {
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
         const result = await response.json();
-        if (result.success) {
+        if (result.success && Array.isArray(result.data)) {
             currentData = result.data;
             renderDashboard(currentData);
         }
     } catch (error) {
         console.error("Gagal mengambil data Andon:", error);
+        const container = document.getElementById('line-container');
+        if (container && currentData.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-wifi-off text-warning mb-3" style="font-size: 2.5rem;"></i>
+                    <h5 class="fw-bold">STATUS ANDON BELUM TERSEDIA</h5>
+                    <p class="text-muted mb-0">Koneksi sedang diperiksa kembali secara otomatis.</p>
+                </div>`;
+        }
+    } finally {
+        statusRequestInProgress = false;
     }
 }
 
