@@ -147,9 +147,8 @@ class AuditExportController extends BaseController
         $sheet->setCellValue('H1', 'DATA REKAN ANDON ' . $year);
         $sheet->setCellValue('N4', date('d/m/Y'));
 
-        // Kosongkan hanya baris yang benar-benar memiliki data.
-        // getHighestRow() dapat ikut menghitung baris yang hanya memiliki format.
-        $oldLast = max($sheet->getHighestDataRow(), self::FIRST_ROW);
+        // Kosongkan data lama dari template, format tetap dipertahankan
+        $oldLast = max($sheet->getHighestRow(), self::FIRST_ROW);
         for ($r = self::FIRST_ROW; $r <= $oldLast; $r++) {
             foreach (range('A', 'O') as $col) {
                 $sheet->getCell($col . $r)->setValueExplicit(null, DataType::TYPE_NULL);
@@ -218,194 +217,21 @@ class AuditExportController extends BaseController
             }
         }
 
-        // Gunakan satu aturan dropdown untuk satu kolom (rentang), bukan
-        // membuat clone DataValidation untuk setiap baris. Cara ini jauh
-        // mengurangi jumlah objek dan elemen XML pada file hasil export.
+        // Dropdown ditulis ulang per sel, supaya susunan yang benar berlaku di semua baris
         $last = self::FIRST_ROW + max(count($units), 1) - 1;
-        $this->applyDropdownValidations($sheet, $last);
+        foreach (self::DROPDOWNS as $col => $list) {
+            $dv = new DataValidation();
+            $dv->setType(DataValidation::TYPE_LIST);
+            $dv->setErrorStyle(DataValidation::STYLE_STOP);
+            $dv->setAllowBlank(true);
+            $dv->setFormula1('"' . $list . '"');
+
+            for ($r = self::FIRST_ROW; $r <= $last; $r++) {
+                $sheet->getCell($col . $r)->setDataValidation(clone $dv);
+            }
+        }
 
         $sheet->freezePane('C' . self::FIRST_ROW);
-    }
-
-    /**
-     * Terapkan dropdown sekali per kolom menggunakan sqref range.
-     * Hapus aturan lama yang menimpa area input agar hasil validasinya konsisten.
-     */
-    private function applyDropdownValidations(Worksheet $sheet, int $lastRow): void
-    {
-        $firstRow = self::FIRST_ROW;
-        $columns  = array_keys(self::DROPDOWNS);
-
-        // Bersihkan validasi lama yang bersinggungan dengan area input C:O.
-        foreach ($sheet->getDataValidationCollection() as $coordinate => $validation) {
-            $sqref = $validation->getSqref() ?: (string) $coordinate;
-            $parts = preg_split('/\\s+/', trim(str_replace('
-    private function fillSummary(Worksheet $s, string $year, string $monthName, array $units): void
-    {
-        $lines = array_values(array_unique(array_map(static fn ($u) => (int) $u['line'], $units)));
-        $p     = self::SUM_FIRST;
-        $q     = $p + max(count($lines), 1) - 1;
-        $last  = self::FIRST_ROW + max(count($units), 1) - 1;
-
-        $rng = static fn (string $c): string => "'" . $monthName . "'!\$" . $c . '$' . self::FIRST_ROW . ':$' . $c . '$' . $last;
-        $rA = $rng('A');
-        $rC = $rng('C');
-        $rD = $rng('D');
-        $rE = $rng('E');
-        $rF = $rng('F');
-        $rH = $rng('H');
-        $rJ = $rng('J');
-        $rL = $rng('L');
-
-        // Lepas merge di area per-line, karena jumlah dan urutan line berubah
-        foreach ($s->getMergeCells() as $range) {
-            [$start] = explode(':', $range);
-            if ((int) preg_replace('/\D/', '', $start) >= $p) {
-                $s->unmergeCells($range);
-            }
-        }
-
-        // Kosongkan isi lama area per-line
-        $clearTo = max($q, $s->getHighestRow());
-        for ($r = $p; $r <= $clearTo; $r++) {
-            foreach (['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $col) {
-                $s->getCell($col . $r)->setValueExplicit(null, DataType::TYPE_NULL);
-            }
-        }
-
-        // Format baris per-line mengikuti format baris 33 di template
-        if ($q >= $p) {
-            $s->duplicateStyle($s->getStyle('A33:M33'), "A{$p}:M{$q}");
-        }
-
-        $s->setCellValue('F1', 'DATA REKAN ANDON ' . $year);
-        $s->setCellValue('L4', date('d/m/Y'));
-
-        // Rekap total
-        $s->setCellValue('D10', "=SUM(D{$p}:D{$q})");
-        $s->setCellValue('D11', "=SUM(E{$p}:E{$q})");
-        $s->setCellValue('D12', "=SUM(F{$p}:F{$q})");
-        $s->setCellValue('D13', "=SUM(G{$p}:G{$q})");
-        $s->setCellValue('D14', "=SUM(H{$p}:H{$q})");
-        $s->setCellValue('D15', "=SUM(I{$p}:I{$q})");
-        $s->setCellValue('D16', "=COUNTIF(J{$p}:J{$q},\"OFF\")");
-        $s->setCellValue('D17', "=COUNTIF(J{$p}:J{$q},\"ON\")");
-        $s->setCellValue('D18', "=COUNTIF(K{$p}:K{$q},\"OFF\")");
-        $s->setCellValue('D19', "=COUNTIF(K{$p}:K{$q},\"ON\")");
-        $s->setCellValue('D20', "=COUNTIF(L{$p}:L{$q},\"OFF\")");
-        $s->setCellValue('D21', "=COUNTIF(L{$p}:L{$q},\"ON\")");
-        $s->setCellValue('D22', "=COUNTIF(M{$p}:M{$q},\"OFF\")");
-        $s->setCellValue('D23', "=COUNTIF(M{$p}:M{$q},\"ON\")");
-        $s->setCellValue('D24', "=SUM(C{$p}:C{$q})");
-        $s->setCellValue('D25', "=COUNTA(A{$p}:A{$q})");
-
-        // Rekap per line
-        foreach ($lines as $i => $line) {
-            $r = $p + $i;
-
-            $s->setCellValue("A{$r}", $line);
-            $s->setCellValue("C{$r}", "=D{$r}+E{$r}");
-            $s->setCellValue("D{$r}", "=COUNTIFS({$rA},\$A{$r},{$rC},\"ADA\")");
-            $s->setCellValue("E{$r}", "=COUNTIFS({$rA},\$A{$r},{$rC},\"TIDAK ADA\")");
-            $s->setCellValue("F{$r}", "=COUNTIFS({$rA},\$A{$r},{$rD},\"ON\")");
-            $s->setCellValue("G{$r}", "=COUNTIFS({$rA},\$A{$r},{$rD},\"OFF\")");
-            $s->setCellValue("H{$r}", "=COUNTIFS({$rA},\$A{$r},{$rE},\"ADA\")");
-            $s->setCellValue("I{$r}", "=COUNTIFS({$rA},\$A{$r},{$rE},\"TIDAK ADA\")");
-            $s->setCellValue("J{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rF},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rF},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("K{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rH},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rH},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("L{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rJ},\"ON\")>0,\"ON\",\"-\"))");
-            $s->setCellValue("M{$r}", "=IF(COUNTIFS({$rA},\$A{$r},{$rL},\"OFF\")>0,\"OFF\",IF(COUNTIFS({$rA},\$A{$r},{$rL},\"ON\")>0,\"ON\",\"-\"))");
-        }
-    }
-
-    /**
-     * Hapus aturan pewarnaan bawaan template. Kalau struktur library berbeda,
-     * aturan dibiarkan agar file tidak rusak.
-     */
-    private function clearConditionalFormats(Worksheet $sheet): void
-    {
-        try {
-            $prop = new \ReflectionProperty(Worksheet::class, 'conditionalStylesCollection');
-            $prop->setAccessible(true);
-            $prop->setValue($sheet, []);
-        } catch (\ReflectionException $e) {
-            log_message('warning', 'Aturan pewarnaan template tidak dapat dihapus: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Aturan kondisional dari template dipertahankan, tetapi rentangnya
-     * dibatasi sampai baris $lastRow (line 68-77 tidak diberi warna).
-     */
-    private function restrictConditionalFormats(Worksheet $sheet, int $lastRow): void
-    {
-        $collection = $sheet->getConditionalStylesCollection();
-        if (empty($collection)) {
-            return;
-        }
-
-        $this->clearConditionalFormats($sheet);
-
-        foreach ($collection as $range => $rules) {
-            foreach (explode(' ', trim((string) $range)) as $part) {
-                if (!preg_match('/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/', $part, $m)) {
-                    continue;
-                }
-
-                $startRow = (int) $m[2];
-                $endRow   = min((int) $m[4], $lastRow);
-
-                if ($startRow > $endRow) {
-                    continue;
-                }
-
-                $sheet->setConditionalStyles($m[1] . $startRow . ':' . $m[3] . $endRow, $rules);
-            }
-        }
-    }
-}
-, '', $sqref)));
-            $remove = false;
-
-            foreach ($parts as $part) {
-                if (!preg_match('/^([A-Z]+)(\\d+)(?::([A-Z]+)(\\d+))?$/i', $part, $match)) {
-                    continue;
-                }
-
-                $startColumn = strtoupper($match[1]);
-                $endColumn   = isset($match[3]) ? strtoupper($match[3]) : $startColumn;
-                $start       = (int) $match[2];
-                $end         = isset($match[4]) ? (int) $match[4] : $start;
-
-                if ($start > $lastRow || $end < $firstRow) {
-                    continue;
-                }
-
-                foreach ($columns as $column) {
-                    if ($startColumn <= $column && $endColumn >= $column) {
-                        $remove = true;
-                        break 2;
-                    }
-                }
-            }
-
-            if ($remove) {
-                $sheet->setDataValidation((string) $coordinate, null);
-            }
-        }
-
-        // Satu DataValidation untuk seluruh rentang setiap kolom.
-        foreach (self::DROPDOWNS as $column => $list) {
-            $validation = new DataValidation();
-            $validation->setType(DataValidation::TYPE_LIST);
-            $validation->setErrorStyle(DataValidation::STYLE_STOP);
-            $validation->setAllowBlank(true);
-            $validation->setFormula1('"' . $list . '"');
-            $validation->setSqref($column . $firstRow . ':' . $column . $lastRow);
-
-            // Aturan disimpan pada sel awal; sqref menentukan seluruh cakupannya.
-            $sheet->getCell($column . $firstRow)->setDataValidation($validation);
-        }
     }
 
     /**
