@@ -24,7 +24,7 @@ function isMenuActive($path, $current_path)
 /*
  * Status menu aktif untuk setiap kelompok.
  */
-$isDashboardActive       = isMenuActive('', $current_path);
+$isDashboardActive       = ($current_path === '' || $current_path === 'andon');
 $isButtonIdActive        = isMenuActive('andon/update-button', $current_path);
 
 $isAuditDashboardActive  = isMenuActive('audit-andon', $current_path);
@@ -90,7 +90,7 @@ $isUserManagementActive = isMenuActive('users', $current_path);
                 <ul class="nav nav-treeview">
                     <li class="nav-item">
                         <a
-                            href="<?= base_url('/') ?>"
+                            href="<?= base_url('andon') ?>"
                             class="nav-link<?= $isDashboardActive ? ' active' : '' ?>"
                             title="Dashboard Andon"
                         >
@@ -359,13 +359,6 @@ $isUserManagementActive = isMenuActive('users', $current_path);
     font-weight: 600;
 }
 
-.sidebar-menu .nav-treeview .nav-link {
-    padding-left: 2.5rem;
-}
-
-.sidebar-menu .nav-treeview .nav-treeview .nav-link {
-    padding-left: 3.25rem;
-}
 
 .tooltip .tooltip-inner {
     background-color: #111b21;
